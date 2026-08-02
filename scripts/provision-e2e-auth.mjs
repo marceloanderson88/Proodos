@@ -31,6 +31,8 @@ async function provisionSyntheticPasswords() {
     requiredEnvironmentVariable("SUPABASE_LOCAL_URL"),
   );
   const adminKey = requiredEnvironmentVariable("SUPABASE_LOCAL_ADMIN_KEY");
+  const publicKey = requiredEnvironmentVariable("SUPABASE_LOCAL_PUBLIC_KEY");
+  const email = requiredEnvironmentVariable("E2E_TEST_EMAIL");
   const password = requiredEnvironmentVariable("E2E_TEST_PASSWORD");
   const supabase = createClient(supabaseUrl, adminKey, {
     auth: {
@@ -56,8 +58,29 @@ async function provisionSyntheticPasswords() {
     }
   }
 
+  const publicClient = createClient(supabaseUrl, publicKey, {
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
+    },
+  });
+  const { data: signInData, error: signInError } =
+    await publicClient.auth.signInWithPassword({ email, password });
+  if (signInError) {
+    throw new Error(
+      `Credenciais sintéticas não criaram sessão: ${signInError.name} (${signInError.status ?? "sem status"})`,
+    );
+  }
+  if (signInData.user.id !== syntheticUserIds[0] || !signInData.session) {
+    throw new Error(
+      "A sessão sintética não corresponde ao usuário E2E esperado.",
+    );
+  }
+  await publicClient.auth.signOut({ scope: "local" });
+
   console.log(
-    `${syntheticUserIds.length} usuários sintéticos provisionados no Supabase local.`,
+    `${syntheticUserIds.length} usuários sintéticos provisionados e login local verificado.`,
   );
 }
 

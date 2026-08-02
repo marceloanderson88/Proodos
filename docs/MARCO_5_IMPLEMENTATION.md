@@ -56,6 +56,8 @@ O smoke autenticado seguinte demonstrou que inserir um hash manual em `auth.user
 
 Os registros determinísticos usados pelas FKs dos testes preenchem explicitamente os campos internos de token com strings vazias e as flags de tipo de usuário com `false`. Isso permite que o Auth carregue o registro antes da atualização administrativa sem persistir tokens ou hashes conhecidos no repositório.
 
+O CI usa o par legado `ANON_KEY`/`SERVICE_ROLE_KEY` gerado pelo Supabase CLI somente no stack local. Após provisionar as senhas, o script executa `signInWithPassword` com a chave anônima e exige uma sessão do usuário esperado antes de iniciar o Playwright. Produção continua usando `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` no modelo atual de chaves.
+
 ## Pendências externas
 
 - criar um projeto Supabase de homologação e separar variáveis Vercel Preview;

@@ -53,11 +53,10 @@ jobs:
         shell: bash
         run: |
           eval "$(pnpm exec supabase status -o env)"
-          PUBLIC_KEY="${PUBLISHABLE_KEY:-${ANON_KEY:-}}"
           test -n "$API_URL"
-          test -n "$PUBLIC_KEY"
+          test -n "$ANON_KEY"
           echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
-          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLIC_KEY" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$ANON_KEY" >> "$GITHUB_ENV"
 
       - name: Recriar banco do zero
         run: pnpm exec supabase db reset --local
@@ -67,9 +66,11 @@ jobs:
         run: |
           eval "$(pnpm exec supabase status -o env)"
           test -n "$API_URL"
+          test -n "$ANON_KEY"
           test -n "$SERVICE_ROLE_KEY"
           SUPABASE_LOCAL_URL="$API_URL" \
             SUPABASE_LOCAL_ADMIN_KEY="$SERVICE_ROLE_KEY" \
+            SUPABASE_LOCAL_PUBLIC_KEY="$ANON_KEY" \
             pnpm seed:e2e-auth
 
       - name: Formatter

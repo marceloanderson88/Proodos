@@ -54,6 +54,8 @@ O workflow `.github/workflows/ci.yml` executa:
 
 Qualquer falha bloqueia o job. GitHub Actions de terceiros estão fixadas por SHA.
 
+O stack local usa `ANON_KEY`/`SERVICE_ROLE_KEY` efêmeras fornecidas pelo próprio CLI e valida o login antes do navegador. Isso não altera o uso da chave publicável moderna nos ambientes hospedados.
+
 ## 5. Aplicação de migrations
 
 1. Confirmar que os nomes locais correspondem a `supabase_migrations.schema_migrations`.
