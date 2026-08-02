@@ -152,9 +152,9 @@ end $$;
 reset role;
 
 -- Portfólio sintético do Marco 6, exclusivo do ambiente local.
-set local role authenticated;
-select set_config('request.jwt.claim.role', 'authenticated', true);
-select set_config('request.jwt.claim.sub', '90000000-0000-4000-8000-000000000001', true);
+-- O bootstrap usa IDs determinísticos para os testes. A aplicação autenticada
+-- não recebe grant de INSERT na coluna id; o isolamento é verificado pelos
+-- testes pgTAP/RLS, não por este carregamento administrativo local.
 
 insert into public.incubators (id, organization_id, name, slug, created_by)
 select
