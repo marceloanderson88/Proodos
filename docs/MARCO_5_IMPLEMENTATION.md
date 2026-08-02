@@ -46,6 +46,10 @@ Não executados localmente:
 
 Esses itens permanecem gates obrigatórios no workflow e não são declarados como aprovados antes da primeira execução do CI.
 
+### Primeira execução no GitHub Actions
+
+A primeira reconstrução limpa identificou uma dependência histórica na migration `20260802045847_m1_harden_rls_event_trigger.sql`: ela revogava privilégios de `public.rls_auto_enable()`, função criada diretamente no projeto hospedado antes do histórico versionado e, por isso, ausente em um banco novo. A migration agora consulta `to_regprocedure()` e somente executa os `REVOKE` quando a função existe. O comportamento de segurança no ambiente remoto permanece o mesmo e a reconstrução limpa deixa de depender de estado externo ao repositório.
+
 ## Pendências externas
 
 - criar um projeto Supabase de homologação e separar variáveis Vercel Preview;
