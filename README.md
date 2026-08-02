@@ -1,6 +1,6 @@
 # Proodos — Plataforma Sertão Maker
 
-Fundação técnica da plataforma de gestão de incubadoras descrita em [`docs/SDD.md`](docs/SDD.md). O repositório está concluído até o **Marco 1**; autenticação, persistência multi-tenant e módulos de negócio ainda não estão implementados.
+Fundação técnica da plataforma de gestão de incubadoras descrita em [`docs/SDD.md`](docs/SDD.md). O repositório está concluído até o **Marco 2**: autenticação Supabase SSR e perfil próprio com RLS estão implementados; tenancy, RBAC e módulos de negócio permanecem para os marcos seguintes.
 
 ## Requisitos locais
 
@@ -16,7 +16,7 @@ Copy-Item .env.example .env.local
 pnpm dev
 ```
 
-Abra `http://localhost:3000`. O dashboard demonstrativo está em `http://localhost:3000/o/sertao-maker/dashboard`.
+Preencha em `.env.local` a URL e a chave publicável do projeto Supabase. Abra `http://localhost:3000`; a área `/o/sertao-maker/dashboard` exige uma sessão válida e continua exibindo dados claramente demonstrativos.
 
 ## Verificações
 
@@ -41,14 +41,16 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-## Variáveis do Marco 1
+## Variáveis do Marco 2
 
-| Variável               | Obrigatória | Uso                                               |
-| ---------------------- | ----------- | ------------------------------------------------- |
-| `NEXT_PUBLIC_APP_NAME` | Não         | Nome público; possui valor padrão seguro.         |
-| `NEXT_PUBLIC_APP_ENV`  | Não         | `development`, `test`, `staging` ou `production`. |
-| `APP_BASE_URL`         | Não no M1   | URL base reservada para callbacks no M2.          |
+| Variável                               | Obrigatória | Uso                                               |
+| -------------------------------------- | ----------- | ------------------------------------------------- |
+| `NEXT_PUBLIC_APP_NAME`                 | Não         | Nome público; possui valor padrão seguro.         |
+| `NEXT_PUBLIC_APP_ENV`                  | Não         | `development`, `test`, `staging` ou `production`. |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Sim         | URL pública do projeto Supabase.                  |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Sim         | Chave publicável; nunca usar secret/service role. |
+| `APP_BASE_URL`                         | Recomendado | URL canônica por ambiente.                        |
 
-`NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` estão documentadas para o Marco 2, mas não são lidas pelo código atual. Nenhuma service role ou secret key deve usar prefixo `NEXT_PUBLIC_`.
+No Supabase Auth, registre `http://localhost:3000/auth/callback` e a URL equivalente da Vercel entre os redirects permitidos. Para Google, configure o provider no Supabase e o callback fornecido pelo Supabase no Google Cloud. Nenhuma service role ou secret key deve usar prefixo `NEXT_PUBLIC_`.
 
-Consulte [`docs/MARCO_1_IMPLEMENTATION.md`](docs/MARCO_1_IMPLEMENTATION.md) para escopo, migrations e limitações.
+Consulte [`docs/MARCO_2_IMPLEMENTATION.md`](docs/MARCO_2_IMPLEMENTATION.md) para escopo, migration, políticas, testes e limitações.

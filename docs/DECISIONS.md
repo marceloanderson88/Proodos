@@ -48,7 +48,7 @@
 
 ## DEC-007 — Perfil criado por trigger mínimo e endurecido
 
-**Status:** Proposta  
+**Status:** Aceita e implementada no Marco 2
 **Decisão:** criar `profiles` após inserção em `auth.users` por função privada idempotente.  
 **Controles:** `search_path=''`, referências qualificadas, `EXECUTE` revogado, nenhum uso de metadata editável para autorização e teste de falha.  
 **Risco:** erro no trigger pode bloquear signup; deve existir teste e procedimento de reparo.
@@ -130,3 +130,9 @@
 **Status:** Aceita  
 **Decisão:** o M1 não cria tabela de negócio apenas para satisfazer formalmente RLS. O schema exposto permanece vazio, grants padrão são endurecidos e um teste SQL bloqueia qualquer tabela pública futura sem RLS e policy.  
 **Consequências:** policies tenant-aware e testes cross-tenant reais entram junto das tabelas no M3; a função preexistente `public.rls_auto_enable()` não é executável por clientes.
+
+## DEC-021 — Sessão SSR renovada no proxy e revalidada no servidor
+
+**Status:** Aceita e implementada no Marco 2
+**Decisão:** o `proxy.ts` do Next.js 16 chama `getClaims()` imediatamente após criar o cliente SSR, propaga cookies e headers privados; o layout privado usa `getUser()` antes de carregar o perfil.
+**Consequências:** rotas privadas são dinâmicas, o proxy melhora a jornada mas não substitui RLS, e nenhum objeto de `getSession()` é usado como prova de identidade.

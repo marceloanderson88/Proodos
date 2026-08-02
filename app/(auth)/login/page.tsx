@@ -1,16 +1,12 @@
-import {
-  ArrowLeft,
-  ArrowRight,
-  BarChart3,
-  Eye,
-  LockKeyhole,
-  Mail,
-  Rocket,
-  UsersRound,
-} from "lucide-react";
+import { ArrowLeft, BarChart3, Rocket, UsersRound } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import { LoginForm } from "@/components/auth/login-form";
+import { AuthFeedback } from "@/components/auth/auth-feedback";
 import { BrandMark } from "@/components/brand-mark";
+import { getSafeAuthDestination } from "@/lib/auth/safe-redirect";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const benefits = [
   { icon: Rocket, text: "Impulsione ideias e transforme realidades" },
@@ -19,8 +15,19 @@ const benefits = [
 ] as const;
 
 export const metadata = { title: "Acesso" };
+export const dynamic = "force-dynamic";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string; message?: string }>;
+}) {
+  const query = await searchParams;
+  const destination = getSafeAuthDestination(query.next);
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase.auth.getClaims();
+  if (data?.claims) redirect(destination);
+
   return (
     <main
       id="conteudo-principal"
@@ -61,31 +68,7 @@ export default function LoginPage() {
             ))}
           </div>
         </div>
-        <div
-          className="absolute inset-x-0 bottom-0 h-28 opacity-25"
-          aria-hidden="true"
-        >
-          <svg
-            viewBox="0 0 800 120"
-            className="h-full w-full"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M0 78 C150 15 260 115 410 55 C560 -5 640 92 800 34 L800 120 L0 120Z"
-              fill="none"
-              stroke="#f4c47a"
-              strokeWidth="2"
-            />
-            <path
-              d="M0 98 C190 40 310 130 480 72 C630 22 720 90 800 63"
-              fill="none"
-              stroke="#fff"
-              strokeWidth="1"
-            />
-          </svg>
-        </div>
       </section>
-
       <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12 sm:px-10">
         <div
           className="dot-field absolute right-0 bottom-0 h-64 w-64 opacity-45"
@@ -96,14 +79,6 @@ export default function LoginPage() {
             <BrandMark />
           </div>
           <div className="dashboard-card rounded-[2rem] p-7 sm:p-10">
-            <div
-              className="mb-7 rounded-2xl border border-[#d97918]/20 bg-[#fff4de] px-4 py-3 text-sm leading-6 text-[#70440d]"
-              role="status"
-            >
-              <strong>Prévia visual do Marco 1.</strong> A autenticação será
-              implementada no Marco 2; os controles estão intencionalmente
-              desabilitados.
-            </div>
             <div className="text-center">
               <p className="text-xs font-black tracking-[0.16em] text-[#921a20] uppercase">
                 Acesso à plataforma
@@ -115,79 +90,23 @@ export default function LoginPage() {
                 Entre para continuar na Plataforma Sertão Maker.
               </p>
             </div>
-
-            <form
-              className="mt-9 space-y-5"
-              aria-describedby="auth-preview-note"
-            >
-              <p id="auth-preview-note" className="sr-only">
-                Formulário não funcional nesta etapa.
-              </p>
-              <label className="block text-sm font-bold text-[#3c2a2a]">
-                E-mail
-                <span className="mt-2 flex items-center gap-3 rounded-xl border border-[#d8ceca] bg-white px-4 py-3.5 text-[#8b8080]">
-                  <Mail className="size-5" aria-hidden="true" />
-                  <input
-                    disabled
-                    type="email"
-                    placeholder="seu@email.com"
-                    className="w-full bg-transparent outline-none disabled:cursor-not-allowed"
-                  />
-                </span>
-              </label>
-              <label className="block text-sm font-bold text-[#3c2a2a]">
-                Senha
-                <span className="mt-2 flex items-center gap-3 rounded-xl border border-[#d8ceca] bg-white px-4 py-3.5 text-[#8b8080]">
-                  <LockKeyhole className="size-5" aria-hidden="true" />
-                  <input
-                    disabled
-                    type="password"
-                    placeholder="Digite sua senha"
-                    className="w-full bg-transparent outline-none disabled:cursor-not-allowed"
-                  />
-                  <Eye className="size-5" aria-hidden="true" />
-                </span>
-              </label>
-              <button
-                disabled
-                type="submit"
-                className="flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-xl bg-[#751118] px-5 py-4 font-extrabold text-white opacity-55"
-              >
-                Entrar
-                <ArrowRight className="size-5" aria-hidden="true" />
-              </button>
-              <div
-                className="flex items-center gap-4 text-xs font-bold text-[#958989]"
-                aria-hidden="true"
-              >
-                <span className="h-px flex-1 bg-[#e5dcd7]" />
-                ou
-                <span className="h-px flex-1 bg-[#e5dcd7]" />
+            {query.message === "password-updated" ? (
+              <div className="mt-7">
+                <AuthFeedback
+                  tone="success"
+                  message="Senha atualizada. Entre novamente com suas novas credenciais."
+                />
               </div>
-              <button
-                disabled
-                type="button"
-                className="w-full cursor-not-allowed rounded-xl border border-[#d8ceca] bg-white px-5 py-4 font-bold text-[#625050] opacity-55"
-              >
-                Entrar com Google · disponível no Marco 2
-              </button>
-            </form>
+            ) : null}
+            <LoginForm next={destination} />
           </div>
-          <div className="mt-6 flex items-center justify-between gap-4 text-sm">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 font-extrabold text-[#751118] hover:underline"
-            >
-              <ArrowLeft className="size-4" aria-hidden="true" />
-              Voltar
-            </Link>
-            <Link
-              href="/o/sertao-maker/dashboard"
-              className="font-extrabold text-[#751118] hover:underline"
-            >
-              Ver shell demonstrativo
-            </Link>
-          </div>
+          <Link
+            href="/"
+            className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold text-[#751118] hover:underline"
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Voltar
+          </Link>
         </div>
       </section>
     </main>

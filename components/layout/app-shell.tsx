@@ -40,12 +40,23 @@ const navigation = [
 
 type AppShellProps = {
   organizationSlug: string;
+  user: {
+    displayName: string;
+    email: string;
+    avatarUrl: string | null;
+  };
   children: React.ReactNode;
 };
 
-export function AppShell({ organizationSlug, children }: AppShellProps) {
+export function AppShell({ organizationSlug, user, children }: AppShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const initials = user.displayName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 
   return (
     <div className="min-h-screen bg-[#fbf5ef] lg:grid lg:grid-cols-[17.5rem_1fr]">
@@ -132,9 +143,10 @@ export function AppShell({ organizationSlug, children }: AppShellProps) {
             </svg>
           </div>
           <div className="relative flex items-center gap-3 rounded-2xl bg-white/8 p-3">
-            <div className="grid size-10 place-items-center rounded-full bg-[#f4c47a] text-sm font-black text-[#5c0c12]">
-              SM
-            </div>
+            <BrandMark
+              compact
+              className="grid size-10 place-items-center rounded-xl bg-[#fffaf5] shadow-sm"
+            />
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-extrabold">Sertão Maker</p>
               <p className="mt-0.5 truncate text-[0.65rem] text-white/55">
@@ -184,16 +196,25 @@ export function AppShell({ organizationSlug, children }: AppShellProps) {
             </button>
             <div className="flex items-center gap-3 rounded-xl border border-[#751118]/10 bg-white px-2.5 py-2 shadow-sm">
               <div className="grid size-8 place-items-center rounded-full bg-[#751118] text-xs font-black text-white">
-                MS
+                {initials}
               </div>
               <div className="hidden sm:block">
-                <p className="text-xs font-black text-[#3f090d]">
-                  Marcelo Silva
+                <p className="max-w-36 truncate text-xs font-black text-[#3f090d]">
+                  {user.displayName}
                 </p>
-                <p className="text-[0.65rem] text-[#8b7c76]">
-                  Perfil demonstrativo
+                <p className="max-w-36 truncate text-[0.65rem] text-[#8b7c76]">
+                  {user.email}
                 </p>
               </div>
+              <form action="/auth/logout" method="post">
+                <button
+                  type="submit"
+                  className="rounded-lg px-2 py-1 text-xs font-bold text-[#751118] hover:bg-[#751118]/7"
+                  aria-label="Sair da conta"
+                >
+                  Sair
+                </button>
+              </form>
             </div>
           </div>
         </header>
@@ -201,7 +222,8 @@ export function AppShell({ organizationSlug, children }: AppShellProps) {
           className="border-b border-[#d97918]/20 bg-[#fff4de] px-4 py-2 text-center text-xs font-bold text-[#70440d] sm:px-6"
           role="status"
         >
-          Ambiente demonstrativo · sem autenticação ou persistência no Marco 1
+          Sessão autenticada · dados do dashboard continuam demonstrativos no
+          Marco 2
         </div>
         <main
           id="conteudo-principal"

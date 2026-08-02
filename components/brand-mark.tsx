@@ -1,4 +1,4 @@
-import { BrainCircuit, Sparkles } from "lucide-react";
+import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 
@@ -15,42 +15,30 @@ export function BrandMark({
 }: BrandMarkProps) {
   return (
     <div
-      className={cn("flex items-center gap-3", className)}
+      className={cn(
+        "inline-flex shrink-0 items-center",
+        inverse &&
+          "rounded-xl border border-white/20 bg-[#fffaf5]/95 p-2 shadow-[0_12px_32px_rgba(38,6,9,0.18)]",
+        className,
+      )}
       aria-label="Incubadora Sertão Maker"
     >
-      <div
+      <Image
+        src={
+          compact
+            ? "/brand/sertao-maker-symbol-transparent.png"
+            : "/brand/sertao-maker-logo-transparent.png"
+        }
+        alt=""
+        width={compact ? 508 : 2870}
+        height={compact ? 759 : 838}
+        sizes={compact ? "48px" : inverse ? "188px" : "240px"}
+        priority
         className={cn(
-          "relative grid size-12 shrink-0 place-items-center rounded-2xl border",
-          inverse
-            ? "border-white/25 bg-white/10 text-white"
-            : "border-[#921a20]/15 bg-[#921a20]/8 text-[#751118]",
+          "h-auto object-contain",
+          compact ? "w-8" : inverse ? "w-[11.75rem]" : "w-[min(15rem,72vw)]",
         )}
-      >
-        <BrainCircuit aria-hidden="true" className="size-7" strokeWidth={1.8} />
-        <Sparkles
-          aria-hidden="true"
-          className={cn(
-            "absolute -top-1 -right-1 size-4",
-            inverse ? "text-[#f4c47a]" : "text-[#a65f48]",
-          )}
-          fill="currentColor"
-        />
-      </div>
-      {!compact && (
-        <div
-          className={cn(
-            "leading-none",
-            inverse ? "text-white" : "text-[#5c0c12]",
-          )}
-        >
-          <span className="block text-[0.68rem] font-extrabold tracking-[0.2em] uppercase opacity-75">
-            Incubadora
-          </span>
-          <span className="font-[family-name:var(--font-display)] text-xl font-black tracking-[-0.03em] uppercase">
-            Sertão Maker
-          </span>
-        </div>
-      )}
+      />
     </div>
   );
 }

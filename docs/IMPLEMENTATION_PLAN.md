@@ -12,7 +12,7 @@ Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos
 | ----- | ------------------------------------------------------------------ | -------------------------------------------------- |
 | M0    | Requisitos, arquitetura, decisões, lacunas e plano versionados     | Concluído nesta etapa                              |
 | M1    | Scaffold Next.js, qualidade, design system e shell público/privado | Concluído em 02/08/2026                            |
-| M2    | Autenticação completa e perfil seguro                              | Planejado                                          |
+| M2    | Autenticação completa e perfil seguro                              | Concluído em 02/08/2026                            |
 | M3    | Fundação multi-tenant, RBAC, RLS e auditoria                       | Bloqueado por B-01/B-02                            |
 | M4    | Contratos de arquivos/Drive e shell privado integrado              | Planejado; integração real bloqueada por B-03/B-04 |
 | M5    | Segurança, testes cross-tenant, CI e readiness para deploy         | Planejado                                          |
@@ -95,6 +95,8 @@ Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos
 - Nenhuma secret key aparece no bundle do cliente.
 - Sessão expirada é renovada ou redirecionada de forma previsível.
 - Testes e build passam.
+
+**Resultado:** implementado em 02/08/2026. Os fluxos e a proteção foram validados localmente; a conclusão real de Google OAuth e entrega de e-mail depende da configuração externa de provider, redirects e SMTP do ambiente. Evidências em [MARCO_2_IMPLEMENTATION.md](./MARCO_2_IMPLEMENTATION.md).
 
 ### M3 — Tenancy, RBAC, RLS e auditoria
 
@@ -480,6 +482,16 @@ Uma etapa só é concluída quando:
 - `format:check`, `lint`, `typecheck`, 5 testes unitários/componentes e build de produção passaram.
 - Detalhes e comandos estão em `docs/MARCO_1_IMPLEMENTATION.md` e `README.md`.
 
+### Marco 2 — 02/08/2026
+
+- Supabase Auth SSR implementado com clientes por requisição, cookies PKCE e `getClaims()` no proxy do Next.js 16.
+- Login por e-mail/senha e Google, callback com destino validado, recuperação, redefinição e logout por POST implementados.
+- Área `/o/*` protegida no proxy e revalidada no layout servidor com `getUser()`; rotas autenticadas são dinâmicas.
+- `public.profiles` criada por migration versionada, com RLS, grants por coluna e trigger idempotente no schema `private`.
+- Teste SQL transacional de provisioning/RLS passou no projeto conectado; Advisors retornaram zero alertas de segurança e desempenho.
+- Format, lint, typecheck, 15 testes unitários/componentes, E2E e build de produção passaram.
+- Fluxos externos de Google e e-mail ainda exigem provider, redirects, templates/SMTP e credenciais de teste configurados por ambiente.
+
 ## 10. Próxima ação recomendada
 
-Iniciar somente o M2 após aprovação explícita: Supabase Auth SSR, login por e-mail/senha e Google, recuperação, logout, proteção no servidor e perfil mínimo seguro. As perguntas B-01 e B-02 continuam bloqueando a modelagem definitiva do M3.
+Antes de iniciar o M3, resolver B-01 e B-02. O próximo marco deve criar organizações, memberships, RBAC, auditoria e a matriz de testes cross-tenant sem antecipar módulos de negócio.

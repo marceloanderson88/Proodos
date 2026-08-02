@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 
 import { ModulePlaceholder } from "@/components/module-placeholder";
 
+export const dynamic = "force-dynamic";
+
 const modules = {
   startups: {
     title: "Startups",
@@ -54,10 +56,6 @@ type ModuleSlug = keyof typeof modules;
 
 function isModuleSlug(value: string): value is ModuleSlug {
   return Object.hasOwn(modules, value);
-}
-
-export function generateStaticParams() {
-  return Object.keys(modules).map((module) => ({ module }));
 }
 
 export default async function ModulePage({
