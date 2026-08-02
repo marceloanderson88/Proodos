@@ -54,6 +54,8 @@ Depois que a reconstrução passou, o runner apontou que os scripts transacionai
 
 O smoke autenticado seguinte demonstrou que inserir um hash manual em `auth.users` não é um contrato confiável para criar credenciais de login. O seed mantém somente identidades sintéticas; depois do reset, `provision-e2e-auth.mjs` define suas senhas pela Auth Admin API usando a `SERVICE_ROLE_KEY` efêmera gerada pelo Supabase CLI. A chave permanece no ambiente do único processo de provisionamento, e o script rejeita qualquer URL que não seja `localhost` ou `127.0.0.1`.
 
+Os registros determinísticos usados pelas FKs dos testes preenchem explicitamente os campos internos de token com strings vazias e as flags de tipo de usuário com `false`. Isso permite que o Auth carregue o registro antes da atualização administrativa sem persistir tokens ou hashes conhecidos no repositório.
+
 ## Pendências externas
 
 - criar um projeto Supabase de homologação e separar variáveis Vercel Preview;
