@@ -33,7 +33,11 @@ async function provisionSyntheticPasswords() {
   const adminKey = requiredEnvironmentVariable("SUPABASE_LOCAL_ADMIN_KEY");
   const password = requiredEnvironmentVariable("E2E_TEST_PASSWORD");
   const supabase = createClient(supabaseUrl, adminKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
+    },
   });
 
   for (const userId of syntheticUserIds) {
@@ -42,7 +46,7 @@ async function provisionSyntheticPasswords() {
     });
     if (error) {
       throw new Error(
-        `Falha ao provisionar usuário sintético ${userId}: ${error.message}`,
+        `Falha ao provisionar usuário sintético ${userId}: ${error.name} (${error.status ?? "sem status"})`,
       );
     }
     if (data.user.id !== userId || !data.user.email_confirmed_at) {
