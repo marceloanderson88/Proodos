@@ -1,0 +1,27 @@
+# Configuração mínima do ambiente Supabase local do Proodos.
+# Serviços usam os defaults seguros da CLI; amplie somente no marco que os consumir.
+project_id = "proodos"
+
+[api]
+enabled = true
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+major_version = 17
+
+[db.migrations]
+enabled = true
+schema_paths = []
+
+[db.seed]
+enabled = false
+sql_paths = []
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = []
+enable_signup = true
+enable_anonymous_sign_ins = false
