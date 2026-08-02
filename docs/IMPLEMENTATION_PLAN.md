@@ -4,7 +4,7 @@
 
 Construir a fundação técnica da Plataforma de Gestão de Incubadoras descrita no [SDD](./SDD.md), sem implementar prematuramente os módulos completos de diagnóstico, plano, conteúdos, atividades, mentorias ou indicadores.
 
-Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos seguintes permanecem no estado indicado abaixo.
+Este plano nasceu na Fase A. Os Marcos 1 a 5 foram concluídos em 02/08/2026. O Marco 6 iniciou o primeiro corte vertical real do MVP na mesma data.
 
 ## 2. Marcos
 
@@ -16,7 +16,7 @@ Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos
 | M3    | Fundação multi-tenant, RBAC, RLS e auditoria                       | Concluído em 02/08/2026                  |
 | M4    | Contratos de arquivos/Drive e shell privado integrado              | Concluído sem adapter real em 02/08/2026 |
 | M5    | Segurança, testes cross-tenant, CI e readiness para deploy         | Concluído em 02/08/2026                  |
-| M6    | Primeiro módulo vertical do MVP                                    | Fora desta etapa; selecionar depois      |
+| M6    | Programas, turmas, startups, equipes e matrículas                  | Implementado; aguardando gate SQL no CI  |
 
 ## 3. Sequência de implementação
 
