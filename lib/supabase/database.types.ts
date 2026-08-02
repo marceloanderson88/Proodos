@@ -126,7 +126,9 @@ export type Database = {
           incubator_id: string | null;
           label: string | null;
           organization_id: string;
+          program_id: string | null;
           purpose: Database["public"]["Enums"]["file_link_purpose"];
+          startup_id: string | null;
           unit_id: string | null;
         };
         Insert: {
@@ -139,7 +141,9 @@ export type Database = {
           incubator_id?: string | null;
           label?: string | null;
           organization_id: string;
+          program_id?: string | null;
           purpose: Database["public"]["Enums"]["file_link_purpose"];
+          startup_id?: string | null;
           unit_id?: string | null;
         };
         Update: {
@@ -152,7 +156,9 @@ export type Database = {
           incubator_id?: string | null;
           label?: string | null;
           organization_id?: string;
+          program_id?: string | null;
           purpose?: Database["public"]["Enums"]["file_link_purpose"];
+          startup_id?: string | null;
           unit_id?: string | null;
         };
         Relationships: [
@@ -168,6 +174,20 @@ export type Database = {
             columns: ["organization_id", "incubator_id"];
             isOneToOne: false;
             referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "file_links_program_same_org";
+            columns: ["organization_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "programs";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "file_links_startup_same_org";
+            columns: ["organization_id", "startup_id"];
+            isOneToOne: false;
+            referencedRelation: "startups";
             referencedColumns: ["organization_id", "id"];
           },
           {
@@ -632,6 +652,411 @@ export type Database = {
         };
         Relationships: [];
       };
+      program_types: {
+        Row: {
+          code: string;
+          created_at: string;
+          created_by: string;
+          description: string | null;
+          id: string;
+          incubator_id: string | null;
+          is_active: boolean;
+          name: string;
+          organization_id: string;
+          settings: Json;
+          updated_at: string;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          created_by: string;
+          description?: string | null;
+          id?: string;
+          incubator_id?: string | null;
+          is_active?: boolean;
+          name: string;
+          organization_id: string;
+          settings?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          created_by?: string;
+          description?: string | null;
+          id?: string;
+          incubator_id?: string | null;
+          is_active?: boolean;
+          name?: string;
+          organization_id?: string;
+          settings?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      programs: {
+        Row: {
+          admission_criteria: Json;
+          code: string;
+          created_at: string;
+          created_by: string;
+          deleted_at: string | null;
+          description: string | null;
+          ends_on: string | null;
+          id: string;
+          incubator_id: string;
+          name: string;
+          organization_id: string;
+          settings: Json;
+          starts_on: string | null;
+          status: Database["public"]["Enums"]["program_status"];
+          type_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          admission_criteria?: Json;
+          code: string;
+          created_at?: string;
+          created_by: string;
+          deleted_at?: string | null;
+          description?: string | null;
+          ends_on?: string | null;
+          id?: string;
+          incubator_id: string;
+          name: string;
+          organization_id: string;
+          settings?: Json;
+          starts_on?: string | null;
+          status?: Database["public"]["Enums"]["program_status"];
+          type_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          admission_criteria?: Json;
+          code?: string;
+          created_at?: string;
+          created_by?: string;
+          deleted_at?: string | null;
+          description?: string | null;
+          ends_on?: string | null;
+          id?: string;
+          incubator_id?: string;
+          name?: string;
+          organization_id?: string;
+          settings?: Json;
+          starts_on?: string | null;
+          status?: Database["public"]["Enums"]["program_status"];
+          type_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      cohorts: {
+        Row: {
+          capacity: number | null;
+          code: string;
+          created_at: string;
+          created_by: string;
+          deleted_at: string | null;
+          ends_on: string | null;
+          enrollment_ends_on: string | null;
+          enrollment_starts_on: string | null;
+          id: string;
+          name: string;
+          organization_id: string;
+          program_id: string;
+          settings: Json;
+          starts_on: string | null;
+          status: Database["public"]["Enums"]["cohort_status"];
+          updated_at: string;
+        };
+        Insert: {
+          capacity?: number | null;
+          code: string;
+          created_at?: string;
+          created_by: string;
+          deleted_at?: string | null;
+          ends_on?: string | null;
+          enrollment_ends_on?: string | null;
+          enrollment_starts_on?: string | null;
+          id?: string;
+          name: string;
+          organization_id: string;
+          program_id: string;
+          settings?: Json;
+          starts_on?: string | null;
+          status?: Database["public"]["Enums"]["cohort_status"];
+          updated_at?: string;
+        };
+        Update: {
+          capacity?: number | null;
+          code?: string;
+          created_at?: string;
+          created_by?: string;
+          deleted_at?: string | null;
+          ends_on?: string | null;
+          enrollment_ends_on?: string | null;
+          enrollment_starts_on?: string | null;
+          id?: string;
+          name?: string;
+          organization_id?: string;
+          program_id?: string;
+          settings?: Json;
+          starts_on?: string | null;
+          status?: Database["public"]["Enums"]["cohort_status"];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      program_members: {
+        Row: {
+          active_from: string;
+          active_until: string | null;
+          created_at: string;
+          created_by: string;
+          id: string;
+          organization_id: string;
+          program_id: string;
+          role: Database["public"]["Enums"]["program_member_role"];
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          active_from?: string;
+          active_until?: string | null;
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          organization_id: string;
+          program_id: string;
+          role?: Database["public"]["Enums"]["program_member_role"];
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          active_from?: string;
+          active_until?: string | null;
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          organization_id?: string;
+          program_id?: string;
+          role?: Database["public"]["Enums"]["program_member_role"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      startups: {
+        Row: {
+          business_model: string | null;
+          city: string | null;
+          country_code: string;
+          created_at: string;
+          created_by: string;
+          custom_fields: Json;
+          deleted_at: string | null;
+          id: string;
+          incubator_id: string;
+          legal_name: string | null;
+          name: string;
+          organization_id: string;
+          sector: string | null;
+          stage: Database["public"]["Enums"]["startup_stage"];
+          state: string | null;
+          status: Database["public"]["Enums"]["startup_status"];
+          tax_id: string | null;
+          updated_at: string;
+          website_url: string | null;
+        };
+        Insert: {
+          business_model?: string | null;
+          city?: string | null;
+          country_code?: string;
+          created_at?: string;
+          created_by: string;
+          custom_fields?: Json;
+          deleted_at?: string | null;
+          id?: string;
+          incubator_id: string;
+          legal_name?: string | null;
+          name: string;
+          organization_id: string;
+          sector?: string | null;
+          stage?: Database["public"]["Enums"]["startup_stage"];
+          state?: string | null;
+          status?: Database["public"]["Enums"]["startup_status"];
+          tax_id?: string | null;
+          updated_at?: string;
+          website_url?: string | null;
+        };
+        Update: {
+          business_model?: string | null;
+          city?: string | null;
+          country_code?: string;
+          created_at?: string;
+          created_by?: string;
+          custom_fields?: Json;
+          deleted_at?: string | null;
+          id?: string;
+          incubator_id?: string;
+          legal_name?: string | null;
+          name?: string;
+          organization_id?: string;
+          sector?: string | null;
+          stage?: Database["public"]["Enums"]["startup_stage"];
+          state?: string | null;
+          status?: Database["public"]["Enums"]["startup_status"];
+          tax_id?: string | null;
+          updated_at?: string;
+          website_url?: string | null;
+        };
+        Relationships: [];
+      };
+      startup_members: {
+        Row: {
+          competencies: string[];
+          created_at: string;
+          created_by: string;
+          dedication_hours_per_week: number | null;
+          email: string | null;
+          equity_percentage: number | null;
+          full_name: string;
+          id: string;
+          is_representative: boolean;
+          joined_on: string | null;
+          left_on: string | null;
+          organization_id: string;
+          role: Database["public"]["Enums"]["startup_member_role"];
+          role_title: string | null;
+          startup_id: string;
+          status: Database["public"]["Enums"]["startup_member_status"];
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          competencies?: string[];
+          created_at?: string;
+          created_by: string;
+          dedication_hours_per_week?: number | null;
+          email?: string | null;
+          equity_percentage?: number | null;
+          full_name: string;
+          id?: string;
+          is_representative?: boolean;
+          joined_on?: string | null;
+          left_on?: string | null;
+          organization_id: string;
+          role?: Database["public"]["Enums"]["startup_member_role"];
+          role_title?: string | null;
+          startup_id: string;
+          status?: Database["public"]["Enums"]["startup_member_status"];
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          competencies?: string[];
+          created_at?: string;
+          created_by?: string;
+          dedication_hours_per_week?: number | null;
+          email?: string | null;
+          equity_percentage?: number | null;
+          full_name?: string;
+          id?: string;
+          is_representative?: boolean;
+          joined_on?: string | null;
+          left_on?: string | null;
+          organization_id?: string;
+          role?: Database["public"]["Enums"]["startup_member_role"];
+          role_title?: string | null;
+          startup_id?: string;
+          status?: Database["public"]["Enums"]["startup_member_status"];
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
+      startup_enrollments: {
+        Row: {
+          cohort_id: string;
+          created_at: string;
+          created_by: string;
+          entry_date: string;
+          exit_date: string | null;
+          exit_reason: string | null;
+          id: string;
+          organization_id: string;
+          previous_enrollment_id: string | null;
+          source: Database["public"]["Enums"]["enrollment_source"];
+          startup_id: string;
+          status: Database["public"]["Enums"]["enrollment_status"];
+          updated_at: string;
+        };
+        Insert: {
+          cohort_id: string;
+          created_at?: string;
+          created_by: string;
+          entry_date?: string;
+          exit_date?: string | null;
+          exit_reason?: string | null;
+          id?: string;
+          organization_id: string;
+          previous_enrollment_id?: string | null;
+          source?: Database["public"]["Enums"]["enrollment_source"];
+          startup_id: string;
+          status?: Database["public"]["Enums"]["enrollment_status"];
+          updated_at?: string;
+        };
+        Update: {
+          cohort_id?: string;
+          created_at?: string;
+          created_by?: string;
+          entry_date?: string;
+          exit_date?: string | null;
+          exit_reason?: string | null;
+          id?: string;
+          organization_id?: string;
+          previous_enrollment_id?: string | null;
+          source?: Database["public"]["Enums"]["enrollment_source"];
+          startup_id?: string;
+          status?: Database["public"]["Enums"]["enrollment_status"];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      startup_history: {
+        Row: {
+          actor_user_id: string | null;
+          event_type: string;
+          id: number;
+          metadata: Json;
+          occurred_at: string;
+          organization_id: string;
+          startup_id: string;
+          title: string;
+        };
+        Insert: {
+          actor_user_id?: string | null;
+          event_type: string;
+          id?: never;
+          metadata?: Json;
+          occurred_at?: string;
+          organization_id: string;
+          startup_id: string;
+          title: string;
+        };
+        Update: {
+          actor_user_id?: string | null;
+          event_type?: string;
+          id?: never;
+          metadata?: Json;
+          occurred_at?: string;
+          organization_id?: string;
+          startup_id?: string;
+          title?: string;
+        };
+        Relationships: [];
+      };
       permissions: {
         Row: {
           category: string;
@@ -954,6 +1379,14 @@ export type Database = {
           slug: string;
         }[];
       };
+      transfer_startup_enrollment: {
+        Args: {
+          target_cohort_id: string;
+          target_startup_id: string;
+          transfer_on?: string;
+        };
+        Returns: string;
+      };
       system_readiness: {
         Args: never;
         Returns: boolean;
@@ -1001,6 +1434,36 @@ export type Database = {
       invitation_status: "pending" | "accepted" | "revoked" | "expired";
       membership_status: "invited" | "active" | "suspended" | "removed";
       organization_status: "active" | "inactive" | "suspended";
+      program_status:
+        "draft" | "planned" | "active" | "completed" | "cancelled" | "archived";
+      cohort_status:
+        "planned" | "enrollment_open" | "active" | "completed" | "cancelled";
+      program_member_role: "coordinator" | "staff" | "viewer";
+      startup_stage:
+        | "idea"
+        | "validation"
+        | "operation"
+        | "traction"
+        | "scale"
+        | "graduated";
+      startup_status:
+        "active" | "inactive" | "graduated" | "withdrawn" | "archived";
+      startup_member_role:
+        | "founder"
+        | "cofounder"
+        | "representative"
+        | "employee"
+        | "advisor"
+        | "other";
+      startup_member_status: "active" | "inactive";
+      enrollment_status:
+        | "invited"
+        | "active"
+        | "suspended"
+        | "completed"
+        | "withdrawn"
+        | "transferred";
+      enrollment_source: "manual" | "invitation" | "selection_process";
       role_scope_type: "organization" | "unit" | "incubator";
       upload_session_status:
         | "pending"
@@ -1181,6 +1644,55 @@ export const Constants = {
       invitation_status: ["pending", "accepted", "revoked", "expired"],
       membership_status: ["invited", "active", "suspended", "removed"],
       organization_status: ["active", "inactive", "suspended"],
+      program_status: [
+        "draft",
+        "planned",
+        "active",
+        "completed",
+        "cancelled",
+        "archived",
+      ],
+      cohort_status: [
+        "planned",
+        "enrollment_open",
+        "active",
+        "completed",
+        "cancelled",
+      ],
+      program_member_role: ["coordinator", "staff", "viewer"],
+      startup_stage: [
+        "idea",
+        "validation",
+        "operation",
+        "traction",
+        "scale",
+        "graduated",
+      ],
+      startup_status: [
+        "active",
+        "inactive",
+        "graduated",
+        "withdrawn",
+        "archived",
+      ],
+      startup_member_role: [
+        "founder",
+        "cofounder",
+        "representative",
+        "employee",
+        "advisor",
+        "other",
+      ],
+      startup_member_status: ["active", "inactive"],
+      enrollment_status: [
+        "invited",
+        "active",
+        "suspended",
+        "completed",
+        "withdrawn",
+        "transferred",
+      ],
+      enrollment_source: ["manual", "invitation", "selection_process"],
       role_scope_type: ["organization", "unit", "incubator"],
       upload_session_status: [
         "pending",

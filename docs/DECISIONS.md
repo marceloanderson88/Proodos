@@ -186,3 +186,9 @@ O bootstrap inicial é uma inserção operacional manual pelo PostgreSQL na allo
 **Status:** Parcialmente implementada no Marco 5
 **Decisão:** limitar rajadas por instância nas rotas próprias e manter os limites nativos do Supabase Auth; exigir armazenamento distribuído antes do piloto para garantias globais.
 **Consequências:** a proteção atual reduz abuso casual, mas não é apresentada como limite global em ambiente serverless.
+
+## DEC-030 — Programa e startup como primeiro corte vertical
+
+**Status:** Aceita e implementada no Marco 6
+**Decisão:** iniciar o MVP operacional pelo fluxo `programa → turma → startup → equipe → matrícula`, mantendo tipos de programa configuráveis e metodologia completamente opcional.
+**Consequências:** `organization_id` permanece em todas as entidades; relações usam FKs compostas; representantes acessam somente a própria startup; transferências de turma são transacionais e preservam o registro anterior. Diagnósticos e planos usarão `startup_id` obrigatório nos marcos seguintes, enquanto templates permanecem catálogos independentes.

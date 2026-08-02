@@ -150,3 +150,108 @@ do $$ begin
   end if;
 end $$;
 reset role;
+
+-- Portfólio sintético do Marco 6, exclusivo do ambiente local.
+set local role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claim.sub', '90000000-0000-4000-8000-000000000001', true);
+
+insert into public.incubators (id, organization_id, name, slug, created_by)
+select
+  '92000000-0000-4000-8000-000000000001',
+  o.id,
+  'Incubadora Sintética Sertão',
+  'incubadora-sintetica-sertao',
+  '90000000-0000-4000-8000-000000000001'
+from public.organizations o
+where o.slug = 'seed-org-a'
+on conflict (id) do nothing;
+
+insert into public.program_types (id, organization_id, incubator_id, code, name, description, created_by)
+select
+  '93000000-0000-4000-8000-000000000001',
+  o.id,
+  '92000000-0000-4000-8000-000000000001',
+  'pre_incubacao',
+  'Pré-incubação sintética',
+  'Registro fictício usado apenas para validar o Marco 6.',
+  '90000000-0000-4000-8000-000000000001'
+from public.organizations o
+where o.slug = 'seed-org-a'
+on conflict (id) do nothing;
+
+insert into public.programs (id, organization_id, incubator_id, type_id, code, name, starts_on, ends_on, status, created_by)
+select
+  '94000000-0000-4000-8000-000000000001',
+  o.id,
+  '92000000-0000-4000-8000-000000000001',
+  '93000000-0000-4000-8000-000000000001',
+  'SINTETICO-2026',
+  'Ciclo Sintético 2026',
+  date '2026-08-01',
+  date '2026-12-15',
+  'active',
+  '90000000-0000-4000-8000-000000000001'
+from public.organizations o
+where o.slug = 'seed-org-a'
+on conflict (id) do nothing;
+
+insert into public.cohorts (id, organization_id, program_id, code, name, starts_on, ends_on, status, capacity, created_by)
+select
+  '95000000-0000-4000-8000-000000000001',
+  o.id,
+  '94000000-0000-4000-8000-000000000001',
+  'T1-2026',
+  'Turma Sintética 1',
+  date '2026-08-01',
+  date '2026-12-15',
+  'active',
+  20,
+  '90000000-0000-4000-8000-000000000001'
+from public.organizations o
+where o.slug = 'seed-org-a'
+on conflict (id) do nothing;
+
+insert into public.startups (id, organization_id, incubator_id, name, sector, stage, city, state, created_by)
+select
+  '96000000-0000-4000-8000-000000000001',
+  o.id,
+  '92000000-0000-4000-8000-000000000001',
+  'Agro Sintética',
+  'Agtech',
+  'validation',
+  'Salgueiro',
+  'PE',
+  '90000000-0000-4000-8000-000000000001'
+from public.organizations o
+where o.slug = 'seed-org-a'
+on conflict (id) do nothing;
+
+insert into public.startup_members (id, organization_id, startup_id, full_name, email, role, role_title, is_representative, created_by)
+select
+  '97000000-0000-4000-8000-000000000001',
+  o.id,
+  '96000000-0000-4000-8000-000000000001',
+  'Pessoa Fundadora Sintética',
+  'fundador@example.invalid',
+  'founder',
+  'CEO',
+  true,
+  '90000000-0000-4000-8000-000000000001'
+from public.organizations o
+where o.slug = 'seed-org-a'
+on conflict (id) do nothing;
+
+insert into public.startup_enrollments (id, organization_id, startup_id, cohort_id, entry_date, created_by)
+select
+  '98000000-0000-4000-8000-000000000001',
+  o.id,
+  '96000000-0000-4000-8000-000000000001',
+  '95000000-0000-4000-8000-000000000001',
+  date '2026-08-01',
+  '90000000-0000-4000-8000-000000000001'
+from public.organizations o
+where o.slug = 'seed-org-a'
+on conflict (id) do nothing;
+
+reset role;

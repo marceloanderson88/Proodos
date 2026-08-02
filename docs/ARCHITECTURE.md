@@ -238,13 +238,21 @@ As funções são pequenas, usam nomes qualificados e `search_path=''`. Os dois 
 - `anon` não acessa tabelas de negócio.
 - Secret/service role não é utilizada por testes do cliente nem empacotada no frontend.
 
-## 8. Módulos e fronteiras futuras
+## 8. Módulos e fronteiras de negócio
 
-Os contextos `programs`, `startups`, `assessments`, `action-plans`, `contents`, `tasks`, `mentoring`, `indicators` e `methodologies` serão adicionados por migrations e features independentes. O shell pode exibir itens de navegação desabilitados ou páginas de placeholder, mas não simular persistência real. Dados fictícios do dashboard devem ser marcados como demonstração.
+Os contextos `programs` e `startups` foram iniciados no Marco 6. `assessments`, `action-plans`, `contents`, `tasks`, `mentoring`, `indicators` e `methodologies` continuam como migrations e features independentes. O shell exibe placeholders para módulos ainda não implementados e não simula persistência. Dados fictícios do dashboard permanecem marcados como demonstração.
 
 CERNE será um pacote de dados/metodologia opcional sobre o contexto genérico `methodologies`. Relações metodológicas ficam em tabela associativa; nenhuma FK `cerne_* not null` poderá existir em programas, atividades, conteúdos, mentorias ou planos.
 
-### 8.1 Fundação de arquivos implementada
+### 8.1 Primeiro corte vertical implementado
+
+O fluxo `incubadora → tipo de programa → programa → turma → startup → equipe → matrícula` usa tabelas tenant-aware, Server Actions validadas por Zod e RLS como fronteira final. `startup_history` é append-only e recebe eventos de cadastro, equipe e matrícula por triggers. A RPC transacional `transfer_startup_enrollment` encerra a matrícula corrente e cria a nova com `previous_enrollment_id`, preservando o histórico exigido pelo RF-014.
+
+Os vínculos de arquivo agora possuem `program_id` e `startup_id` com FKs compostas. O arquivo continua escopado à organização/unidade/incubadora, enquanto o vínculo registra o destino de negócio e exige `file.manage` na incubadora correspondente.
+
+Leitura de programas pode ocorrer por `program.read` no escopo ou participação explícita em `program_members`. Leitura de startups pode ocorrer por `startup.read` no escopo ou vínculo ativo em `startup_members`; representantes ativos podem gerenciar somente a equipe da própria startup. Tipos organizacionais são reutilizáveis, enquanto tipos de incubadora não podem ser associados a outra incubadora.
+
+### 8.2 Fundação de arquivos implementada
 
 `files` concentra escopo, classificação e estado; `file_versions` preserva versões físicas; `file_links` usa somente destinos com FKs disponíveis; `upload_sessions` armazena idempotência, offset e hash de correlação, nunca a URL resumível; `file_access_logs` é append-only. O helper `private.can_view_file` impede que usuários somente leitores vejam versões ou vínculos antes de `available`.
 
