@@ -25,14 +25,18 @@ test.describe("smoke autenticado", () => {
     await expect(
       page.getByRole("heading", { name: "Programas e turmas" }),
     ).toBeVisible();
-    await expect(page.getByText("Ciclo Sintético 2026")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Ciclo Sintético 2026", exact: true }),
+    ).toBeVisible();
     await expect(page.getByText("Dados reais · Supabase")).toBeVisible();
 
     await page.goto("/o/seed-org-a/startups");
     await expect(
       page.getByRole("heading", { name: "Startups e equipes" }),
     ).toBeVisible();
-    await expect(page.getByText("Agro Sintética")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Agro Sintética", exact: true }),
+    ).toBeVisible();
     await expect(page.getByText("Portfólio real e protegido")).toBeVisible();
 
     await page.goto("/o/seed-org-b/dashboard");
