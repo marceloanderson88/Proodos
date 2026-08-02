@@ -515,13 +515,13 @@ begin
     if not found or (type_incubator_id is not null and type_incubator_id <> new.incubator_id) then
       raise exception 'Tipo de programa não pertence ao escopo da incubadora' using errcode = '23514';
     end if;
-  elsif tg_table_name = 'startup_members' and new.user_id is not null then
-    if not exists (
-      select 1 from public.organization_memberships m
-      where m.organization_id = new.organization_id
-        and m.user_id = new.user_id
-        and m.status = 'active'
-    ) then
+  elsif tg_table_name = 'startup_members' then
+    if new.user_id is not null and not exists (
+        select 1 from public.organization_memberships m
+        where m.organization_id = new.organization_id
+          and m.user_id = new.user_id
+          and m.status = 'active'
+      ) then
       raise exception 'Conta vinculada precisa ser membro ativo da organização' using errcode = '23514';
     end if;
   elsif tg_table_name = 'startup_enrollments' then
