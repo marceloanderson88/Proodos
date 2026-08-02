@@ -1,12 +1,33 @@
 type SecurityHeadersOptions = {
   development?: boolean;
+  supabaseUrl?: string;
 };
+
+function getLocalSupabaseOrigin(rawUrl?: string) {
+  if (!rawUrl) return undefined;
+
+  try {
+    const url = new URL(rawUrl);
+    const isLocalHost = ["127.0.0.1", "localhost"].includes(url.hostname);
+    return url.protocol === "http:" && isLocalHost ? url.origin : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export function buildContentSecurityPolicy({
   development = false,
+  supabaseUrl,
 }: SecurityHeadersOptions = {}) {
   const scriptSources = ["'self'", "'unsafe-inline'"];
   if (development) scriptSources.push("'unsafe-eval'");
+  const connectSources = [
+    "'self'",
+    "https://*.supabase.co",
+    "wss://*.supabase.co",
+  ];
+  const localSupabaseOrigin = getLocalSupabaseOrigin(supabaseUrl);
+  if (localSupabaseOrigin) connectSources.push(localSupabaseOrigin);
 
   return [
     "default-src 'self'",
@@ -14,7 +35,7 @@ export function buildContentSecurityPolicy({
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
     "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+    `connect-src ${connectSources.join(" ")}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

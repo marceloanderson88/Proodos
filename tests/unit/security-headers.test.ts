@@ -19,6 +19,21 @@ describe("security headers", () => {
     );
   });
 
+  it("permite somente a origem exata do Supabase local", () => {
+    const policy = buildContentSecurityPolicy({
+      supabaseUrl: "http://127.0.0.1:54321/path-ignorado",
+    });
+    expect(policy).toContain("http://127.0.0.1:54321");
+    expect(policy).not.toContain("http://*");
+  });
+
+  it("não injeta uma origem externa arbitrária no CSP", () => {
+    const policy = buildContentSecurityPolicy({
+      supabaseUrl: "https://example.com",
+    });
+    expect(policy).not.toContain("https://example.com");
+  });
+
   it("inclui controles de framing, MIME e permissões", () => {
     const headers = new Map(
       getSecurityHeaders().map(({ key, value }) => [key, value]),

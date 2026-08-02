@@ -58,6 +58,8 @@ Os registros determinísticos usados pelas FKs dos testes preenchem explicitamen
 
 O CI usa o par legado `ANON_KEY`/`SERVICE_ROLE_KEY` gerado pelo Supabase CLI somente no stack local. Após provisionar as senhas, o script executa `signInWithPassword` com a chave anônima e exige uma sessão do usuário esperado antes de iniciar o Playwright. Produção continua usando `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` no modelo atual de chaves.
 
+O CSP inclui a origem exata do Supabase somente quando a URL configurada usa HTTP em `localhost` ou `127.0.0.1`, permitindo o Auth no navegador do CI. URLs externas arbitrárias não são incorporadas, e o conjunto hospedado continua limitado aos domínios HTTPS/WSS do Supabase.
+
 ## Pendências externas
 
 - criar um projeto Supabase de homologação e separar variáveis Vercel Preview;
