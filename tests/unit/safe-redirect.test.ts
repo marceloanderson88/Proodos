@@ -8,9 +8,14 @@ import {
 
 describe("getSafeAuthDestination", () => {
   it("aceita somente rotas privadas da aplicação", () => {
+    expect(getSafeAuthDestination("/o")).toBe("/o");
     expect(getSafeAuthDestination("/o/sertao-maker/startups?aba=ativas")).toBe(
       "/o/sertao-maker/startups?aba=ativas",
     );
+  });
+
+  it("usa o resolvedor de organização como destino padrão", () => {
+    expect(DEFAULT_AUTH_DESTINATION).toBe("/o");
   });
 
   it("aceita apenas a tela interna de redefinição no callback de recuperação", () => {

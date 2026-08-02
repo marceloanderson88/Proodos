@@ -13,7 +13,7 @@ Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos
 | M0    | Requisitos, arquitetura, decisões, lacunas e plano versionados     | Concluído nesta etapa                              |
 | M1    | Scaffold Next.js, qualidade, design system e shell público/privado | Concluído em 02/08/2026                            |
 | M2    | Autenticação completa e perfil seguro                              | Concluído em 02/08/2026                            |
-| M3    | Fundação multi-tenant, RBAC, RLS e auditoria                       | Bloqueado por B-01/B-02                            |
+| M3    | Fundação multi-tenant, RBAC, RLS e auditoria                       | Concluído em 02/08/2026                            |
 | M4    | Contratos de arquivos/Drive e shell privado integrado              | Planejado; integração real bloqueada por B-03/B-04 |
 | M5    | Segurança, testes cross-tenant, CI e readiness para deploy         | Planejado                                          |
 | M6    | Primeiro módulo vertical do MVP                                    | Fora desta etapa; selecionar depois                |
@@ -102,7 +102,7 @@ Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos
 
 **Objetivo:** isolamento comprovado antes de qualquer módulo de negócio.
 
-**Pré-requisitos:** respostas B-01 e B-02.
+**Pré-requisitos:** B-01 e B-02 resolvidos em 02/08/2026.
 
 **Tarefas técnicas**
 
@@ -136,6 +136,8 @@ Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos
 - Seed não contém dados reais.
 - Migrations do zero, testes RLS e advisors passam.
 
+**Resultado:** implementado em 02/08/2026. A hierarquia, RBAC por escopo, convites hasheados, auditoria append-only, seleção real de tenant e testes transacionais A/B estão ativos. Os advisors foram executados; avisos intencionais e pendências externas estão registrados em [MARCO_3_IMPLEMENTATION.md](./MARCO_3_IMPLEMENTATION.md).
+
 ### M4 — Contratos de arquivos e shell tenant-aware
 
 **Objetivo:** preparar a integração sem implementar upload completo antes do spike.
@@ -151,7 +153,7 @@ Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos
 7. Criar testes de falha parcial usando fake.
 8. Realizar spike Google Drive no ambiente de teste após B-03/B-04.
 9. Registrar decisão sobre CORS, retomada, preview, streaming e Cloud Run.
-10. Integrar organização ativa ao shell e dashboard.
+10. Expandir o shell tenant-aware implementado no M3 com permissões e feature flags dos arquivos.
 11. Exibir placeholders por módulo, permissões e feature flags.
 
 **Critérios de aceite**

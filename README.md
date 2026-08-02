@@ -1,6 +1,6 @@
 # Proodos — Plataforma Sertão Maker
 
-Fundação técnica da plataforma de gestão de incubadoras descrita em [`docs/SDD.md`](docs/SDD.md). O repositório está concluído até o **Marco 2**: autenticação Supabase SSR e perfil próprio com RLS estão implementados; tenancy, RBAC e módulos de negócio permanecem para os marcos seguintes.
+Fundação técnica da plataforma de gestão de incubadoras descrita em [`docs/SDD.md`](docs/SDD.md). O repositório está concluído até o **Marco 3**: autenticação SSR, tenancy, RBAC por escopo, RLS, convites hasheados, auditoria e seleção de organização estão implementados. Os módulos de negócio permanecem para os marcos seguintes.
 
 ## Requisitos locais
 
@@ -16,7 +16,7 @@ Copy-Item .env.example .env.local
 pnpm dev
 ```
 
-Preencha em `.env.local` a URL e a chave publicável do projeto Supabase. Abra `http://localhost:3000`; a área `/o/sertao-maker/dashboard` exige uma sessão válida e continua exibindo dados claramente demonstrativos.
+Preencha em `.env.local` a URL e a chave publicável do projeto Supabase. Abra `http://localhost:3000`; `/o` resolve a organização ativa por uma preferência sem valor de segurança e RLS valida o vínculo. O dashboard continua exibindo dados claramente demonstrativos.
 
 ## Verificações
 
@@ -41,7 +41,7 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-## Variáveis do Marco 2
+## Variáveis até o Marco 3
 
 | Variável                               | Obrigatória | Uso                                               |
 | -------------------------------------- | ----------- | ------------------------------------------------- |
@@ -53,4 +53,4 @@ pnpm test:e2e
 
 No Supabase Auth, registre `http://localhost:3000/auth/callback` e a URL equivalente da Vercel entre os redirects permitidos. Para Google, configure o provider no Supabase e o callback fornecido pelo Supabase no Google Cloud. Nenhuma service role ou secret key deve usar prefixo `NEXT_PUBLIC_`.
 
-Consulte [`docs/MARCO_2_IMPLEMENTATION.md`](docs/MARCO_2_IMPLEMENTATION.md) para escopo, migration, políticas, testes e limitações.
+O Marco 3 não adiciona variáveis de ambiente. Consulte [`docs/MARCO_3_IMPLEMENTATION.md`](docs/MARCO_3_IMPLEMENTATION.md) para modelo, migrations, políticas, bootstrap, testes e limitações.

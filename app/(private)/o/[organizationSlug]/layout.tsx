@@ -19,19 +19,37 @@ export default async function OrganizationLayout({
 
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name, avatar_url")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: profile }, { data: organizations }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("organizations")
+      .select("id, name, slug")
+      .eq("status", "active")
+      .is("deleted_at", null)
+      .order("name"),
+  ]);
+
+  const availableOrganizations = organizations ?? [];
+  const currentOrganization = availableOrganizations.find(
+    (organization) => organization.slug === organizationSlug,
+  );
+
+  // A URL nunca concede acesso. Se RLS não devolveu o tenant, a rota é rejeitada.
+  if (!currentOrganization) redirect("/o");
 
   const displayName =
     profile?.display_name ?? user.email?.split("@")[0] ?? "Usuário";
 
   return (
     <AppShell
-      organizationSlug={organizationSlug}
+      currentOrganization={currentOrganization}
+      organizations={availableOrganizations}
       user={{
+        id: user.id,
         displayName,
         email: user.email ?? "",
         avatarUrl: profile?.avatar_url ?? null,

@@ -34,14 +34,14 @@
 
 ## DEC-005 — Organização ativa explícita na URL
 
-**Status:** Proposta  
+**Status:** Aceita e implementada no Marco 3
 **Decisão:** usar `/o/[organizationSlug]` como contexto de navegação. Uma preferência pode lembrar o último tenant, sem participar da autorização.  
 **Motivo:** evita estado global oculto e torna links reproduzíveis.  
 **Alternativa rejeitada:** confiar exclusivamente em `active_organization_id` no perfil ou localStorage.
 
 ## DEC-006 — RBAC com atribuição de escopo
 
-**Status:** Proposta  
+**Status:** Aceita e implementada no Marco 3
 **Decisão:** separar catálogo de permissões, papéis, composição papel-permissão e atribuições de papel por escopo.  
 **Motivo:** um papel não concede acesso global e o mesmo usuário pode ter papéis diferentes.  
 **Restrição:** não usar identificador polimórfico sem integridade referencial como solução permanente.
@@ -55,9 +55,11 @@
 
 ## DEC-008 — Superadmin fora da autorização editável pelo usuário
 
-**Status:** Proposta  
+**Status:** Aceita e implementada no Marco 3
 **Decisão:** administrar superadmins em tabela privada e operações de plataforma somente por backend privilegiado.  
 **Alternativas rejeitadas:** `user_metadata`, flag manipulável pelo cliente ou policy `TO authenticated` ampla.
+
+O bootstrap inicial é uma inserção operacional manual pelo PostgreSQL na allowlist `private.platform_admins`, vinculada ao UUID confirmado em `auth.users`. A tabela não possui grants para clientes e não integra o schema exposto da Data API.
 
 ## DEC-009 — Google Drive armazena bytes; Supabase governa acesso
 
@@ -136,3 +138,15 @@
 **Status:** Aceita e implementada no Marco 2
 **Decisão:** o `proxy.ts` do Next.js 16 chama `getClaims()` imediatamente após criar o cliente SSR, propaga cookies e headers privados; o layout privado usa `getUser()` antes de carregar o perfil.
 **Consequências:** rotas privadas são dinâmicas, o proxy melhora a jornada mas não substitui RLS, e nenhum objeto de `getSession()` é usado como prova de identidade.
+
+## DEC-022 — Hierarquia organização, unidade opcional e incubadora
+
+**Status:** Aceita e implementada no Marco 3
+**Decisão:** `organizations` é o tenant raiz; `organization_units` representa unidade administrativa; `incubators` pertence à organização e pode pertencer a uma unidade.
+**Consequências:** FKs compostas validam o mesmo `organization_id`; papéis usam escopos tipados `organization`, `unit` ou `incubator` sem identificador polimórfico.
+
+## DEC-023 — Convite hasheado e RPCs privilegiados mínimos
+
+**Status:** Aceita e implementada no Marco 3
+**Decisão:** armazenar somente SHA-256 do token de convite; aceite e criação de tenant são transações `SECURITY DEFINER` pequenas, com `search_path=''`, autenticação interna e grants explícitos.
+**Consequências:** os warnings do advisor para essas duas RPCs são intencionais e revisados; token bruto nunca entra no banco, auditoria ou bundle.

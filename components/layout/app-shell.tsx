@@ -5,7 +5,6 @@ import {
   Bell,
   BookOpen,
   Building2,
-  ChevronDown,
   ClipboardCheck,
   Gauge,
   LayoutDashboard,
@@ -23,6 +22,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { BrandMark } from "@/components/brand-mark";
+import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -39,8 +39,18 @@ const navigation = [
 ] as const;
 
 type AppShellProps = {
-  organizationSlug: string;
+  currentOrganization: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  organizations: Array<{
+    id: string;
+    name: string;
+    slug: string;
+  }>;
   user: {
+    id: string;
     displayName: string;
     email: string;
     avatarUrl: string | null;
@@ -48,7 +58,12 @@ type AppShellProps = {
   children: React.ReactNode;
 };
 
-export function AppShell({ organizationSlug, user, children }: AppShellProps) {
+export function AppShell({
+  currentOrganization,
+  organizations,
+  user,
+  children,
+}: AppShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const initials = user.displayName
@@ -90,7 +105,7 @@ export function AppShell({ organizationSlug, user, children }: AppShellProps) {
         >
           <ul className="space-y-1">
             {navigation.map(({ label, slug, icon: Icon }) => {
-              const href = `/o/${organizationSlug}/${slug}`;
+              const href = `/o/${currentOrganization.slug}/${slug}`;
               const active =
                 pathname === href ||
                 (slug !== "dashboard" && pathname.startsWith(`${href}/`));
@@ -142,19 +157,11 @@ export function AppShell({ organizationSlug, user, children }: AppShellProps) {
               />
             </svg>
           </div>
-          <div className="relative flex items-center gap-3 rounded-2xl bg-white/8 p-3">
-            <BrandMark
-              compact
-              className="grid size-10 place-items-center rounded-xl bg-[#fffaf5] shadow-sm"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-extrabold">Sertão Maker</p>
-              <p className="mt-0.5 truncate text-[0.65rem] text-white/55">
-                Ambiente demonstrativo
-              </p>
-            </div>
-            <ChevronDown className="size-4 text-white/55" aria-hidden="true" />
-          </div>
+          <OrganizationSwitcher
+            currentOrganization={currentOrganization}
+            organizations={organizations}
+            userId={user.id}
+          />
         </div>
       </aside>
 
@@ -222,8 +229,7 @@ export function AppShell({ organizationSlug, user, children }: AppShellProps) {
           className="border-b border-[#d97918]/20 bg-[#fff4de] px-4 py-2 text-center text-xs font-bold text-[#70440d] sm:px-6"
           role="status"
         >
-          Sessão autenticada · dados do dashboard continuam demonstrativos no
-          Marco 2
+          Tenant protegido por RLS · dados do dashboard continuam demonstrativos
         </div>
         <main
           id="conteudo-principal"

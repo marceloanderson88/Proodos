@@ -31,7 +31,10 @@ export async function refreshAuthSession(request: NextRequest) {
   );
 
   const { data } = await supabase.auth.getClaims();
-  const isPrivateRoute = request.nextUrl.pathname.startsWith("/o/");
+  const isPrivateRoute =
+    request.nextUrl.pathname === "/o" ||
+    request.nextUrl.pathname.startsWith("/o/") ||
+    request.nextUrl.pathname === "/sem-organizacao";
 
   if (isPrivateRoute && !data?.claims) {
     const loginUrl = request.nextUrl.clone();

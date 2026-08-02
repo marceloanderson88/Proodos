@@ -7,9 +7,366 @@ export type Json =
   | Json[];
 
 export type Database = {
-  __InternalSupabase: { PostgrestVersion: "14.15" };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.15";
+  };
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          actor_user_id: string | null;
+          created_at: string;
+          entity_id: string | null;
+          entity_type: string;
+          event_type: string;
+          id: number;
+          metadata: Json;
+          organization_id: string;
+        };
+        Insert: {
+          actor_user_id?: string | null;
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type: string;
+          event_type: string;
+          id?: never;
+          metadata?: Json;
+          organization_id: string;
+        };
+        Update: {
+          actor_user_id?: string | null;
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type?: string;
+          event_type?: string;
+          id?: never;
+          metadata?: Json;
+          organization_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      incubators: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          deleted_at: string | null;
+          id: string;
+          locale: string;
+          name: string;
+          organization_id: string;
+          settings: Json;
+          slug: string;
+          status: Database["public"]["Enums"]["organization_status"];
+          timezone: string;
+          unit_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          deleted_at?: string | null;
+          id?: string;
+          locale?: string;
+          name: string;
+          organization_id: string;
+          settings?: Json;
+          slug: string;
+          status?: Database["public"]["Enums"]["organization_status"];
+          timezone?: string;
+          unit_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          deleted_at?: string | null;
+          id?: string;
+          locale?: string;
+          name?: string;
+          organization_id?: string;
+          settings?: Json;
+          slug?: string;
+          status?: Database["public"]["Enums"]["organization_status"];
+          timezone?: string;
+          unit_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "incubators_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "incubators_unit_same_org";
+            columns: ["organization_id", "unit_id"];
+            isOneToOne: false;
+            referencedRelation: "organization_units";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      invitations: {
+        Row: {
+          accepted_at: string | null;
+          accepted_by: string | null;
+          created_at: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          incubator_id: string | null;
+          invited_by: string;
+          organization_id: string;
+          revoked_at: string | null;
+          role_id: string;
+          status: Database["public"]["Enums"]["invitation_status"];
+          token_hash: string;
+          unit_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email: string;
+          expires_at: string;
+          id?: string;
+          incubator_id?: string | null;
+          invited_by: string;
+          organization_id: string;
+          revoked_at?: string | null;
+          role_id: string;
+          status?: Database["public"]["Enums"]["invitation_status"];
+          token_hash: string;
+          unit_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email?: string;
+          expires_at?: string;
+          id?: string;
+          incubator_id?: string | null;
+          invited_by?: string;
+          organization_id?: string;
+          revoked_at?: string | null;
+          role_id?: string;
+          status?: Database["public"]["Enums"]["invitation_status"];
+          token_hash?: string;
+          unit_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invitations_incubator_same_org";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "invitations_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invitations_role_same_org";
+            columns: ["organization_id", "role_id"];
+            isOneToOne: false;
+            referencedRelation: "roles";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "invitations_unit_same_org";
+            columns: ["organization_id", "unit_id"];
+            isOneToOne: false;
+            referencedRelation: "organization_units";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      organization_memberships: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          joined_at: string | null;
+          organization_id: string;
+          status: Database["public"]["Enums"]["membership_status"];
+          suspended_at: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          joined_at?: string | null;
+          organization_id: string;
+          status?: Database["public"]["Enums"]["membership_status"];
+          suspended_at?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          joined_at?: string | null;
+          organization_id?: string;
+          status?: Database["public"]["Enums"]["membership_status"];
+          suspended_at?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "organization_memberships_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      organization_units: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          deleted_at: string | null;
+          id: string;
+          name: string;
+          organization_id: string;
+          settings: Json;
+          slug: string;
+          status: Database["public"]["Enums"]["organization_status"];
+          timezone: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          deleted_at?: string | null;
+          id?: string;
+          name: string;
+          organization_id: string;
+          settings?: Json;
+          slug: string;
+          status?: Database["public"]["Enums"]["organization_status"];
+          timezone?: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          deleted_at?: string | null;
+          id?: string;
+          name?: string;
+          organization_id?: string;
+          settings?: Json;
+          slug?: string;
+          status?: Database["public"]["Enums"]["organization_status"];
+          timezone?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "organization_units_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      organizations: {
+        Row: {
+          contact_email: string | null;
+          created_at: string;
+          created_by: string;
+          deleted_at: string | null;
+          id: string;
+          locale: string;
+          logo_url: string | null;
+          name: string;
+          settings: Json;
+          slug: string;
+          status: Database["public"]["Enums"]["organization_status"];
+          timezone: string;
+          updated_at: string;
+        };
+        Insert: {
+          contact_email?: string | null;
+          created_at?: string;
+          created_by: string;
+          deleted_at?: string | null;
+          id?: string;
+          locale?: string;
+          logo_url?: string | null;
+          name: string;
+          settings?: Json;
+          slug: string;
+          status?: Database["public"]["Enums"]["organization_status"];
+          timezone?: string;
+          updated_at?: string;
+        };
+        Update: {
+          contact_email?: string | null;
+          created_at?: string;
+          created_by?: string;
+          deleted_at?: string | null;
+          id?: string;
+          locale?: string;
+          logo_url?: string | null;
+          name?: string;
+          settings?: Json;
+          slug?: string;
+          status?: Database["public"]["Enums"]["organization_status"];
+          timezone?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      permissions: {
+        Row: {
+          category: string;
+          code: string;
+          created_at: string;
+          description: string;
+          name: string;
+        };
+        Insert: {
+          category: string;
+          code: string;
+          created_at?: string;
+          description: string;
+          name: string;
+        };
+        Update: {
+          category?: string;
+          code?: string;
+          created_at?: string;
+          description?: string;
+          name?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -40,10 +397,346 @@ export type Database = {
         };
         Relationships: [];
       };
+      role_assignments: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          id: string;
+          incubator_id: string | null;
+          membership_id: string;
+          organization_id: string;
+          role_id: string;
+          unit_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          incubator_id?: string | null;
+          membership_id: string;
+          organization_id: string;
+          role_id: string;
+          unit_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          incubator_id?: string | null;
+          membership_id?: string;
+          organization_id?: string;
+          role_id?: string;
+          unit_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "role_assignments_incubator_same_org";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "role_assignments_membership_same_org";
+            columns: ["organization_id", "membership_id"];
+            isOneToOne: false;
+            referencedRelation: "organization_memberships";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "role_assignments_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "role_assignments_role_same_org";
+            columns: ["organization_id", "role_id"];
+            isOneToOne: false;
+            referencedRelation: "roles";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "role_assignments_unit_same_org";
+            columns: ["organization_id", "unit_id"];
+            isOneToOne: false;
+            referencedRelation: "organization_units";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      role_permissions: {
+        Row: {
+          created_at: string;
+          organization_id: string;
+          permission_code: string;
+          role_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          organization_id: string;
+          permission_code: string;
+          role_id: string;
+        };
+        Update: {
+          created_at?: string;
+          organization_id?: string;
+          permission_code?: string;
+          role_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_code_fkey";
+            columns: ["permission_code"];
+            isOneToOne: false;
+            referencedRelation: "permissions";
+            referencedColumns: ["code"];
+          },
+          {
+            foreignKeyName: "role_permissions_role_same_org";
+            columns: ["organization_id", "role_id"];
+            isOneToOne: false;
+            referencedRelation: "roles";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      roles: {
+        Row: {
+          archived_at: string | null;
+          code: string;
+          created_at: string;
+          description: string;
+          id: string;
+          is_system: boolean;
+          name: string;
+          organization_id: string;
+          scope_type: Database["public"]["Enums"]["role_scope_type"];
+          updated_at: string;
+        };
+        Insert: {
+          archived_at?: string | null;
+          code: string;
+          created_at?: string;
+          description: string;
+          id?: string;
+          is_system?: boolean;
+          name: string;
+          organization_id: string;
+          scope_type: Database["public"]["Enums"]["role_scope_type"];
+          updated_at?: string;
+        };
+        Update: {
+          archived_at?: string | null;
+          code?: string;
+          created_at?: string;
+          description?: string;
+          id?: string;
+          is_system?: boolean;
+          name?: string;
+          organization_id?: string;
+          scope_type?: Database["public"]["Enums"]["role_scope_type"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "roles_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_preferences: {
+        Row: {
+          active_organization_id: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          active_organization_id?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          active_organization_id?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_active_organization_id_fkey";
+            columns: ["active_organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
-    Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
-    Enums: { [_ in never]: never };
-    CompositeTypes: { [_ in never]: never };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      accept_invitation: {
+        Args: { raw_token: string };
+        Returns: {
+          membership_id: string;
+          organization_id: string;
+          organization_slug: string;
+        }[];
+      };
+      create_organization: {
+        Args: {
+          organization_locale?: string;
+          organization_name: string;
+          organization_slug: string;
+          organization_timezone?: string;
+        };
+        Returns: {
+          id: string;
+          slug: string;
+        }[];
+      };
+    };
+    Enums: {
+      invitation_status: "pending" | "accepted" | "revoked" | "expired";
+      membership_status: "invited" | "active" | "suspended" | "removed";
+      organization_status: "active" | "inactive" | "suspended";
+      role_scope_type: "organization" | "unit" | "incubator";
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
 };
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<
+  keyof Database,
+  "public"
+>];
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R;
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I;
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U;
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never;
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never;
+
+export const Constants = {
+  public: {
+    Enums: {
+      invitation_status: ["pending", "accepted", "revoked", "expired"],
+      membership_status: ["invited", "active", "suspended", "removed"],
+      organization_status: ["active", "inactive", "suspended"],
+      role_scope_type: ["organization", "unit", "incubator"],
+    },
+  },
+} as const;

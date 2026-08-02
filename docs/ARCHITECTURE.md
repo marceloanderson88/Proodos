@@ -157,7 +157,7 @@ erDiagram
   PROFILES ||--o{ ORGANIZATION_MEMBERSHIPS : "participa"
   ORGANIZATIONS ||--o{ ORGANIZATION_UNITS : "contém"
   ORGANIZATIONS ||--o{ INCUBATORS : "contém"
-  ORGANIZATION_UNITS o|--o{ INCUBATORS : "agrupa (a confirmar)"
+  ORGANIZATION_UNITS o|--o{ INCUBATORS : "agrupa opcionalmente"
   ORGANIZATION_MEMBERSHIPS ||--o{ ROLE_ASSIGNMENTS : "recebe"
   ROLES ||--o{ ROLE_ASSIGNMENTS : "define"
   ROLES ||--o{ ROLE_PERMISSIONS : "possui"
@@ -166,25 +166,25 @@ erDiagram
 
 ### 6.3 Tabelas iniciais propostas
 
-| Tabela                     | Finalidade                                                   | Fronteira tenant                      |
-| -------------------------- | ------------------------------------------------------------ | ------------------------------------- |
-| `profiles`                 | Dados públicos internos mínimos do usuário                   | Usuário próprio e escopos autorizados |
-| `organizations`            | Tenant raiz                                                  | `id`                                  |
-| `organization_units`       | Unidade administrativa, se confirmada como conceito distinto | `organization_id`                     |
-| `incubators`               | Unidade gestora de incubação                                 | `organization_id`                     |
-| `organization_memberships` | Associação usuário-organização e status                      | `organization_id`                     |
-| `roles`                    | Papéis de sistema e customizáveis                            | global ou `organization_id`           |
-| `permissions`              | Catálogo estável de capacidades                              | global                                |
-| `role_permissions`         | Composição de papel                                          | herdada do papel                      |
-| `role_assignments`         | Papel aplicado a organização/unidade/incubadora              | `organization_id` + FK de escopo      |
-| `invitations`              | Convites com expiração e consumo único                       | `organization_id`                     |
-| `user_preferences`         | Preferência de organização, idioma e UI                      | usuário próprio                       |
-| `audit_logs`               | Eventos de segurança e negócio                               | `organization_id`, imutável           |
-| `integration_accounts`     | Metadados de integrações; nunca segredos brutos              | `organization_id`                     |
-| `files`                    | Registro lógico e estado do objeto no Drive                  | `organization_id`                     |
-| `file_versions`            | Versões físicas e checksums                                  | herdada de `files`                    |
-| `file_links`               | Associação do arquivo com recurso de negócio                 | `organization_id`                     |
-| `file_access_logs`         | Auditoria de acesso e download                               | `organization_id`                     |
+| Tabela                     | Finalidade                                      | Fronteira tenant                      |
+| -------------------------- | ----------------------------------------------- | ------------------------------------- |
+| `profiles`                 | Dados públicos internos mínimos do usuário      | Usuário próprio e escopos autorizados |
+| `organizations`            | Tenant raiz                                     | `id`                                  |
+| `organization_units`       | Unidade administrativa opcional                 | `organization_id`                     |
+| `incubators`               | Unidade gestora de incubação                    | `organization_id`                     |
+| `organization_memberships` | Associação usuário-organização e status         | `organization_id`                     |
+| `roles`                    | Papéis de sistema e customizáveis               | `organization_id`                     |
+| `permissions`              | Catálogo estável de capacidades                 | global                                |
+| `role_permissions`         | Composição de papel                             | herdada do papel                      |
+| `role_assignments`         | Papel aplicado a organização/unidade/incubadora | `organization_id` + FK de escopo      |
+| `invitations`              | Convites com expiração e consumo único          | `organization_id`                     |
+| `user_preferences`         | Preferência de organização, idioma e UI         | usuário próprio                       |
+| `audit_logs`               | Eventos de segurança e negócio                  | `organization_id`, imutável           |
+| `integration_accounts`     | Metadados de integrações; nunca segredos brutos | `organization_id`                     |
+| `files`                    | Registro lógico e estado do objeto no Drive     | `organization_id`                     |
+| `file_versions`            | Versões físicas e checksums                     | herdada de `files`                    |
+| `file_links`               | Associação do arquivo com recurso de negócio    | `organization_id`                     |
+| `file_access_logs`         | Auditoria de acesso e download                  | `organization_id`                     |
 
 ### 6.4 Convenções de dados
 
@@ -217,13 +217,13 @@ erDiagram
 - Tabelas sem necessidade de acesso direto pelo cliente ficam em schema não exposto ou com privilégios revogados.
 - Policies usam `TO authenticated` junto de predicados de autorização; `TO authenticated` isolado é insuficiente.
 
-### 7.3 Funções auxiliares candidatas
+### 7.3 Funções auxiliares implementadas
 
-- `private.is_active_org_member(org_id uuid, user_id uuid default auth.uid())`
-- `private.has_permission(org_id uuid, permission_code text, scope_type ..., scope_id uuid ...)`
-- `private.is_platform_admin(user_id uuid default auth.uid())`
+- `private.is_active_org_member(org_id uuid)`
+- `private.has_permission(org_id uuid, permission_code text, unit_id uuid, incubator_id uuid)`
+- `private.is_platform_admin()`
 
-Essas funções serão pequenas, determinísticas quando possível, com schema qualificado e testes de não recursão. Caso precisem ignorar RLS para consultar memberships, o uso de `SECURITY DEFINER` será documentado e seu `EXECUTE` limitado ao papel necessário.
+As funções são pequenas, usam nomes qualificados e `search_path=''`. Os dois predicados chamados pelas policies possuem `EXECUTE` apenas para `authenticated`; `is_platform_admin` não é diretamente executável pelo cliente. Os RPCs públicos `create_organization` e `accept_invitation` aplicam autorização própria e transações indivisíveis.
 
 ### 7.4 Matriz mínima de testes de isolamento
 
@@ -278,4 +278,4 @@ CERNE será um pacote de dados/metodologia opcional sobre o contexto genérico `
 
 ## 13. Pontos que exigem decisão
 
-Os bloqueios e suposições estão registrados em [ASSUMPTIONS_AND_GAPS.md](./ASSUMPTIONS_AND_GAPS.md). A principal decisão de esquema é a relação entre organização, unidade e incubadora. A principal decisão operacional é a disponibilidade de um Drive Compartilhado institucional por ambiente.
+Os bloqueios e suposições estão registrados em [ASSUMPTIONS_AND_GAPS.md](./ASSUMPTIONS_AND_GAPS.md). A hierarquia multi-tenant e a governança de superadmin foram resolvidas no Marco 3. A principal decisão operacional restante é a disponibilidade de um Drive Compartilhado institucional por ambiente.

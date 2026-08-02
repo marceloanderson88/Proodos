@@ -6,25 +6,15 @@ Perguntas classificadas como bloqueantes impedem uma migration ou integração c
 
 ## 2. Perguntas bloqueantes para a implementação da fundação
 
-### B-01 — “Unidade” e “incubadora” são conceitos distintos?
+### B-01 — “Unidade” e “incubadora” são conceitos distintos? — Resolvida
 
 O SDD afirma que uma organização pode possuir “incubadoras/unidades”, mas a solicitação lista organizações/incubadoras e unidades separadamente.
 
-Precisamos confirmar uma das opções:
+**Decisão confirmada em 02/08/2026:** organização → unidade administrativa opcional → incubadora. Uma incubadora sempre pertence à organização e pode não estar agrupada em unidade. Implementada no Marco 3 com FKs compostas tenant-aware.
 
-1. organização → unidades administrativas → incubadoras;
-2. organização → incubadoras, e “unidade” é sinônimo;
-3. organização → unidades e incubadoras como estruturas independentes.
+### B-02 — Como será governado o superadministrador da plataforma? — Resolvida
 
-**Impacto:** FKs, escopo de papéis, rotas, unicidade e RLS.  
-**Bloqueia:** migration definitiva de tenancy além de `organizations` e `organization_memberships`.
-
-### B-02 — Como será governado o superadministrador da plataforma?
-
-É necessário definir quem pode conceder/revogar esse papel e como ocorrerá o bootstrap inicial.
-
-**Proposta segura:** allowlist operacional inicial aplicada por migration/secret controlado e tabela privada `platform_admins`; nunca `user_metadata`.  
-**Bloqueia:** operações administrativas de plataforma e policies correspondentes.
+**Decisão confirmada em 02/08/2026:** allowlist operacional em `private.platform_admins`, nunca `user_metadata`. Concessão/revogação ocorre somente pelo PostgreSQL operacional; o UUID inicial foi inserido fora do código após confirmação da identidade. O RPC `create_organization` exige essa allowlist.
 
 ### B-03 — Existe Google Workspace com Shared Drive para cada ambiente?
 
@@ -61,7 +51,7 @@ Confirmar tamanho máximo por tipo, tipos proibidos, retenção, quarentena/anti
 ### G-04 — Convites e autoinscrição
 
 **Lacuna:** qualquer pessoa pode criar organização ou somente usuários convidados?  
-**Suposição:** não haverá criação pública de tenant no primeiro marco; usuários entram por convite, e organizações são criadas por superadmin/backend controlado.
+**Implementado no Marco 3:** não há criação pública de tenant. Organizações são criadas pelo RPC controlado por `platform_admins`; usuários entram por convite ou vínculo administrativo.
 
 ### G-05 — Personalização por organização
 
@@ -71,7 +61,7 @@ Confirmar tamanho máximo por tipo, tipos proibidos, retenção, quarentena/anti
 ### G-06 — Matriz granular de permissões
 
 **Lacuna:** o SDD descreve papéis, mas não enumera todas as capacidades CRUD por recurso.  
-**Suposição:** criar catálogo mínimo para tenancy/administração e adicionar permissões por módulo; nunca conceder wildcard no cliente.
+**Implementado no Marco 3:** catálogo mínimo de 13 permissões para tenancy/administração; permissões de módulos serão adicionadas junto às respectivas migrations, sem wildcard no cliente.
 
 ### G-07 — Escopo de mentorias
 

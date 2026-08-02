@@ -1,7 +1,11 @@
-export const DEFAULT_AUTH_DESTINATION = "/o/sertao-maker/dashboard";
+export const DEFAULT_AUTH_DESTINATION = "/o";
 
 export function getSafeAuthDestination(value: string | null | undefined) {
-  if (!value || !value.startsWith("/o/") || value.startsWith("//")) {
+  if (
+    !value ||
+    (value !== "/o" && !value.startsWith("/o/")) ||
+    value.startsWith("//")
+  ) {
     return DEFAULT_AUTH_DESTINATION;
   }
 
