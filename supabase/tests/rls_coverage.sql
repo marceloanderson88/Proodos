@@ -1,6 +1,10 @@
 -- Executável contra um banco local ou remoto de teste.
 -- Falha se qualquer tabela exposta em public estiver sem RLS ou sem ao menos uma policy.
 
+begin;
+
+select plan(1);
+
 do $$
 declare
   violation text;
@@ -38,3 +42,8 @@ begin
   end if;
 end
 $$;
+
+select pass('Todas as tabelas públicas têm RLS, policies e grants de schema seguros');
+select * from finish();
+
+rollback;

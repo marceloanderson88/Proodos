@@ -2,6 +2,8 @@
 
 begin;
 
+select plan(1);
+
 insert into auth.users (
   id,
   email,
@@ -106,5 +108,8 @@ begin
   end if;
 end
 $$;
+
+select pass('Provisionamento e isolamento de perfis foram verificados');
+select * from finish();
 
 rollback;

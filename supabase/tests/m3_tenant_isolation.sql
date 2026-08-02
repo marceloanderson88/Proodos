@@ -2,6 +2,8 @@
 
 begin;
 
+select plan(1);
+
 insert into auth.users (id, email, email_confirmed_at, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
   ('30000000-0000-4000-8000-000000000001', 'm3-admin-a@example.invalid', now(), 'authenticated', 'authenticated', '{}'::jsonb, '{}'::jsonb, now(), now()),
@@ -104,5 +106,8 @@ begin
     raise exception 'organization_id de unidade pode ser alterado pelo cliente';
   end if;
 end $$;
+
+select pass('CRUD, suspensão, grants e isolamento entre organizações foram verificados');
+select * from finish();
 
 rollback;

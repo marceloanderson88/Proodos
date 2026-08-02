@@ -2,6 +2,8 @@
 
 begin;
 
+select plan(1);
+
 insert into auth.users (id, email, email_confirmed_at, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
   ('31000000-0000-4000-8000-000000000001', 'm3-platform@example.invalid', now(), 'authenticated', 'authenticated', '{}'::jsonb, '{}'::jsonb, now(), now()),
@@ -69,5 +71,8 @@ begin
   select count(*) into audit_count from public.audit_logs where event_type = 'update.invitations';
   if audit_count < 1 then raise exception 'Aceite do convite não foi auditado'; end if;
 end $$;
+
+select pass('Bootstrap privilegiado e aceite de convite permanecem seguros e idempotentes');
+select * from finish();
 
 rollback;

@@ -50,6 +50,8 @@ Esses itens permanecem gates obrigatórios no workflow e não são declarados co
 
 A primeira reconstrução limpa identificou uma dependência histórica na migration `20260802045847_m1_harden_rls_event_trigger.sql`: ela revogava privilégios de `public.rls_auto_enable()`, função criada diretamente no projeto hospedado antes do histórico versionado e, por isso, ausente em um banco novo. A migration agora consulta `to_regprocedure()` e somente executa os `REVOKE` quando a função existe. O comportamento de segurança no ambiente remoto permanece o mesmo e a reconstrução limpa deixa de depender de estado externo ao repositório.
 
+Depois que a reconstrução passou, o runner apontou que os scripts transacionais de RLS não emitiam um plano TAP. A suíte agora prepara a extensão `pgtap` em `000_pgtap_setup.sql`; cada arquivo declara seu plano, mantém as verificações por exceção e somente emite `pass()` depois que todas elas terminam. Os dados sintéticos continuam revertidos ao final de cada teste.
+
 ## Pendências externas
 
 - criar um projeto Supabase de homologação e separar variáveis Vercel Preview;
