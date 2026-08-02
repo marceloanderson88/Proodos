@@ -15,7 +15,7 @@ Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos
 | M2    | Autenticação completa e perfil seguro                              | Concluído em 02/08/2026                  |
 | M3    | Fundação multi-tenant, RBAC, RLS e auditoria                       | Concluído em 02/08/2026                  |
 | M4    | Contratos de arquivos/Drive e shell privado integrado              | Concluído sem adapter real em 02/08/2026 |
-| M5    | Segurança, testes cross-tenant, CI e readiness para deploy         | Planejado                                |
+| M5    | Segurança, testes cross-tenant, CI e readiness para deploy         | Concluído em 02/08/2026                  |
 | M6    | Primeiro módulo vertical do MVP                                    | Fora desta etapa; selecionar depois      |
 
 ## 3. Sequência de implementação
@@ -192,6 +192,8 @@ Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos
 - Nenhum segredo aparece em Git, bundle ou output de teste.
 - Testes cross-tenant passam de forma reprodutível.
 - Pendências conhecidas estão documentadas; nenhuma falha é declarada como sucesso.
+
+**Resultado:** concluído em 02/08/2026. CI, headers/CSP, proteção de origem, rate limiting local, correlação, health/readiness, scans, smokes e runbook foram adicionados. Unitários, lint, typecheck, build, scans e jornadas públicas/acessíveis passaram localmente; a migration de readiness foi aplicada e verificada no Supabase. Reset limpo/pgTAP e smoke autenticado permanecem gates da primeira execução do CI porque Docker não existe nesta máquina. Evidências e limites estão em [MARCO_5_IMPLEMENTATION.md](./MARCO_5_IMPLEMENTATION.md).
 
 ## 4. Backlog por épico, histórias e tarefas
 

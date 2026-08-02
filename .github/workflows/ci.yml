@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-and-security:
+    name: Qualidade, banco e smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      APP_BASE_URL: http://localhost:3000
+      GOOGLE_DRIVE_UPLOAD_ENABLED: "false"
+      NEXT_PUBLIC_APP_ENV: test
+      NEXT_PUBLIC_APP_NAME: Plataforma Sertão Maker
+      E2E_TEST_EMAIL: admin-a@example.invalid
+      E2E_TEST_PASSWORD: Proodos-E2E-2026!
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: pnpm
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: 11.9.0
+
+      - name: Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Dependências congeladas
+        run: pnpm install --frozen-lockfile
+
+      - name: Scan de segredos no repositório
+        run: pnpm security:scan
+
+      - name: Supabase local mínimo
+        run: pnpm exec supabase start --exclude realtime,storage-api,imgproxy,mailpit,studio,edge-runtime,logflare,vector,supavisor --yes
+
+      - name: Exportar configuração pública local
+        shell: bash
+        run: |
+          eval "$(pnpm exec supabase status -o env)"
+          PUBLIC_KEY="${PUBLISHABLE_KEY:-${ANON_KEY:-}}"
+          test -n "$API_URL"
+          test -n "$PUBLIC_KEY"
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLIC_KEY" >> "$GITHUB_ENV"
+
+      - name: Recriar banco do zero
+        run: pnpm exec supabase db reset --local
+
+      - name: Formatter
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: TypeScript strict
+        run: pnpm typecheck
+
+      - name: Testes unitários
+        run: pnpm test
+
+      - name: Testes de integração e RLS
+        run: pnpm test:rls
+
+      - name: Build de produção
+        run: pnpm build
+
+      - name: Scan de segredos no bundle
+        run: pnpm security:scan:bundle
+
+      - name: Chromium para smoke tests
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Smoke autenticado e acessibilidade
+        run: pnpm test:e2e
+
+      - name: Encerrar Supabase local
+        if: always()
+        run: pnpm exec supabase stop --no-backup

@@ -1,6 +1,6 @@
 # Proodos — Plataforma Sertão Maker
 
-Fundação técnica da plataforma de gestão de incubadoras descrita em [`docs/SDD.md`](docs/SDD.md). O repositório está concluído até o **Marco 4**: autenticação, tenancy, RBAC/RLS e a fundação de metadados para arquivos grandes estão implementados. O adapter Google Drive e os módulos de negócio permanecem desativados até seus respectivos gates.
+Fundação técnica da plataforma de gestão de incubadoras descrita em [`docs/SDD.md`](docs/SDD.md). O repositório está implementado até o **Marco 5**: autenticação, tenancy, RBAC/RLS, metadados de arquivos, hardening, CI e deploy readiness. O adapter Google Drive e os módulos de negócio permanecem desativados até seus respectivos gates.
 
 ## Requisitos locais
 
@@ -41,7 +41,7 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-## Variáveis até o Marco 4
+## Variáveis até o Marco 5
 
 | Variável                               | Obrigatória | Uso                                               |
 | -------------------------------------- | ----------- | ------------------------------------------------- |
@@ -51,7 +51,8 @@ pnpm test:e2e
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Sim         | Chave publicável; nunca usar secret/service role. |
 | `APP_BASE_URL`                         | Recomendado | URL canônica por ambiente.                        |
 | `GOOGLE_DRIVE_UPLOAD_ENABLED`          | Não         | Deve permanecer `false` até concluir B-03/B-04.   |
+| `PRODUCTION_SUPABASE_PROJECT_REF`      | No Preview  | Bloqueia Preview ligado ao banco de produção.     |
 
 No Supabase Auth, registre `http://localhost:3000/auth/callback` e a URL equivalente da Vercel entre os redirects permitidos. Para Google, configure o provider no Supabase e o callback fornecido pelo Supabase no Google Cloud. Nenhuma service role ou secret key deve usar prefixo `NEXT_PUBLIC_`.
 
-Não configure credenciais Google enquanto a flag estiver falsa. Consulte [`docs/MARCO_4_IMPLEMENTATION.md`](docs/MARCO_4_IMPLEMENTATION.md) para contratos, migrations, policies, testes e limitações.
+Não configure credenciais Google enquanto a flag estiver falsa. Consulte [`docs/MARCO_5_IMPLEMENTATION.md`](docs/MARCO_5_IMPLEMENTATION.md) e [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md) para verificações, variáveis por ambiente, deploy e riscos aceitos.

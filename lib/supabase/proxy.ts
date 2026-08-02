@@ -5,8 +5,11 @@ import { getSafeAuthDestination } from "@/lib/auth/safe-redirect";
 import { getSupabasePublicEnv } from "@/lib/env";
 import type { Database } from "@/lib/supabase/database.types";
 
-export async function refreshAuthSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+export async function refreshAuthSession(
+  request: NextRequest,
+  requestHeaders = new Headers(request.headers),
+) {
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
   const env = getSupabasePublicEnv();
   const supabase = createServerClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
@@ -18,7 +21,9 @@ export async function refreshAuthSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          response = NextResponse.next({ request });
+          response = NextResponse.next({
+            request: { headers: requestHeaders },
+          });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );

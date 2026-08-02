@@ -65,12 +65,13 @@ export function LoginForm({ next }: LoginFormProps) {
       noValidate
     >
       {feedback ? <AuthFeedback message={feedback} /> : null}
-      <label className="block text-sm font-bold text-[#3c2a2a]">
-        E-mail
+      <div className="text-sm font-bold text-[#3c2a2a]">
+        <label htmlFor="login-email">E-mail</label>
         <span className="mt-2 flex items-center gap-3 rounded-xl border border-[#d8ceca] bg-white px-4 py-3.5 focus-within:border-[#921a20] focus-within:ring-3 focus-within:ring-[#921a20]/10">
           <Mail className="size-5 text-[#8b8080]" aria-hidden="true" />
           <input
             {...register("email")}
+            id="login-email"
             type="email"
             autoComplete="email"
             placeholder="seu@email.com"
@@ -87,13 +88,14 @@ export function LoginForm({ next }: LoginFormProps) {
             {errors.email.message}
           </span>
         ) : null}
-      </label>
-      <label className="block text-sm font-bold text-[#3c2a2a]">
-        Senha
+      </div>
+      <div className="text-sm font-bold text-[#3c2a2a]">
+        <label htmlFor="login-password">Senha</label>
         <span className="mt-2 flex items-center gap-3 rounded-xl border border-[#d8ceca] bg-white px-4 py-3.5 focus-within:border-[#921a20] focus-within:ring-3 focus-within:ring-[#921a20]/10">
           <LockKeyhole className="size-5 text-[#8b8080]" aria-hidden="true" />
           <input
             {...register("password")}
+            id="login-password"
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"
             placeholder="Digite sua senha"
@@ -122,7 +124,7 @@ export function LoginForm({ next }: LoginFormProps) {
             {errors.password.message}
           </span>
         ) : null}
-      </label>
+      </div>
       <div className="flex justify-end">
         <Link
           href="/recuperar-senha"

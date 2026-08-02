@@ -1,4 +1,5 @@
 -- Marco 2: perfil mínimo, provisionamento transacional e políticas de acesso próprio.
+-- Versão alinhada ao histórico remoto no Marco 5; SQL funcional inalterado.
 -- Nenhum campo desta tabela participa de autorização; identidade vem de auth.users.
 
 begin;

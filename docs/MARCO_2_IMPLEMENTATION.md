@@ -18,7 +18,7 @@ O Marco 2 implementa identidade e sessão, sem antecipar tenancy ou módulos de 
 
 ## Migration e RLS
 
-Migration: `supabase/migrations/20260802055042_m2_profiles_and_auth_security.sql`.
+Migration: `supabase/migrations/20260802055520_m2_profiles_and_auth_security.sql`.
 
 Ela cria `public.profiles`, FK para `auth.users`, constraints, timestamps e duas policies:
 

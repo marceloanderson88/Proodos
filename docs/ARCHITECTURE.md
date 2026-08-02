@@ -252,7 +252,7 @@ As rotas `/api/v1/files/upload-session`, `/api/v1/files/{id}/complete` e `/api/v
 
 ## 9. Erros, observabilidade e auditoria
 
-- Erro de domínio padronizado: `code`, `message`, `details`, `request_id`.
+- Erro de API padronizado: `code`, `message`, detalhes sanitizados e `requestId`; o mesmo identificador é devolvido em `x-request-id`.
 - Mensagens ao usuário não expõem stack, SQL, tokens ou identificadores secretos.
 - Logs técnicos incluem `request_id`; `user_id` e `organization_id` somente quando apropriado e sem dados pessoais desnecessários.
 - `audit_logs` é append-only e registra mudanças de permissão, notas, prazos, metadados sensíveis e acessos a arquivos restritos.
@@ -274,6 +274,9 @@ As rotas `/api/v1/files/upload-session`, `/api/v1/files/{id}/complete` e `/api/v
 - Produção tem projeto Supabase e Drive Compartilhado próprios.
 - CI bloqueia merge quando lint, formatter, typecheck, testes ou validação de migrations falham.
 - Migrations são aplicadas como etapa controlada; rollback de aplicação não depende de migration destrutiva.
+- O build de Preview rejeita o project ref de produção e exige rótulo `staging`.
+- `/api/health` mede liveness; `/api/ready` mede Data API/Postgres por RPC sem dados.
+- O workflow reconstrói o banco, executa pgTAP/RLS, faz scan do bundle e roda smoke autenticado antes da promoção.
 
 ## 12. Dependências arquiteturais externas
 

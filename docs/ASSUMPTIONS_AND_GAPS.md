@@ -115,6 +115,18 @@ Confirmar tamanho máximo por tipo, tipos proibidos, retenção, quarentena/anti
 **Resolvido:** CERNE é opcional e desabilitado por padrão.  
 **Suposição:** seed CERNE não entra na fundação; apenas a arquitetura evita dependências obrigatórias.
 
+### G-18 — Ambiente de homologação
+
+**Bloqueante para Preview:** ainda não foi fornecido um segundo projeto Supabase. O Marco 5 bloqueia Preview ligado à produção; criar o projeto e separar as variáveis continua sendo ação externa.
+
+### G-19 — Rate limiting distribuído
+
+**Lacuna aceita:** não há Redis/KV ou gateway de rate limiting definido. O limitador por instância é defesa em profundidade, não garantia global. Selecionar infraestrutura antes do piloto.
+
+### G-20 — Execução local do pipeline
+
+**Lacuna operacional:** Docker não está instalado na máquina atual. Reset limpo, pgTAP e smoke autenticado foram configurados como gates de CI, mas precisam da primeira execução do workflow para produzir evidência.
+
 ## 4. Conflitos e observações do SDD
 
 1. O SDD usa `incubators` como “unidade gestora”, mas também exige “unidades”; a hierarquia não está fechada.

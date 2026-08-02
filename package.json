@@ -16,9 +16,12 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:rls": "supabase test db",
+    "test:rls": "supabase test db --local supabase/tests",
+    "security:scan": "node scripts/scan-secrets.mjs",
+    "security:scan:bundle": "node scripts/scan-secrets.mjs --bundle",
     "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {

@@ -162,3 +162,27 @@ O bootstrap inicial é uma inserção operacional manual pelo PostgreSQL na allo
 **Status:** Aceita e implementada no Marco 4
 **Decisão:** `files` e `file_links` possuem FKs explícitas para organização, unidade ou incubadora. Não foi criado `resource_type/resource_id` genérico.
 **Consequências:** programas, startups, conteúdos, planos e entregas acrescentarão colunas/FKs próprias quando seus agregados existirem. Conteúdo continuará relacionado a trilhas e ações sem dependência obrigatória de CERNE.
+
+## DEC-026 — Preview falha fechado contra produção
+
+**Status:** Aceita e implementada no Marco 5
+**Decisão:** builds Vercel Preview exigem `NEXT_PUBLIC_APP_ENV=staging`, um project ref de produção declarado e um Supabase diferente do projeto produtivo.
+**Consequências:** previews existentes que reutilizem variáveis de produção deixam de publicar até receberem um ambiente de homologação seguro.
+
+## DEC-027 — Health separado de readiness
+
+**Status:** Aceita e implementada no Marco 5
+**Decisão:** `/api/health` comprova apenas o processo Next.js; `/api/ready` chama uma RPC `security invoker` sem dados para comprovar Data API/Postgres.
+**Consequências:** monitores distinguem processo vivo de dependência pronta sem expor schema, contagens ou dados de tenant.
+
+## DEC-028 — CSP compatível antes de nonce estrito
+
+**Status:** Risco aceito no Marco 5
+**Decisão:** aplicar CSP restritiva para origem, frames, objetos e conexões, mantendo `unsafe-inline` necessário ao runtime atual do Next.js. `unsafe-eval` existe somente em desenvolvimento.
+**Consequências:** framing e fontes externas ficam bloqueados por padrão, mas nonce/strict-dynamic permanece um hardening posterior mensurado.
+
+## DEC-029 — Rate limiting em duas camadas
+
+**Status:** Parcialmente implementada no Marco 5
+**Decisão:** limitar rajadas por instância nas rotas próprias e manter os limites nativos do Supabase Auth; exigir armazenamento distribuído antes do piloto para garantias globais.
+**Consequências:** a proteção atual reduz abuso casual, mas não é apresentada como limite global em ambiente serverless.

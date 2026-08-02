@@ -18,9 +18,9 @@ O Marco 3 foi concluído em 02/08/2026 sem iniciar módulos de negócio. A aplic
 
 ## Migrations
 
-1. `20260802163000_m3_multi_tenant_rbac_audit.sql`: schema, catálogo de 13 permissões, papéis padrão, helpers, RPCs, RLS, grants, triggers e índices principais.
-2. `20260802165500_m3_fix_invitation_acceptance.sql`: correção incremental da ambiguidade de `organization_id` encontrada pelo teste de convite.
-3. `20260802170500_m3_advisor_fk_indexes.sql`: índices de cobertura das FKs apontadas pelo advisor.
+1. `20260802064441_m3_multi_tenant_rbac_audit.sql`: schema, catálogo de 13 permissões, papéis padrão, helpers, RPCs, RLS, grants, triggers e índices principais.
+2. `20260802064541_m3_fix_invitation_acceptance.sql`: correção incremental da ambiguidade de `organization_id` encontrada pelo teste de convite.
+3. `20260802064647_m3_advisor_fk_indexes.sql`: índices de cobertura das FKs apontadas pelo advisor.
 
 As três migrations foram aplicadas ao projeto Supabase `Proodos`. A primeira também foi corrigida para que uma reconstrução do zero já nasça sem a ambiguidade; a migration incremental preserva o histórico real de produção.
 

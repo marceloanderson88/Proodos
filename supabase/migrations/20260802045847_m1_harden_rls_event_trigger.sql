@@ -1,4 +1,5 @@
 -- Marco 1: endurece a função de event trigger já existente no projeto Supabase.
+-- Versão alinhada ao histórico remoto no Marco 5; SQL funcional inalterado.
 -- Ela habilita RLS automaticamente em novas tabelas do schema public, mas não deve
 -- ser exposta como RPC para clientes anônimos ou autenticados.
 

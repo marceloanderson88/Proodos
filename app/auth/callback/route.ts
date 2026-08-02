@@ -9,9 +9,11 @@ export async function GET(request: NextRequest) {
     request.nextUrl.searchParams.get("next"),
   );
   if (!code) {
-    return NextResponse.redirect(
+    const response = NextResponse.redirect(
       new URL("/auth/erro?code=missing-code", request.url),
     );
+    response.headers.set("Cache-Control", "no-store");
+    return response;
   }
 
   const response = NextResponse.redirect(new URL(destination, request.url));
@@ -23,5 +25,6 @@ export async function GET(request: NextRequest) {
       new URL("/auth/erro?code=callback-failed", request.url).toString(),
     );
   }
+  response.headers.set("Cache-Control", "no-store");
   return response;
 }

@@ -16,10 +16,10 @@
 
 ## Migrations
 
-1. `20260802030000_m1_security_baseline.sql`
+1. `20260802045744_m1_security_baseline.sql`
    - revoga `CREATE` no schema `public` de `public`, `anon` e `authenticated`;
    - revoga privilégios padrão sobre futuras tabelas, sequências e funções de clientes.
-2. `20260802050000_m1_harden_rls_event_trigger.sql`
+2. `20260802045847_m1_harden_rls_event_trigger.sql`
    - revoga `EXECUTE` público da função preexistente `public.rls_auto_enable()`.
 
 As duas migrations foram aplicadas ao projeto Supabase `Proodos`. O schema `public` permanece vazio: o Marco 1 não cria tabelas de negócio e, por isso, não cria policies artificiais. `supabase/tests/rls_coverage.sql` rejeita qualquer tabela pública futura sem RLS ou sem policy e também valida os grants do schema.

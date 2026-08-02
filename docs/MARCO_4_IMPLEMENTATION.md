@@ -13,7 +13,7 @@ O Marco 4 foi concluído em 02/08/2026 no limite previsto: metadados, contratos,
 
 ## Banco e migration
 
-`20260802173000_m4_file_metadata_foundation.sql` criou:
+`20260802143754_m4_file_metadata_foundation.sql` criou:
 
 - `files`: registro lógico, escopo tipado, classificação, metadados esperados/finais e estado;
 - `file_versions`: versões físicas e checksums;
@@ -22,7 +22,7 @@ O Marco 4 foi concluído em 02/08/2026 no limite previsto: metadados, contratos,
 - `upload_sessions`: idempotência, offset, expiração e hash de correlação sem URL;
 - permissões `file.read`, `file.manage` e `file.audit` e distribuição aos papéis existentes/futuros.
 
-`20260802174500_m4_tighten_file_visibility.sql` registrou o hardening encontrado na revisão: versões e vínculos de estados internos agora exigem `file.manage`, e logs sem `file_id` resolvido podem ser consultados apenas por auditor do tenant.
+`20260802144151_m4_tighten_file_visibility.sql` registrou o hardening encontrado na revisão: versões e vínculos de estados internos agora exigem `file.manage`, e logs sem `file_id` resolvido podem ser consultados apenas por auditor do tenant.
 
 A CLI do Supabase 2.111.0 voltou a apresentar `LegacyMigrationNewWriteError` no diretório OneDrive existente. Os arquivos foram criados com nomes versionados explícitos e aplicados pelo gerenciador de migrations do Supabase; o problema é operacional, não de SQL.
 

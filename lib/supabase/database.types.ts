@@ -954,6 +954,10 @@ export type Database = {
           slug: string;
         }[];
       };
+      system_readiness: {
+        Args: never;
+        Returns: boolean;
+      };
     };
     Enums: {
       file_access_operation:

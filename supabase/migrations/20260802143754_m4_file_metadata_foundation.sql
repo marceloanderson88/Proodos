@@ -1,4 +1,5 @@
 -- Marco 4: metadados de arquivos grandes e contratos para Google Drive.
+-- Versão alinhada ao histórico remoto no Marco 5; SQL funcional inalterado.
 -- Nenhuma URL de sessão, credencial ou byte de arquivo é persistido no PostgreSQL.
 
 begin;

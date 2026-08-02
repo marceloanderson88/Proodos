@@ -1,4 +1,5 @@
 -- Índices de cobertura para FKs apontadas pelo advisor de performance.
+-- Versão alinhada ao histórico remoto no Marco 5; SQL funcional inalterado.
 -- Índices ainda não usados são esperados em tabelas recém-criadas e vazias.
 
 begin;

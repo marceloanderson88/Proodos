@@ -1,4 +1,5 @@
 -- Corrige ambiguidade entre a coluna organization_id e o nome da coluna de saída
+-- Versão alinhada ao histórico remoto no Marco 5; SQL funcional inalterado.
 -- da função de aceite. O comportamento e os grants permanecem inalterados.
 
 begin;

@@ -1,4 +1,5 @@
 -- Alinha versões e vínculos à visibilidade do arquivo lógico e permite que
+-- Versão alinhada ao histórico remoto no Marco 5; SQL funcional inalterado.
 -- auditores consultem tentativas negadas que ainda não possuem file_id resolvido.
 
 begin;

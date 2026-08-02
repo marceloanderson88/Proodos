@@ -1,4 +1,5 @@
 -- Marco 1: baseline de segurança. Nenhuma tabela de negócio é criada neste marco.
+-- Versão alinhada ao histórico remoto no Marco 5; SQL funcional inalterado.
 -- Tabelas futuras no schema exposto deverão receber grants explícitos, RLS e policies
 -- na mesma migration que as criar.
 

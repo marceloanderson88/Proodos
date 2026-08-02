@@ -1,4 +1,5 @@
 -- Marco 3: fundação multi-tenant, RBAC por escopo, convites e auditoria.
+-- Versão alinhada ao histórico remoto no Marco 5; SQL funcional inalterado.
 -- Hierarquia aprovada: organização -> unidade administrativa opcional -> incubadora.
 -- O tenant ativo na UI é apenas uma preferência; toda autorização é decidida por RLS.
 
