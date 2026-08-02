@@ -3,7 +3,6 @@ insert into auth.users (
   instance_id,
   id,
   email,
-  encrypted_password,
   email_confirmed_at,
   aud,
   role,
@@ -17,7 +16,6 @@ values
     '00000000-0000-0000-0000-000000000000',
     '90000000-0000-4000-8000-000000000001',
     'admin-a@example.invalid',
-    extensions.crypt('Proodos-E2E-2026!', extensions.gen_salt('bf')),
     now(),
     'authenticated',
     'authenticated',
@@ -30,7 +28,6 @@ values
     '00000000-0000-0000-0000-000000000000',
     '90000000-0000-4000-8000-000000000002',
     'admin-b@example.invalid',
-    extensions.crypt('Proodos-E2E-2026!', extensions.gen_salt('bf')),
     now(),
     'authenticated',
     'authenticated',
@@ -40,8 +37,7 @@ values
     now()
   )
 on conflict (id) do update
-set encrypted_password = excluded.encrypted_password,
-    email_confirmed_at = excluded.email_confirmed_at,
+set email_confirmed_at = excluded.email_confirmed_at,
     raw_app_meta_data = excluded.raw_app_meta_data,
     raw_user_meta_data = excluded.raw_user_meta_data,
     updated_at = excluded.updated_at;

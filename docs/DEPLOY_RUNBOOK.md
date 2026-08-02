@@ -46,10 +46,11 @@ O workflow `.github/workflows/ci.yml` executa:
 2. scan de segredos no repositório;
 3. Supabase local mínimo;
 4. reset completo usando todas as migrations e seed;
-5. formatter, lint e TypeScript strict;
-6. unitários e pgTAP/RLS;
-7. build de produção e scan do bundle;
-8. smoke autenticado, tenant cruzado, health/readiness e acessibilidade.
+5. provisionamento de senha sintética pela Auth Admin API local, com chave administrativa restrita ao processo;
+6. formatter, lint e TypeScript strict;
+7. unitários e pgTAP/RLS;
+8. build de produção e scan do bundle;
+9. smoke autenticado, tenant cruzado, health/readiness e acessibilidade.
 
 Qualquer falha bloqueia o job. GitHub Actions de terceiros estão fixadas por SHA.
 

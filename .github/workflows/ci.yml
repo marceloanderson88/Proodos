@@ -62,6 +62,17 @@ jobs:
       - name: Recriar banco do zero
         run: pnpm exec supabase db reset --local
 
+      - name: Provisionar credenciais sintéticas do Auth
+        shell: bash
+        run: |
+          eval "$(pnpm exec supabase status -o env)"
+          ADMIN_KEY="${SECRET_KEY:-${SERVICE_ROLE_KEY:-}}"
+          test -n "$API_URL"
+          test -n "$ADMIN_KEY"
+          SUPABASE_LOCAL_URL="$API_URL" \
+            SUPABASE_LOCAL_ADMIN_KEY="$ADMIN_KEY" \
+            pnpm seed:e2e-auth
+
       - name: Formatter
         run: pnpm format:check
 

@@ -52,6 +52,8 @@ A primeira reconstrução limpa identificou uma dependência histórica na migra
 
 Depois que a reconstrução passou, o runner apontou que os scripts transacionais de RLS não emitiam um plano TAP. A suíte agora prepara a extensão `pgtap` em `000_pgtap_setup.sql`; cada arquivo declara seu plano, mantém as verificações por exceção e somente emite `pass()` depois que todas elas terminam. Os dados sintéticos continuam revertidos ao final de cada teste.
 
+O smoke autenticado seguinte demonstrou que inserir um hash manual em `auth.users` não é um contrato confiável para criar credenciais de login. O seed mantém somente identidades sintéticas; depois do reset, `provision-e2e-auth.mjs` define suas senhas pela Auth Admin API. A chave administrativa local permanece no ambiente do único processo de provisionamento, e o script rejeita qualquer URL que não seja `localhost` ou `127.0.0.1`.
+
 ## Pendências externas
 
 - criar um projeto Supabase de homologação e separar variáveis Vercel Preview;

@@ -34,6 +34,8 @@ Quando o Supabase CLI local estiver ligado:
 pnpm test:rls
 ```
 
+O seed cria identidades sintéticas sem senha. No CI, `seed:e2e-auth` define as senhas pela Auth Admin API somente contra `localhost`/`127.0.0.1`; a chave administrativa local fica restrita àquele processo e não é exportada para o build ou navegador.
+
 Os testes E2E requerem os navegadores do Playwright instalados e uma aplicação em execução:
 
 ```powershell
