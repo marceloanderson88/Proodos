@@ -150,3 +150,15 @@ O bootstrap inicial é uma inserção operacional manual pelo PostgreSQL na allo
 **Status:** Aceita e implementada no Marco 3
 **Decisão:** armazenar somente SHA-256 do token de convite; aceite e criação de tenant são transações `SECURITY DEFINER` pequenas, com `search_path=''`, autenticação interna e grants explícitos.
 **Consequências:** os warnings do advisor para essas duas RPCs são intencionais e revisados; token bruto nunca entra no banco, auditoria ou bundle.
+
+## DEC-024 — Ciclo de vida de arquivos explícito e fail-closed
+
+**Status:** Aceita e implementada no Marco 4
+**Decisão:** arquivos percorrem uma máquina de estados validada no TypeScript e no PostgreSQL. Somente `available` é visível com `file.read`; estados internos exigem `file.manage`.
+**Consequências:** o cliente não recebe grant para alterar `status`, IDs do provedor, versões, sessões ou logs. As rotas autenticam e validam o tenant, mas respondem `503` enquanto a feature flag estiver desativada e `501` se for ativada sem adapter.
+
+## DEC-025 — Escopo tipado de arquivo antes dos módulos de negócio
+
+**Status:** Aceita e implementada no Marco 4
+**Decisão:** `files` e `file_links` possuem FKs explícitas para organização, unidade ou incubadora. Não foi criado `resource_type/resource_id` genérico.
+**Consequências:** programas, startups, conteúdos, planos e entregas acrescentarão colunas/FKs próprias quando seus agregados existirem. Conteúdo continuará relacionado a trilhas e ações sem dependência obrigatória de CERNE.

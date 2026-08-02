@@ -1,6 +1,6 @@
 # Proodos — Plataforma Sertão Maker
 
-Fundação técnica da plataforma de gestão de incubadoras descrita em [`docs/SDD.md`](docs/SDD.md). O repositório está concluído até o **Marco 3**: autenticação SSR, tenancy, RBAC por escopo, RLS, convites hasheados, auditoria e seleção de organização estão implementados. Os módulos de negócio permanecem para os marcos seguintes.
+Fundação técnica da plataforma de gestão de incubadoras descrita em [`docs/SDD.md`](docs/SDD.md). O repositório está concluído até o **Marco 4**: autenticação, tenancy, RBAC/RLS e a fundação de metadados para arquivos grandes estão implementados. O adapter Google Drive e os módulos de negócio permanecem desativados até seus respectivos gates.
 
 ## Requisitos locais
 
@@ -41,7 +41,7 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-## Variáveis até o Marco 3
+## Variáveis até o Marco 4
 
 | Variável                               | Obrigatória | Uso                                               |
 | -------------------------------------- | ----------- | ------------------------------------------------- |
@@ -50,7 +50,8 @@ pnpm test:e2e
 | `NEXT_PUBLIC_SUPABASE_URL`             | Sim         | URL pública do projeto Supabase.                  |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Sim         | Chave publicável; nunca usar secret/service role. |
 | `APP_BASE_URL`                         | Recomendado | URL canônica por ambiente.                        |
+| `GOOGLE_DRIVE_UPLOAD_ENABLED`          | Não         | Deve permanecer `false` até concluir B-03/B-04.   |
 
 No Supabase Auth, registre `http://localhost:3000/auth/callback` e a URL equivalente da Vercel entre os redirects permitidos. Para Google, configure o provider no Supabase e o callback fornecido pelo Supabase no Google Cloud. Nenhuma service role ou secret key deve usar prefixo `NEXT_PUBLIC_`.
 
-O Marco 3 não adiciona variáveis de ambiente. Consulte [`docs/MARCO_3_IMPLEMENTATION.md`](docs/MARCO_3_IMPLEMENTATION.md) para modelo, migrations, políticas, bootstrap, testes e limitações.
+Não configure credenciais Google enquanto a flag estiver falsa. Consulte [`docs/MARCO_4_IMPLEMENTATION.md`](docs/MARCO_4_IMPLEMENTATION.md) para contratos, migrations, policies, testes e limitações.

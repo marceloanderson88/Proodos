@@ -8,15 +8,15 @@ Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos
 
 ## 2. Marcos
 
-| Marco | Resultado                                                          | Estado                                             |
-| ----- | ------------------------------------------------------------------ | -------------------------------------------------- |
-| M0    | Requisitos, arquitetura, decisões, lacunas e plano versionados     | Concluído nesta etapa                              |
-| M1    | Scaffold Next.js, qualidade, design system e shell público/privado | Concluído em 02/08/2026                            |
-| M2    | Autenticação completa e perfil seguro                              | Concluído em 02/08/2026                            |
-| M3    | Fundação multi-tenant, RBAC, RLS e auditoria                       | Concluído em 02/08/2026                            |
-| M4    | Contratos de arquivos/Drive e shell privado integrado              | Planejado; integração real bloqueada por B-03/B-04 |
-| M5    | Segurança, testes cross-tenant, CI e readiness para deploy         | Planejado                                          |
-| M6    | Primeiro módulo vertical do MVP                                    | Fora desta etapa; selecionar depois                |
+| Marco | Resultado                                                          | Estado                                   |
+| ----- | ------------------------------------------------------------------ | ---------------------------------------- |
+| M0    | Requisitos, arquitetura, decisões, lacunas e plano versionados     | Concluído nesta etapa                    |
+| M1    | Scaffold Next.js, qualidade, design system e shell público/privado | Concluído em 02/08/2026                  |
+| M2    | Autenticação completa e perfil seguro                              | Concluído em 02/08/2026                  |
+| M3    | Fundação multi-tenant, RBAC, RLS e auditoria                       | Concluído em 02/08/2026                  |
+| M4    | Contratos de arquivos/Drive e shell privado integrado              | Concluído sem adapter real em 02/08/2026 |
+| M5    | Segurança, testes cross-tenant, CI e readiness para deploy         | Planejado                                |
+| M6    | Primeiro módulo vertical do MVP                                    | Fora desta etapa; selecionar depois      |
 
 ## 3. Sequência de implementação
 
@@ -164,6 +164,8 @@ Este plano nasceu na Fase A. O Marco 1 foi implementado em 02/08/2026; os marcos
 - Rotas não aceitam `provider_file_id`/URL como prova de acesso.
 - Falhas parciais têm estado retentável.
 - Spike está documentado antes de ativar upload real.
+
+**Resultado:** fundação concluída em 02/08/2026. Contratos, fake, schemas Zod, metadados, estados, RLS, testes cross-tenant, rotas fail-closed e painel de configuração real foram implementados. O adapter e o spike com Google Drive não foram iniciados porque B-03/B-04 permanecem abertos; `GOOGLE_DRIVE_UPLOAD_ENABLED` fica falso. Evidências em [MARCO_4_IMPLEMENTATION.md](./MARCO_4_IMPLEMENTATION.md).
 
 ### M5 — Hardening, CI e deploy readiness
 

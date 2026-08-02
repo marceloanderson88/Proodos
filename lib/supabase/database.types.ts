@@ -55,6 +55,295 @@ export type Database = {
           },
         ];
       };
+      file_access_logs: {
+        Row: {
+          created_at: string;
+          file_id: string | null;
+          id: number;
+          ip_hash: string | null;
+          metadata: Json;
+          operation: Database["public"]["Enums"]["file_access_operation"];
+          organization_id: string;
+          reason_code: string | null;
+          request_id: string | null;
+          result: Database["public"]["Enums"]["file_access_result"];
+          user_agent: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          file_id?: string | null;
+          id?: never;
+          ip_hash?: string | null;
+          metadata?: Json;
+          operation: Database["public"]["Enums"]["file_access_operation"];
+          organization_id: string;
+          reason_code?: string | null;
+          request_id?: string | null;
+          result: Database["public"]["Enums"]["file_access_result"];
+          user_agent?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          file_id?: string | null;
+          id?: never;
+          ip_hash?: string | null;
+          metadata?: Json;
+          operation?: Database["public"]["Enums"]["file_access_operation"];
+          organization_id?: string;
+          reason_code?: string | null;
+          request_id?: string | null;
+          result?: Database["public"]["Enums"]["file_access_result"];
+          user_agent?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "file_access_logs_file_same_org";
+            columns: ["organization_id", "file_id"];
+            isOneToOne: false;
+            referencedRelation: "files";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "file_access_logs_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      file_links: {
+        Row: {
+          classification_override:
+            Database["public"]["Enums"]["file_classification"] | null;
+          created_at: string;
+          created_by: string;
+          file_id: string;
+          id: string;
+          incubator_id: string | null;
+          label: string | null;
+          organization_id: string;
+          purpose: Database["public"]["Enums"]["file_link_purpose"];
+          unit_id: string | null;
+        };
+        Insert: {
+          classification_override?:
+            Database["public"]["Enums"]["file_classification"] | null;
+          created_at?: string;
+          created_by: string;
+          file_id: string;
+          id?: string;
+          incubator_id?: string | null;
+          label?: string | null;
+          organization_id: string;
+          purpose: Database["public"]["Enums"]["file_link_purpose"];
+          unit_id?: string | null;
+        };
+        Update: {
+          classification_override?:
+            Database["public"]["Enums"]["file_classification"] | null;
+          created_at?: string;
+          created_by?: string;
+          file_id?: string;
+          id?: string;
+          incubator_id?: string | null;
+          label?: string | null;
+          organization_id?: string;
+          purpose?: Database["public"]["Enums"]["file_link_purpose"];
+          unit_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "file_links_file_same_org";
+            columns: ["organization_id", "file_id"];
+            isOneToOne: false;
+            referencedRelation: "files";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "file_links_incubator_same_org";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "file_links_unit_same_org";
+            columns: ["organization_id", "unit_id"];
+            isOneToOne: false;
+            referencedRelation: "organization_units";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      file_versions: {
+        Row: {
+          checksum: string | null;
+          checksum_algorithm: string | null;
+          created_at: string;
+          created_by: string;
+          file_id: string;
+          id: string;
+          mime_type: string;
+          organization_id: string;
+          provider_file_id: string;
+          provider_revision_id: string | null;
+          size_bytes: number;
+          superseded_at: string | null;
+          version_number: number;
+        };
+        Insert: {
+          checksum?: string | null;
+          checksum_algorithm?: string | null;
+          created_at?: string;
+          created_by: string;
+          file_id: string;
+          id?: string;
+          mime_type: string;
+          organization_id: string;
+          provider_file_id: string;
+          provider_revision_id?: string | null;
+          size_bytes: number;
+          superseded_at?: string | null;
+          version_number: number;
+        };
+        Update: {
+          checksum?: string | null;
+          checksum_algorithm?: string | null;
+          created_at?: string;
+          created_by?: string;
+          file_id?: string;
+          id?: string;
+          mime_type?: string;
+          organization_id?: string;
+          provider_file_id?: string;
+          provider_revision_id?: string | null;
+          size_bytes?: number;
+          superseded_at?: string | null;
+          version_number?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "file_versions_file_same_org";
+            columns: ["organization_id", "file_id"];
+            isOneToOne: false;
+            referencedRelation: "files";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      files: {
+        Row: {
+          checksum: string | null;
+          checksum_algorithm: string | null;
+          classification: Database["public"]["Enums"]["file_classification"];
+          created_at: string;
+          created_by: string;
+          current_version_number: number;
+          deleted_at: string | null;
+          display_name: string;
+          expected_size_bytes: number;
+          failure_code: string | null;
+          failure_detail: string | null;
+          id: string;
+          incubator_id: string | null;
+          last_reconciled_at: string | null;
+          mime_type: string;
+          organization_id: string;
+          original_name: string;
+          provider: Database["public"]["Enums"]["file_provider"];
+          provider_drive_id: string | null;
+          provider_file_id: string | null;
+          provider_parent_id: string | null;
+          size_bytes: number | null;
+          status: Database["public"]["Enums"]["file_status"];
+          unit_id: string | null;
+          updated_at: string;
+          upload_expires_at: string | null;
+        };
+        Insert: {
+          checksum?: string | null;
+          checksum_algorithm?: string | null;
+          classification?: Database["public"]["Enums"]["file_classification"];
+          created_at?: string;
+          created_by: string;
+          current_version_number?: number;
+          deleted_at?: string | null;
+          display_name: string;
+          expected_size_bytes: number;
+          failure_code?: string | null;
+          failure_detail?: string | null;
+          id?: string;
+          incubator_id?: string | null;
+          last_reconciled_at?: string | null;
+          mime_type: string;
+          organization_id: string;
+          original_name: string;
+          provider?: Database["public"]["Enums"]["file_provider"];
+          provider_drive_id?: string | null;
+          provider_file_id?: string | null;
+          provider_parent_id?: string | null;
+          size_bytes?: number | null;
+          status?: Database["public"]["Enums"]["file_status"];
+          unit_id?: string | null;
+          updated_at?: string;
+          upload_expires_at?: string | null;
+        };
+        Update: {
+          checksum?: string | null;
+          checksum_algorithm?: string | null;
+          classification?: Database["public"]["Enums"]["file_classification"];
+          created_at?: string;
+          created_by?: string;
+          current_version_number?: number;
+          deleted_at?: string | null;
+          display_name?: string;
+          expected_size_bytes?: number;
+          failure_code?: string | null;
+          failure_detail?: string | null;
+          id?: string;
+          incubator_id?: string | null;
+          last_reconciled_at?: string | null;
+          mime_type?: string;
+          organization_id?: string;
+          original_name?: string;
+          provider?: Database["public"]["Enums"]["file_provider"];
+          provider_drive_id?: string | null;
+          provider_file_id?: string | null;
+          provider_parent_id?: string | null;
+          size_bytes?: number | null;
+          status?: Database["public"]["Enums"]["file_status"];
+          unit_id?: string | null;
+          updated_at?: string;
+          upload_expires_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "files_incubator_same_org";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "files_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "files_unit_same_org";
+            columns: ["organization_id", "unit_id"];
+            isOneToOne: false;
+            referencedRelation: "organization_units";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
       incubators: {
         Row: {
           created_at: string;
@@ -549,6 +838,71 @@ export type Database = {
           },
         ];
       };
+      upload_sessions: {
+        Row: {
+          acknowledged_offset_bytes: number;
+          attempt_count: number;
+          created_at: string;
+          created_by: string;
+          error_code: string | null;
+          error_detail: string | null;
+          expected_size_bytes: number;
+          expires_at: string;
+          file_id: string;
+          id: string;
+          idempotency_key: string;
+          last_attempt_at: string | null;
+          organization_id: string;
+          provider_session_reference_hash: string | null;
+          status: Database["public"]["Enums"]["upload_session_status"];
+          updated_at: string;
+        };
+        Insert: {
+          acknowledged_offset_bytes?: number;
+          attempt_count?: number;
+          created_at?: string;
+          created_by: string;
+          error_code?: string | null;
+          error_detail?: string | null;
+          expected_size_bytes: number;
+          expires_at: string;
+          file_id: string;
+          id?: string;
+          idempotency_key: string;
+          last_attempt_at?: string | null;
+          organization_id: string;
+          provider_session_reference_hash?: string | null;
+          status?: Database["public"]["Enums"]["upload_session_status"];
+          updated_at?: string;
+        };
+        Update: {
+          acknowledged_offset_bytes?: number;
+          attempt_count?: number;
+          created_at?: string;
+          created_by?: string;
+          error_code?: string | null;
+          error_detail?: string | null;
+          expected_size_bytes?: number;
+          expires_at?: string;
+          file_id?: string;
+          id?: string;
+          idempotency_key?: string;
+          last_attempt_at?: string | null;
+          organization_id?: string;
+          provider_session_reference_hash?: string | null;
+          status?: Database["public"]["Enums"]["upload_session_status"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "upload_sessions_file_same_org";
+            columns: ["organization_id", "file_id"];
+            isOneToOne: false;
+            referencedRelation: "files";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
       user_preferences: {
         Row: {
           active_organization_id: string | null;
@@ -602,10 +956,57 @@ export type Database = {
       };
     };
     Enums: {
+      file_access_operation:
+        | "metadata"
+        | "preview"
+        | "download"
+        | "upload_session"
+        | "complete"
+        | "trash"
+        | "restore"
+        | "reconcile";
+      file_access_result: "allowed" | "denied" | "failed";
+      file_classification:
+        "public" | "internal" | "confidential" | "restricted";
+      file_link_purpose:
+        | "organization_document"
+        | "unit_document"
+        | "incubator_document"
+        | "program_document"
+        | "startup_document"
+        | "delivery"
+        | "diagnostic_evidence"
+        | "mentoring"
+        | "content_asset"
+        | "report"
+        | "other";
+      file_provider: "google_drive";
+      file_status:
+        | "pending"
+        | "uploading"
+        | "validating"
+        | "available"
+        | "quarantined"
+        | "failed"
+        | "trash_pending"
+        | "trashed"
+        | "restore_pending"
+        | "missing"
+        | "purge_pending"
+        | "purged";
       invitation_status: "pending" | "accepted" | "revoked" | "expired";
       membership_status: "invited" | "active" | "suspended" | "removed";
       organization_status: "active" | "inactive" | "suspended";
       role_scope_type: "organization" | "unit" | "incubator";
+      upload_session_status:
+        | "pending"
+        | "ready"
+        | "uploading"
+        | "validating"
+        | "completed"
+        | "expired"
+        | "failed"
+        | "cancelled";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -733,10 +1134,60 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      file_access_operation: [
+        "metadata",
+        "preview",
+        "download",
+        "upload_session",
+        "complete",
+        "trash",
+        "restore",
+        "reconcile",
+      ],
+      file_access_result: ["allowed", "denied", "failed"],
+      file_classification: ["public", "internal", "confidential", "restricted"],
+      file_link_purpose: [
+        "organization_document",
+        "unit_document",
+        "incubator_document",
+        "program_document",
+        "startup_document",
+        "delivery",
+        "diagnostic_evidence",
+        "mentoring",
+        "content_asset",
+        "report",
+        "other",
+      ],
+      file_provider: ["google_drive"],
+      file_status: [
+        "pending",
+        "uploading",
+        "validating",
+        "available",
+        "quarantined",
+        "failed",
+        "trash_pending",
+        "trashed",
+        "restore_pending",
+        "missing",
+        "purge_pending",
+        "purged",
+      ],
       invitation_status: ["pending", "accepted", "revoked", "expired"],
       membership_status: ["invited", "active", "suspended", "removed"],
       organization_status: ["active", "inactive", "suspended"],
       role_scope_type: ["organization", "unit", "incubator"],
+      upload_session_status: [
+        "pending",
+        "ready",
+        "uploading",
+        "validating",
+        "completed",
+        "expired",
+        "failed",
+        "cancelled",
+      ],
     },
   },
 } as const;

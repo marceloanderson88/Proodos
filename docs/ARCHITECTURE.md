@@ -59,6 +59,7 @@ flowchart LR
 - Upload resumível direto para uma URL de sessão curta, criada por backend após autorização.
 - Acesso mediado por ID interno do arquivo.
 - Reconciliação periódica de arquivos pendentes, ausentes ou alterados externamente.
+- No Marco 4, somente contratos, fake, metadados e rotas fail-closed existem; nenhum SDK ou segredo Google foi adicionado.
 
 ## 4. Estrutura de diretórios proposta
 
@@ -242,6 +243,12 @@ As funções são pequenas, usam nomes qualificados e `search_path=''`. Os dois 
 Os contextos `programs`, `startups`, `assessments`, `action-plans`, `contents`, `tasks`, `mentoring`, `indicators` e `methodologies` serão adicionados por migrations e features independentes. O shell pode exibir itens de navegação desabilitados ou páginas de placeholder, mas não simular persistência real. Dados fictícios do dashboard devem ser marcados como demonstração.
 
 CERNE será um pacote de dados/metodologia opcional sobre o contexto genérico `methodologies`. Relações metodológicas ficam em tabela associativa; nenhuma FK `cerne_* not null` poderá existir em programas, atividades, conteúdos, mentorias ou planos.
+
+### 8.1 Fundação de arquivos implementada
+
+`files` concentra escopo, classificação e estado; `file_versions` preserva versões físicas; `file_links` usa somente destinos com FKs disponíveis; `upload_sessions` armazena idempotência, offset e hash de correlação, nunca a URL resumível; `file_access_logs` é append-only. O helper `private.can_view_file` impede que usuários somente leitores vejam versões ou vínculos antes de `available`.
+
+As rotas `/api/v1/files/upload-session`, `/api/v1/files/{id}/complete` e `/api/v1/files/{id}/access` existem como contratos seguros. Elas não usam o fake em produção e não fazem mutações enquanto a integração estiver desativada.
 
 ## 9. Erros, observabilidade e auditoria
 

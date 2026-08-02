@@ -255,3 +255,24 @@ Antes da implementação real:
 6. testar limites de streaming na Vercel;
 7. decidir se Cloud Run é necessário para classes/tamanhos específicos;
 8. registrar resultados em decisão arquitetural.
+
+## 14. Estado implementado no Marco 4
+
+A fundação foi implementada sem ativar o provedor:
+
+- `LargeFileStorageService` e fake in-memory, usado somente por testes;
+- schemas Zod para sessão, conclusão, acesso, escopo e operações;
+- máquina de estados equivalente no TypeScript e em trigger PostgreSQL;
+- `files`, `file_versions`, `file_links`, `file_access_logs` e `upload_sessions` com RLS;
+- permissões `file.read`, `file.manage` e `file.audit` por escopo;
+- rotas autenticadas e fail-closed atrás de `GOOGLE_DRIVE_UPLOAD_ENABLED=false`;
+- painel em Configurações com contagem real, sem dados demonstrativos.
+
+Decisões confirmadas na revisão das APIs vigentes:
+
+- uploads retomáveis devem interpretar `308 Resume Incomplete` e o header `Range`, sem presumir o último offset recebido;
+- operações em Shared Drive usarão `supportsAllDrives=true`; buscas serão limitadas a `corpora=drive`, `driveId` e `includeItemsFromAllDrives=true`;
+- o identificador interno `file_id` será salvo em `appProperties` para reconciliação, sem transferir autorização ao Drive;
+- lixeira é reversível por janela limitada pelo Drive, mas a retenção institucional continua sendo B-04.
+
+Referências: [uploads retomáveis](https://developers.google.com/workspace/drive/api/guides/manage-uploads), [suporte a Shared Drives](https://developers.google.com/workspace/drive/api/guides/enable-shareddrives), [propriedades privadas do aplicativo](https://developers.google.com/workspace/drive/api/guides/properties) e [exclusão/restauração](https://developers.google.com/workspace/drive/api/guides/delete).

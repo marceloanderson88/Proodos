@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { ModulePlaceholder } from "@/components/module-placeholder";
+import { FileIntegrationFoundation } from "@/components/files/file-integration-foundation";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ const modules = {
   conteudos: {
     title: "Conteúdos",
     description:
-      "A biblioteca formativa será ligada às ações do plano de forma muitos-para-muitos, sem criar um LMS completo.",
+      "A biblioteca formativa fará parte de trilhas configuráveis e poderá ser ligada às ações do plano de forma muitos-para-muitos, sem criar um LMS completo.",
   },
   indicadores: {
     title: "Indicadores",
@@ -65,6 +66,9 @@ export default async function ModulePage({
 }) {
   const { organizationSlug, module } = await params;
   if (!isModuleSlug(module)) notFound();
+  if (module === "configuracoes") {
+    return <FileIntegrationFoundation organizationSlug={organizationSlug} />;
+  }
   return (
     <ModulePlaceholder
       organizationSlug={organizationSlug}
