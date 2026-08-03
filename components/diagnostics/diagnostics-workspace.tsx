@@ -1,10 +1,4 @@
-import {
-  Activity,
-  BadgeCheck,
-  ClipboardCheck,
-  Plus,
-  Send,
-} from "lucide-react";
+import { Activity, BadgeCheck, ClipboardCheck, Plus, Send } from "lucide-react";
 
 import {
   addDiagnosticCriterionAction,
