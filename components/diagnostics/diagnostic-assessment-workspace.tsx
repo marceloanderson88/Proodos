@@ -10,7 +10,10 @@ import {
 import Link from "next/link";
 
 import {
+  finalizeDiagnosticAssessmentAction,
+  reopenDiagnosticAssessmentAction,
   saveDiagnosticResponseAction,
+  submitDiagnosticAssessmentAction,
   validateDiagnosticResponseAction,
 } from "@/app/(private)/o/[organizationSlug]/i/[incubatorSlug]/diagnosticos/actions";
 import { FeedbackBanner } from "@/components/m6/feedback-banner";
@@ -83,6 +86,21 @@ export function DiagnosticAssessmentWorkspace({
     organizationSlug,
     incubatorSlug,
   );
+  const submitAssessment = submitDiagnosticAssessmentAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const reopenAssessment = reopenDiagnosticAssessmentAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const finalizeAssessment = finalizeDiagnosticAssessmentAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
   const answered = responses.filter(
     (response) => response.self_value !== null || response.is_not_applicable,
   ).length;
@@ -94,6 +112,10 @@ export function DiagnosticAssessmentWorkspace({
   const activeTriggers = triggerResults.filter(
     (result) => result.status === "triggered",
   );
+  const canRespond = ["draft", "in_progress"].includes(assessment.status);
+  const canValidate = ["submitted", "under_review"].includes(assessment.status);
+  const canSubmit = criteria.length > 0 && answered === criteria.length;
+  const canFinalize = criteria.length > 0 && validated === criteria.length;
 
   return (
     <div className="page-enter space-y-6">
@@ -146,6 +168,58 @@ export function DiagnosticAssessmentWorkspace({
         </div>
       </header>
       <FeedbackBanner success={success} error={error} />
+
+      <section className="dashboard-card flex flex-col gap-4 rounded-[1.5rem] p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-[0.65rem] font-black tracking-[0.12em] text-[#9a2930] uppercase">
+            Fluxo da avaliação
+          </p>
+          <h2 className="mt-1 font-black text-[#481014]">
+            {canRespond && "Preencha, revise e envie a autoavaliação."}
+            {canValidate &&
+              "A autoavaliação foi enviada e aguarda validação oficial."}
+            {assessment.status === "validated" &&
+              "Validação final concluída e preservada no histórico."}
+            {assessment.status === "cancelled" &&
+              "Esta avaliação foi cancelada."}
+          </h2>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {canRespond && (
+            <form action={submitAssessment}>
+              <input type="hidden" name="assessmentId" value={assessment.id} />
+              <input type="hidden" name="returnTo" value={currentPath} />
+              <SubmitButton disabled={!canSubmit}>
+                <ClipboardCheck className="size-4" /> Enviar para validação
+              </SubmitButton>
+            </form>
+          )}
+          {canValidate && (
+            <>
+              <form action={reopenAssessment}>
+                <input
+                  type="hidden"
+                  name="assessmentId"
+                  value={assessment.id}
+                />
+                <input type="hidden" name="returnTo" value={currentPath} />
+                <SubmitButton>Reabrir para ajustes</SubmitButton>
+              </form>
+              <form action={finalizeAssessment}>
+                <input
+                  type="hidden"
+                  name="assessmentId"
+                  value={assessment.id}
+                />
+                <input type="hidden" name="returnTo" value={currentPath} />
+                <SubmitButton disabled={!canFinalize}>
+                  <BadgeCheck className="size-4" /> Concluir validação
+                </SubmitButton>
+              </form>
+            </>
+          )}
+        </div>
+      </section>
 
       <section className="dashboard-card rounded-[1.5rem] p-5">
         <div className="flex items-center justify-between gap-4 text-sm">
@@ -342,7 +416,11 @@ export function DiagnosticAssessmentWorkspace({
                                 placeholder="Descreva o documento ou registro comprobatório"
                               />
                             </Field>
-                            <SubmitButton>Salvar resposta</SubmitButton>
+                            <SubmitButton disabled={!canRespond}>
+                              {canRespond
+                                ? "Salvar resposta"
+                                : "Resposta bloqueada"}
+                            </SubmitButton>
                           </form>
                           <form
                             action={validateResponse}
@@ -384,7 +462,7 @@ export function DiagnosticAssessmentWorkspace({
                                 defaultValue={scalar(
                                   response?.validated_value ?? null,
                                 )}
-                                disabled={!response}
+                                disabled={!response || !canValidate}
                                 required
                               >
                                 <option value="">Selecione</option>
@@ -406,11 +484,11 @@ export function DiagnosticAssessmentWorkspace({
                                 className={`${inputClassName} min-h-28`}
                                 name="evaluatorComment"
                                 defaultValue={response?.evaluator_comment ?? ""}
-                                disabled={!response}
+                                disabled={!response || !canValidate}
                                 required
                               />
                             </Field>
-                            <SubmitButton disabled={!response}>
+                            <SubmitButton disabled={!response || !canValidate}>
                               Validar sem alterar a resposta
                             </SubmitButton>
                           </form>

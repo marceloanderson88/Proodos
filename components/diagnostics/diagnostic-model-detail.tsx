@@ -4,14 +4,25 @@ import {
   BarChart3,
   CheckCircle2,
   ClipboardList,
+  CopyPlus,
+  Plus,
   Send,
   ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 
-import { publishDiagnosticTemplateAction } from "@/app/(private)/o/[organizationSlug]/i/[incubatorSlug]/diagnosticos/actions";
+import {
+  addDiagnosticCriterionAction,
+  addDiagnosticDimensionAction,
+  duplicateDiagnosticTemplateAction,
+  publishDiagnosticTemplateAction,
+} from "@/app/(private)/o/[organizationSlug]/i/[incubatorSlug]/diagnosticos/actions";
 import { FeedbackBanner } from "@/components/m6/feedback-banner";
-import { SubmitButton } from "@/components/m6/form-controls";
+import {
+  Field,
+  inputClassName,
+  SubmitButton,
+} from "@/components/m6/form-controls";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Template = Database["public"]["Tables"]["diagnostic_templates"]["Row"];
@@ -51,6 +62,21 @@ export function DiagnosticModelDetail({
 }) {
   const base = `/o/${organizationSlug}/i/${incubatorSlug}/diagnosticos`;
   const publish = publishDiagnosticTemplateAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const addDimension = addDiagnosticDimensionAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const addCriterion = addDiagnosticCriterionAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const duplicate = duplicateDiagnosticTemplateAction.bind(
     null,
     organizationSlug,
     incubatorSlug,
@@ -102,14 +128,40 @@ export function DiagnosticModelDetail({
             {template.description || "Sem descrição."}
           </p>
         </div>
-        {template.status === "draft" && (
-          <form action={publish}>
-            <input type="hidden" name="templateId" value={template.id} />
-            <SubmitButton disabled={!isReady}>
-              <Send className="size-4" /> Publicar versão
-            </SubmitButton>
-          </form>
-        )}
+        <div className="flex flex-wrap gap-3">
+          {template.status === "draft" && (
+            <form action={publish}>
+              <input type="hidden" name="templateId" value={template.id} />
+              <SubmitButton disabled={!isReady}>
+                <Send className="size-4" /> Publicar versão
+              </SubmitButton>
+            </form>
+          )}
+          {template.status === "published" && (
+            <form action={duplicate} className="flex flex-wrap items-end gap-2">
+              <input type="hidden" name="templateId" value={template.id} />
+              <label className="grid gap-1 text-xs font-black text-[#5e4542]">
+                Rótulo da nova versão
+                <input
+                  name="versionLabel"
+                  placeholder="Automático"
+                  className={`${inputClassName} min-w-40`}
+                />
+              </label>
+              <label className="grid gap-1 text-xs font-black text-[#5e4542]">
+                Motivo da revisão
+                <input
+                  name="changelog"
+                  placeholder="Ex.: ajustes de critérios"
+                  className={`${inputClassName} min-w-56`}
+                />
+              </label>
+              <SubmitButton>
+                <CopyPlus className="size-4" /> Criar nova versão
+              </SubmitButton>
+            </form>
+          )}
+        </div>
       </header>
       <FeedbackBanner success={success} error={error} />
 
@@ -153,6 +205,230 @@ export function DiagnosticModelDetail({
           );
         })}
       </section>
+
+      {template.status === "draft" && (
+        <section className="grid gap-5 xl:grid-cols-[0.82fr_1.18fr]">
+          <form
+            action={addDimension}
+            className="dashboard-card rounded-[1.6rem] p-6"
+          >
+            <input type="hidden" name="templateId" value={template.id} />
+            <div className="flex items-start gap-3">
+              <span className="grid size-10 place-items-center rounded-xl bg-[#f7e2d4] text-[#8a141b]">
+                <Plus className="size-5" />
+              </span>
+              <div>
+                <h2 className="text-xl font-black text-[#481014]">
+                  Nova dimensão
+                </h2>
+                <p className="mt-1 text-sm text-[#806f6b]">
+                  Organize o diagnóstico em eixos que, juntos, somem 100%.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 grid gap-4 sm:grid-cols-[8rem_1fr]">
+              <Field label="Código" name="dimension-code">
+                <input
+                  id="dimension-code"
+                  name="code"
+                  placeholder="D1"
+                  required
+                  className={inputClassName}
+                />
+              </Field>
+              <Field label="Nome" name="dimension-name">
+                <input
+                  id="dimension-name"
+                  name="name"
+                  placeholder="Estratégia e mercado"
+                  required
+                  className={inputClassName}
+                />
+              </Field>
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_8rem]">
+              <Field label="Descrição" name="dimension-description">
+                <textarea
+                  id="dimension-description"
+                  name="description"
+                  rows={3}
+                  className={inputClassName}
+                />
+              </Field>
+              <Field label="Peso (%)" name="dimension-weight">
+                <input
+                  id="dimension-weight"
+                  name="weight"
+                  type="number"
+                  min="0.001"
+                  max="100"
+                  step="0.001"
+                  required
+                  className={inputClassName}
+                />
+              </Field>
+            </div>
+            <label className="mt-4 flex items-center gap-3 text-sm font-bold text-[#5e4542]">
+              <input
+                type="checkbox"
+                name="isEssential"
+                className="size-4 accent-[#8a141b]"
+              />
+              Dimensão essencial para a leitura de maturidade
+            </label>
+            <div className="mt-5 flex justify-end">
+              <SubmitButton>Adicionar dimensão</SubmitButton>
+            </div>
+          </form>
+
+          <form
+            action={addCriterion}
+            className="dashboard-card rounded-[1.6rem] p-6"
+          >
+            <input type="hidden" name="templateId" value={template.id} />
+            <div className="flex items-start gap-3">
+              <span className="grid size-10 place-items-center rounded-xl bg-[#f7e2d4] text-[#8a141b]">
+                <ClipboardList className="size-5" />
+              </span>
+              <div>
+                <h2 className="text-xl font-black text-[#481014]">
+                  Novo critério
+                </h2>
+                <p className="mt-1 text-sm text-[#806f6b]">
+                  Cada critério usa a escala de maturidade de 0 a 4 com rubrica
+                  explícita.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 grid gap-4 sm:grid-cols-[1fr_8rem_7rem]">
+              <Field label="Dimensão" name="criterion-dimension">
+                <select
+                  id="criterion-dimension"
+                  name="dimensionId"
+                  required
+                  className={inputClassName}
+                >
+                  <option value="">Selecione</option>
+                  {dimensions.map((dimension) => (
+                    <option key={dimension.id} value={dimension.id}>
+                      {dimension.code} · {dimension.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Código" name="criterion-code">
+                <input
+                  id="criterion-code"
+                  name="code"
+                  placeholder="EM1"
+                  required
+                  className={inputClassName}
+                />
+              </Field>
+              <Field label="Peso" name="criterion-weight">
+                <input
+                  id="criterion-weight"
+                  name="weight"
+                  type="number"
+                  min="0.001"
+                  step="0.001"
+                  defaultValue="1"
+                  required
+                  className={inputClassName}
+                />
+              </Field>
+            </div>
+            <div className="mt-4 grid gap-4">
+              <Field label="Pergunta / critério" name="criterion-prompt">
+                <input
+                  id="criterion-prompt"
+                  name="prompt"
+                  required
+                  className={inputClassName}
+                />
+              </Field>
+              <Field label="Ajuda ao respondente" name="criterion-help">
+                <textarea
+                  id="criterion-help"
+                  name="helpText"
+                  rows={2}
+                  className={inputClassName}
+                />
+              </Field>
+            </div>
+            <fieldset className="mt-5 rounded-2xl border border-[#751118]/10 bg-[#fcf8f5] p-4">
+              <legend className="px-2 text-sm font-black text-[#481014]">
+                Rubrica de maturidade
+              </legend>
+              <div className="grid gap-3">
+                {[
+                  "Inexistente",
+                  "Iniciado",
+                  "Estruturado",
+                  "Validado",
+                  "Sistematizado",
+                ].map((label, score) => (
+                  <label
+                    key={label}
+                    className="grid gap-2 sm:grid-cols-[7rem_1fr] sm:items-center"
+                  >
+                    <span className="text-xs font-black text-[#6f201f]">
+                      {score} · {label}
+                    </span>
+                    <input
+                      name={`rubric${score}`}
+                      required
+                      placeholder={`Descreva o que caracteriza o nível ${score}`}
+                      className={inputClassName}
+                    />
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <label className="flex items-center gap-3 text-sm font-bold text-[#5e4542]">
+                <input
+                  type="checkbox"
+                  name="allowsNotApplicable"
+                  className="size-4 accent-[#8a141b]"
+                />
+                Permitir “não se aplica”
+              </label>
+              <label className="flex items-center gap-3 text-sm font-bold text-[#5e4542]">
+                <input
+                  type="checkbox"
+                  name="requiresNotApplicableJustification"
+                  defaultChecked
+                  className="size-4 accent-[#8a141b]"
+                />
+                Exigir justificativa para N/A
+              </label>
+              <Field
+                label="Evidência obrigatória a partir da nota"
+                name="criterion-evidence"
+              >
+                <select
+                  id="criterion-evidence"
+                  name="evidenceRequiredFrom"
+                  className={inputClassName}
+                >
+                  <option value="">Não exigir</option>
+                  <option value="0">0 ou superior</option>
+                  <option value="1">1 ou superior</option>
+                  <option value="2">2 ou superior</option>
+                  <option value="3">3 ou superior</option>
+                  <option value="4">Somente nota 4</option>
+                </select>
+              </Field>
+            </div>
+            <div className="mt-5 flex justify-end">
+              <SubmitButton disabled={dimensions.length === 0}>
+                Adicionar critério
+              </SubmitButton>
+            </div>
+          </form>
+        </section>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[1.55fr_0.65fr]">
         <section className="space-y-4">

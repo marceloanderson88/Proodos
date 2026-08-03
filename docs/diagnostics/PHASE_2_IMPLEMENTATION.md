@@ -26,6 +26,9 @@ Cada nova incubadora recebe uma cópia publicada e imutável do modelo padrão. 
 7. Pontuação por dimensão e geral na escala 0–100.
 8. Classificação, gap médio, cobertura de evidências e gatilhos calculados no banco.
 9. Histórico inicial de convite da campanha.
+10. Editor funcional de rascunhos com códigos, pesos, essencialidade, critérios e rubricas 0–4.
+11. Duplicação integral de versão publicada para um novo rascunho, incluindo estágios, indicadores e gatilhos.
+12. Submissão, reabertura e validação final com histórico e snapshot imutável das validações.
 
 ## Segurança e isolamento
 
@@ -33,6 +36,7 @@ Cada nova incubadora recebe uma cópia publicada e imutável do modelo padrão. 
 - Campanhas, aplicações, participantes e estruturas validam `organization_id` e `incubator_id` no banco.
 - O respondente não pode gravar a validação oficial.
 - O avaliador não pode reescrever a autoavaliação.
+- O respondente perde escrita após o envio e só recupera acesso por reabertura auditada.
 - Pontuações, classificação e gatilhos não possuem escrita direta pelo cliente.
 - A criação de campanha usa uma função transacional `SECURITY DEFINER` com validação explícita de permissão e escopo.
 - Helpers usados pelas políticas RLS retornam somente booleano, são executáveis apenas por `authenticated` e permanecem no schema `private`, não exposto pela API.
@@ -51,6 +55,9 @@ Cada nova incubadora recebe uma cópia publicada e imutável do modelo padrão. 
 - `20260803075800_grant_diagnostic_rls_helpers.sql`
 - `20260803075900_index_diagnostic_respondents_assessment.sql`
 - `20260803080000_create_diagnostic_template_draft.sql`
+- `20260803081000_diagnostics_editor_and_assessment_workflow.sql`
+- `20260803081100_grant_diagnostic_assessment_writes.sql`
+- `20260803081200_mark_diagnostic_assessment_in_progress.sql`
 
 As migrations corretivas 755–758 permanecem versionadas porque as versões anteriores já haviam sido aplicadas no projeto remoto; removê-las criaria divergência entre o histórico local e o Supabase.
 
@@ -63,6 +70,9 @@ A relação `diagnostic_response_evidence` armazena metadados, estado, autoria e
 - Teste de regressão pgTAP para separação entre resposta e validação.
 - Teste pgTAP do seed, pesos, rubricas, indicadores, scores e gatilhos.
 - Teste transacional remoto da criação de campanha, com rollback, comprovando 1 participante, 1 aplicação e 1 evento para uma startup.
+- Teste transacional remoto do editor, publicando em rollback uma estrutura com 1 dimensão, 1 critério, 5 rubricas e 5 classificações.
+- Teste transacional remoto da duplicação integral, preservando 9 dimensões, 36 critérios, 180 rubricas, 25 indicadores e 13 gatilhos.
+- Teste transacional remoto do workflow completo, com 36 respostas, envio, validação final, 36 revisões imutáveis e eventos de histórico.
 - Testes unitários Zod para período e participantes da campanha.
 - `lint`, `typecheck` e suíte Vitest são obrigatórios antes da conclusão.
 
@@ -70,11 +80,11 @@ O projeto remoto não possui a extensão pgTAP. Os arquivos SQL são destinados 
 
 O advisor de segurança mantém avisos para RPCs `SECURITY DEFINER` intencionais. Essas funções são pontos transacionais explícitos, verificam `auth.uid()` e permissão/escopo no corpo e concedem execução somente a `authenticated`. O advisor também sinaliza que a proteção contra senhas vazadas está desativada; essa opção deve ser habilitada manualmente no painel do Supabase Auth. Índices novos aparecem como “não utilizados” enquanto ainda não há tráfego de produção suficiente, portanto não foram removidos prematuramente.
 
-## Pendências para a Fase 3
+## Pendências após este incremento
 
-- editor completo de rascunhos e fluxo de duplicação/nova versão;
 - atribuição e convite de respondentes por aplicação;
-- submissão, reabertura e validação final com máquina de estados completa;
+- edição, remoção e reordenação de dimensões/critérios em rascunho;
+- autosave com controle otimista por `lock_version`;
 - upload resumível de evidências no Google Drive;
 - indicadores editáveis e fórmulas derivadas na interface;
 - comparação histórica entre ciclos e dashboards/gráficos;

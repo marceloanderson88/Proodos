@@ -9,6 +9,8 @@ import {
   createDiagnosticCriterionSchema,
   createDiagnosticDimensionSchema,
   createDiagnosticTemplateSchema,
+  diagnosticAssessmentTransitionSchema,
+  duplicateDiagnosticTemplateSchema,
   saveDiagnosticResponseSchema,
   validateDiagnosticResponseSchema,
 } from "@/lib/diagnostics/schemas";
@@ -103,27 +105,22 @@ export async function addDiagnosticDimensionAction(
   );
   const parsed = createDiagnosticDimensionSchema.safeParse({
     templateId: value(formData, "templateId"),
+    code: value(formData, "code"),
     name: value(formData, "name"),
     description: value(formData, "description"),
     weight: value(formData, "weight"),
+    isEssential: formData.get("isEssential") === "on",
   });
   if (!parsed.success)
     finish(organizationSlug, incubatorSlug, "error", "Dimensão inválida.");
-  const { count } = await context.supabase
-    .from("diagnostic_dimensions")
-    .select("id", { count: "exact", head: true })
-    .eq("template_id", parsed.data.templateId);
-  const { error } = await context.supabase
-    .from("diagnostic_dimensions")
-    .insert({
-      organization_id: context.organization.id,
-      incubator_id: context.incubator.id,
-      template_id: parsed.data.templateId,
-      name: parsed.data.name,
-      description: parsed.data.description,
-      weight: parsed.data.weight,
-      position: count ?? 0,
-    });
+  const { error } = await context.supabase.rpc("add_diagnostic_dimension", {
+    target_template_id: parsed.data.templateId,
+    dimension_code: parsed.data.code.toUpperCase(),
+    dimension_name: parsed.data.name,
+    dimension_description: parsed.data.description,
+    dimension_weight: parsed.data.weight,
+    dimension_is_essential: parsed.data.isEssential,
+  });
   if (error)
     finish(
       organizationSlug,
@@ -131,8 +128,15 @@ export async function addDiagnosticDimensionAction(
       "error",
       "Não foi possível adicionar a dimensão.",
     );
-  revalidatePath(path(organizationSlug, incubatorSlug));
-  finish(organizationSlug, incubatorSlug, "success", "Dimensão adicionada.");
+  const returnTo = `${path(organizationSlug, incubatorSlug)}/modelos/${parsed.data.templateId}`;
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Dimensão adicionada.",
+  );
 }
 
 export async function addDiagnosticCriterionAction(
@@ -147,13 +151,19 @@ export async function addDiagnosticCriterionAction(
   const parsed = createDiagnosticCriterionSchema.safeParse({
     templateId: value(formData, "templateId"),
     dimensionId: value(formData, "dimensionId"),
+    code: value(formData, "code"),
     prompt: value(formData, "prompt"),
     helpText: value(formData, "helpText"),
-    responseType: value(formData, "responseType"),
     weight: value(formData, "weight"),
-    maximumScore: value(formData, "maximumScore"),
     allowsNotApplicable: formData.get("allowsNotApplicable") === "on",
-    options: value(formData, "options"),
+    requiresNotApplicableJustification:
+      formData.get("requiresNotApplicableJustification") === "on",
+    evidenceRequiredFrom: value(formData, "evidenceRequiredFrom"),
+    rubric0: value(formData, "rubric0"),
+    rubric1: value(formData, "rubric1"),
+    rubric2: value(formData, "rubric2"),
+    rubric3: value(formData, "rubric3"),
+    rubric4: value(formData, "rubric4"),
   });
   if (!parsed.success)
     finish(
@@ -162,30 +172,30 @@ export async function addDiagnosticCriterionAction(
       "error",
       parsed.error.issues[0]?.message ?? "Critério inválido.",
     );
-  const { count } = await context.supabase
-    .from("diagnostic_criteria")
-    .select("id", { count: "exact", head: true })
-    .eq("dimension_id", parsed.data.dimensionId);
-  const options: Json = parsed.data.options
-    ? parsed.data.options
-        .split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean)
-    : [];
-  const { error } = await context.supabase.from("diagnostic_criteria").insert({
-    organization_id: context.organization.id,
-    incubator_id: context.incubator.id,
-    template_id: parsed.data.templateId,
-    dimension_id: parsed.data.dimensionId,
-    prompt: parsed.data.prompt,
-    help_text: parsed.data.helpText,
-    response_type: parsed.data.responseType,
-    weight: parsed.data.weight,
-    maximum_score: parsed.data.maximumScore,
-    allows_not_applicable: parsed.data.allowsNotApplicable,
-    options,
-    position: count ?? 0,
-  });
+  const { error } = await context.supabase.rpc(
+    "add_diagnostic_criterion_with_rubric",
+    {
+      target_dimension_id: parsed.data.dimensionId,
+      criterion_code: parsed.data.code.toUpperCase(),
+      criterion_prompt: parsed.data.prompt,
+      criterion_help_text: parsed.data.helpText,
+      criterion_weight: parsed.data.weight,
+      criterion_allows_na: parsed.data.allowsNotApplicable,
+      criterion_requires_na_justification:
+        parsed.data.requiresNotApplicableJustification,
+      criterion_evidence_required_from:
+        parsed.data.evidenceRequiredFrom === ""
+          ? null
+          : parsed.data.evidenceRequiredFrom,
+      rubric_descriptions: [
+        parsed.data.rubric0,
+        parsed.data.rubric1,
+        parsed.data.rubric2,
+        parsed.data.rubric3,
+        parsed.data.rubric4,
+      ],
+    },
+  );
   if (error)
     finish(
       organizationSlug,
@@ -193,8 +203,56 @@ export async function addDiagnosticCriterionAction(
       "error",
       "Não foi possível adicionar o critério.",
     );
-  revalidatePath(path(organizationSlug, incubatorSlug));
-  finish(organizationSlug, incubatorSlug, "success", "Critério adicionado.");
+  const returnTo = `${path(organizationSlug, incubatorSlug)}/modelos/${parsed.data.templateId}`;
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Critério adicionado.",
+  );
+}
+
+export async function duplicateDiagnosticTemplateAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = duplicateDiagnosticTemplateSchema.safeParse({
+    templateId: value(formData, "templateId"),
+    versionLabel: value(formData, "versionLabel"),
+    changelog: value(formData, "changelog"),
+  });
+  if (!parsed.success)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "error",
+      "Revise os dados da nova versão.",
+    );
+  const { data, error } = await context.supabase.rpc(
+    "duplicate_diagnostic_template_version",
+    {
+      source_template_id: parsed.data.templateId,
+      new_version_label: parsed.data.versionLabel || undefined,
+      version_changelog: parsed.data.changelog,
+    },
+  );
+  if (error || !data)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "error",
+      error?.message || "Não foi possível criar a versão.",
+    );
+  redirect(
+    `${path(organizationSlug, incubatorSlug)}/modelos/${data}?success=${encodeURIComponent("Nova versão criada como rascunho.")}`,
+  );
 }
 
 export async function publishDiagnosticTemplateAction(
@@ -407,11 +465,18 @@ export async function saveDiagnosticResponseAction(
       "error",
       "Não foi possível salvar a resposta.",
     );
-  await context.supabase
-    .from("diagnostic_assessments")
-    .update({ status: "in_progress" })
-    .eq("id", parsed.data.assessmentId)
-    .eq("status", "draft");
+  const { error: transitionError } = await context.supabase.rpc(
+    "mark_diagnostic_assessment_in_progress",
+    { target_assessment_id: parsed.data.assessmentId },
+  );
+  if (transitionError)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "A resposta foi salva, mas não foi possível atualizar o andamento.",
+    );
   revalidatePath(path(organizationSlug, incubatorSlug));
   finishAt(
     organizationSlug,
@@ -473,5 +538,88 @@ export async function validateDiagnosticResponseAction(
     returnTo,
     "success",
     "Nota validada sem substituir a autoavaliação.",
+  );
+}
+
+async function transitionDiagnosticAssessment(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+  rpcName:
+    | "submit_diagnostic_assessment"
+    | "reopen_diagnostic_assessment"
+    | "finalize_diagnostic_assessment",
+  successMessage: string,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = diagnosticAssessmentTransitionSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    returnTo: value(formData, "returnTo"),
+  });
+  if (!parsed.success)
+    finish(organizationSlug, incubatorSlug, "error", "Avaliação inválida.");
+  const { error } = await context.supabase.rpc(rpcName, {
+    target_assessment_id: parsed.data.assessmentId,
+  });
+  if (error)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      parsed.data.returnTo,
+      "error",
+      error.message || "Não foi possível alterar o estado da avaliação.",
+    );
+  revalidatePath(parsed.data.returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    parsed.data.returnTo,
+    "success",
+    successMessage,
+  );
+}
+
+export async function submitDiagnosticAssessmentAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  return transitionDiagnosticAssessment(
+    organizationSlug,
+    incubatorSlug,
+    formData,
+    "submit_diagnostic_assessment",
+    "Autoavaliação enviada para validação.",
+  );
+}
+
+export async function reopenDiagnosticAssessmentAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  return transitionDiagnosticAssessment(
+    organizationSlug,
+    incubatorSlug,
+    formData,
+    "reopen_diagnostic_assessment",
+    "Avaliação reaberta para ajustes.",
+  );
+}
+
+export async function finalizeDiagnosticAssessmentAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  return transitionDiagnosticAssessment(
+    organizationSlug,
+    incubatorSlug,
+    formData,
+    "finalize_diagnostic_assessment",
+    "Validação concluída e registrada no histórico.",
   );
 }

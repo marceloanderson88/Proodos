@@ -67,6 +67,10 @@ Aceite:
 
 ## Fase 3 — biblioteca, editor e importação
 
+Estado: **em andamento**. Criação de rascunho, editor estrutural inicial,
+rubricas, validação de publicação e duplicação integral de versão estão
+concluídos. Permanecem edição/reordenação, autosave e importação XLSX.
+
 Rotas:
 
 - `/diagnosticos/modelos`;
@@ -94,6 +98,10 @@ Aceite:
 - importação não duplica entidades nem publica silenciosamente.
 
 ## Fase 4 — campanhas e resposta
+
+Estado: **em andamento**. Campanha, participantes, acompanhamento, resposta,
+submissão, reabertura e validação final estão implementados. Permanecem convite
+de respondentes, comunicação real, autosave concorrente e evidência binária.
 
 Rotas:
 

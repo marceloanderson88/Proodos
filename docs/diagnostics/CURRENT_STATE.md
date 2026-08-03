@@ -108,9 +108,19 @@ Devem ser preservados:
 - `Button`, `FormField`, `FileUpload`, `StatusBadge`, `PageHeader` e `EmptyState`;
 - IDs das aplicações e respostas existentes, com migrations aditivas e backfill.
 
+## Incrementos posteriores ao inventário
+
+As lacunas deste documento orientaram as migrations da Fase 2 e o incremento
+seguinte. Já foram entregues catálogo de famílias, versões imutáveis, rubricas
+normalizadas, classificações, campanhas, respondentes, validações históricas,
+indicadores, gatilhos, scores materializados, biblioteca navegável, editor
+estrutural inicial, duplicação de versões e máquina de estados de envio e
+validação. A lista original permanece acima como registro do diagnóstico do
+código anterior, não como descrição do estado atual.
+
 ## Estado da validação
 
 - lint: aprovado;
 - typecheck: aprovado;
-- testes unitários: 49 aprovados;
-- pgTAP/RLS local: bloqueado porque o Postgres local em `127.0.0.1:54322` não estava ativo; os testes SQL foram criados e precisam rodar em ambiente Supabase disponível antes de declarar a migration validada em produção.
+- testes unitários: consulte `PHASE_2_IMPLEMENTATION.md` para a contagem da execução mais recente;
+- pgTAP/RLS local: o Postgres local em `127.0.0.1:54322` não estava ativo. Os testes SQL permanecem versionados e os cenários equivalentes de editor, duplicação e workflow foram executados no Supabase remoto dentro de transações com `rollback`.

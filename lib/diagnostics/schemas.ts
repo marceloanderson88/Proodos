@@ -8,30 +8,48 @@ export const createDiagnosticTemplateSchema = z.object({
 
 export const createDiagnosticDimensionSchema = z.object({
   templateId: z.uuid(),
+  code: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z][A-Za-z0-9]{0,9}$/, "Use até 10 letras ou números."),
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(800).default(""),
   weight: z.coerce.number().positive().max(100),
+  isEssential: z.boolean(),
 });
 
 export const createDiagnosticCriterionSchema = z.object({
   templateId: z.uuid(),
   dimensionId: z.uuid(),
+  code: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z][A-Za-z0-9]{0,11}$/, "Use até 12 letras ou números."),
   prompt: z.string().trim().min(3).max(500),
   helpText: z.string().trim().max(800).default(""),
-  responseType: z.enum([
-    "numeric",
-    "text",
-    "single_choice",
-    "currency",
-    "percentage",
-    "date",
-    "link",
-    "file",
-  ]),
   weight: z.coerce.number().positive().max(100),
-  maximumScore: z.coerce.number().positive().max(100),
   allowsNotApplicable: z.boolean(),
-  options: z.string().trim().max(1200).default(""),
+  requiresNotApplicableJustification: z.boolean(),
+  evidenceRequiredFrom: z.union([
+    z.literal(""),
+    z.coerce.number().min(0).max(4),
+  ]),
+  rubric0: z.string().trim().min(2).max(2000),
+  rubric1: z.string().trim().min(2).max(2000),
+  rubric2: z.string().trim().min(2).max(2000),
+  rubric3: z.string().trim().min(2).max(2000),
+  rubric4: z.string().trim().min(2).max(2000),
+});
+
+export const duplicateDiagnosticTemplateSchema = z.object({
+  templateId: z.uuid(),
+  versionLabel: z.string().trim().max(40).default(""),
+  changelog: z.string().trim().max(3000).default(""),
+});
+
+export const diagnosticAssessmentTransitionSchema = z.object({
+  assessmentId: z.uuid(),
+  returnTo: z.string().trim().min(1).max(500),
 });
 
 export const createDiagnosticAssessmentSchema = z.object({

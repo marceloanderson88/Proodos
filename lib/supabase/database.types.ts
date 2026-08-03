@@ -3140,6 +3140,31 @@ export type Database = {
           organization_slug: string;
         }[];
       };
+      add_diagnostic_criterion_with_rubric: {
+        Args: {
+          criterion_allows_na: boolean;
+          criterion_code: string;
+          criterion_evidence_required_from: number | null;
+          criterion_help_text: string;
+          criterion_prompt: string;
+          criterion_requires_na_justification: boolean;
+          criterion_weight: number;
+          rubric_descriptions: string[];
+          target_dimension_id: string;
+        };
+        Returns: string;
+      };
+      add_diagnostic_dimension: {
+        Args: {
+          dimension_code: string;
+          dimension_description: string;
+          dimension_is_essential?: boolean;
+          dimension_name: string;
+          dimension_weight: number;
+          target_template_id: string;
+        };
+        Returns: string;
+      };
       create_diagnostic_campaign: {
         Args: {
           campaign_ends_at: string;
@@ -3178,9 +3203,25 @@ export type Database = {
           slug: string;
         }[];
       };
+      duplicate_diagnostic_template_version: {
+        Args: {
+          new_version_label?: string;
+          source_template_id: string;
+          version_changelog?: string;
+        };
+        Returns: string;
+      };
+      finalize_diagnostic_assessment: {
+        Args: { target_assessment_id: string };
+        Returns: undefined;
+      };
       manage_incubator_lifecycle: {
         Args: { requested_action: string; target_incubator_id: string };
         Returns: string;
+      };
+      mark_diagnostic_assessment_in_progress: {
+        Args: { target_assessment_id: string };
+        Returns: undefined;
       };
       manage_program_lifecycle: {
         Args: { requested_action: string; target_program_id: string };
@@ -3188,6 +3229,14 @@ export type Database = {
       };
       publish_diagnostic_template_version: {
         Args: { target_template_id: string };
+        Returns: undefined;
+      };
+      reopen_diagnostic_assessment: {
+        Args: { target_assessment_id: string };
+        Returns: undefined;
+      };
+      submit_diagnostic_assessment: {
+        Args: { target_assessment_id: string };
         Returns: undefined;
       };
       system_readiness: { Args: never; Returns: boolean };
