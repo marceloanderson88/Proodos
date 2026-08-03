@@ -23,15 +23,15 @@ export default async function IncubatorProgramsPage({
     await Promise.all([
       supabase
         .from("program_types")
-        .select("id, name, incubator_id")
+        .select("id, name")
         .eq("organization_id", organization.id)
         .eq("is_active", true)
-        .or(`incubator_id.is.null,incubator_id.eq.${incubator.id}`)
+        .eq("incubator_id", incubator.id)
         .order("name"),
       supabase
         .from("programs")
         .select(
-          "id, incubator_id, type_id, name, code, description, status, starts_on, ends_on",
+          "id, type_id, name, code, description, status, starts_on, ends_on, logo_path",
         )
         .eq("organization_id", organization.id)
         .eq("incubator_id", incubator.id)
@@ -40,7 +40,7 @@ export default async function IncubatorProgramsPage({
       supabase
         .from("cohorts")
         .select(
-          "id, program_id, name, code, status, starts_on, ends_on, capacity",
+          "id, program_id, name, code, status, launches_on, enrollment_starts_on, enrollment_ends_on, starts_on, ends_on",
         )
         .eq("organization_id", organization.id)
         .is("deleted_at", null)
@@ -69,14 +69,22 @@ export default async function IncubatorProgramsPage({
   const enrollments = (enrollmentsResult.data ?? []).filter((item) =>
     cohortIds.has(item.cohort_id),
   );
+  const programs = await Promise.all(
+    (programsResult.data ?? []).map(async (program) => {
+      if (!program.logo_path) return { ...program, logo_url: null };
+      const { data } = await supabase.storage
+        .from("program-logos")
+        .createSignedUrl(program.logo_path, 60 * 60);
+      return { ...program, logo_url: data?.signedUrl ?? null };
+    }),
+  );
 
   return (
     <ProgramsWorkspace
       organizationSlug={organizationSlug}
       incubatorSlug={incubatorSlug}
-      incubators={[incubator]}
       programTypes={typesResult.data ?? []}
-      programs={programsResult.data ?? []}
+      programs={programs}
       cohorts={cohorts}
       enrollments={enrollments}
       success={firstSearchValue(feedback.success)}

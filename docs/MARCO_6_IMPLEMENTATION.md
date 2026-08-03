@@ -9,7 +9,7 @@ O Marco 6 inicia o primeiro módulo vertical do MVP com persistência real. As r
 O corte entregue cobre:
 
 - criação da primeira incubadora quando a organização ainda não possui uma;
-- tipos de programa configuráveis por organização ou incubadora;
+- tipos de programa privados da incubadora, criados automaticamente a partir de opções guiadas;
 - programas e múltiplas turmas;
 - cadastro institucional da startup, estágio, setor e localização;
 - membros de equipe independentes de conta de acesso;
@@ -21,6 +21,9 @@ O corte entregue cobre:
 - tipos guiados: Pré-Incubação, Incubação, Aceleração, Bootcamp ou nome livre;
 - edição de programas sem permitir alteração de tenant ou do código técnico;
 - exclusão lógica somente sem matrículas históricas e arquivamento quando existem startups vinculadas.
+- programa com nome, logo privada opcional, tipo, período, descrição e estado ativo/inativo;
+- turma separada com lançamento, inscrições opcionais e ciclo próprio;
+- gestão de pessoas e papéis no contexto da incubadora.
 
 Nenhuma tabela ou formulário do marco possui dependência CERNE.
 
@@ -64,11 +67,17 @@ As páginas mantêm a identidade Sertão Maker e distinguem claramente dados rea
 
 Fluxo recomendado na interface:
 
-1. criar ou selecionar uma incubadora;
-2. criar um tipo de programa;
-3. criar programa e turma;
-4. cadastrar startup e equipe;
-5. vincular ou mover a startup para uma turma.
+1. entrar na incubadora que será administrada;
+2. criar o programa escolhendo seu tipo no mesmo formulário, sem informar escopo ou incubadora;
+3. criar uma turma vinculada ao programa;
+4. atribuir papéis às pessoas da incubadora;
+5. cadastrar startup e equipe;
+6. vincular ou mover a startup para uma turma.
+
+Nas rotas `/o/[organizationSlug]/i/[incubatorSlug]`, o segmento `incubatorSlug`
+é a fonte única do contexto operacional. Programas, turmas, startups, equipes e
+matrículas são validados no servidor contra essa incubadora; IDs enviados pelo
+formulário não podem mudar esse pertencimento.
 
 ## Testes
 

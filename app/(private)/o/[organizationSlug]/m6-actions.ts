@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -7,7 +9,6 @@ import {
   addStartupMemberSchema,
   createCohortSchema,
   createProgramSchema,
-  createProgramTypeSchema,
   createStartupSchema,
   enrollStartupSchema,
   organizationSlugSchema,
@@ -68,61 +69,147 @@ async function mutationContext(rawSlug: string) {
   return { organization, organizationSlug, supabase, user };
 }
 
-export async function createProgramTypeAction(
+async function mutationIncubatorContext(
   organizationSlug: string,
   incubatorSlug: string,
-  formData: FormData,
 ) {
   const context = await mutationContext(organizationSlug);
-  const rawIncubatorId = value(formData, "incubatorId");
-  const parsed = createProgramTypeSchema.safeParse({
-    incubatorId: rawIncubatorId || null,
-    preset: value(formData, "preset"),
-    customName: value(formData, "customName"),
-    description: value(formData, "description"),
-  });
-  if (!parsed.success) {
-    redirect(
-      feedbackUrl(
-        context.organizationSlug,
-        incubatorSlug,
-        "programas",
-        "error",
-        "Confira os dados do tipo de programa.",
-      ),
-    );
-  }
+  const safeIncubatorSlug = organizationSlugSchema.parse(incubatorSlug);
+  const { data: incubator } = await context.supabase
+    .from("incubators")
+    .select("id, slug")
+    .eq("organization_id", context.organization.id)
+    .eq("slug", safeIncubatorSlug)
+    .eq("status", "active")
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!incubator) redirect("/o");
+  return { ...context, incubator };
+}
 
-  const programType = resolveProgramType(parsed.data);
-  const { error } = await context.supabase.from("program_types").insert({
-    organization_id: context.organization.id,
-    incubator_id: parsed.data.incubatorId,
-    code: programType.code,
-    name: programType.name,
-    description: parsed.data.description,
-    created_by: context.user.id,
-  });
-  if (error)
-    redirect(
-      feedbackUrl(
-        context.organizationSlug,
-        incubatorSlug,
-        "programas",
-        "error",
-        databaseMessage(error.code),
-      ),
-    );
+type IncubatorMutationContext = Awaited<
+  ReturnType<typeof mutationIncubatorContext>
+>;
 
-  revalidatePath(`/o/${context.organizationSlug}/programas`);
-  redirect(
-    feedbackUrl(
-      context.organizationSlug,
-      incubatorSlug,
-      "programas",
-      "success",
-      "Tipo de programa criado.",
-    ),
-  );
+async function programBelongsToCurrentIncubator(
+  context: IncubatorMutationContext,
+  programId: string,
+) {
+  const { data } = await context.supabase
+    .from("programs")
+    .select("id")
+    .eq("id", programId)
+    .eq("organization_id", context.organization.id)
+    .eq("incubator_id", context.incubator.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return Boolean(data);
+}
+
+async function startupBelongsToCurrentIncubator(
+  context: IncubatorMutationContext,
+  startupId: string,
+) {
+  const { data } = await context.supabase
+    .from("startups")
+    .select("id")
+    .eq("id", startupId)
+    .eq("organization_id", context.organization.id)
+    .eq("incubator_id", context.incubator.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return Boolean(data);
+}
+
+async function cohortBelongsToCurrentIncubator(
+  context: IncubatorMutationContext,
+  cohortId: string,
+) {
+  const { data: cohort } = await context.supabase
+    .from("cohorts")
+    .select("program_id")
+    .eq("id", cohortId)
+    .eq("organization_id", context.organization.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return cohort
+    ? programBelongsToCurrentIncubator(context, cohort.program_id)
+    : false;
+}
+
+async function resolveIncubatorProgramType(
+  context: Awaited<ReturnType<typeof mutationIncubatorContext>>,
+  preset: "pre_incubation" | "incubation" | "acceleration" | "other",
+  customName: string | null,
+) {
+  const programType = resolveProgramType({
+    preset,
+    customName,
+    description: null,
+  });
+  const { data: existing } = await context.supabase
+    .from("program_types")
+    .select("id")
+    .eq("organization_id", context.organization.id)
+    .eq("incubator_id", context.incubator.id)
+    .eq("code", programType.code)
+    .maybeSingle();
+  if (existing) return existing.id;
+
+  const { data: created, error } = await context.supabase
+    .from("program_types")
+    .insert({
+      organization_id: context.organization.id,
+      incubator_id: context.incubator.id,
+      code: programType.code,
+      name: programType.name,
+      created_by: context.user.id,
+    })
+    .select("id")
+    .single();
+  if (!error && created) return created.id;
+  if (error?.code !== "23505") throw error;
+
+  const { data: raced, error: racedError } = await context.supabase
+    .from("program_types")
+    .select("id")
+    .eq("organization_id", context.organization.id)
+    .eq("incubator_id", context.incubator.id)
+    .eq("code", programType.code)
+    .single();
+  if (racedError || !raced) throw racedError;
+  return raced.id;
+}
+
+const logoMimeExtensions: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+};
+
+function logoFile(formData: FormData) {
+  const candidate = formData.get("logo");
+  if (!(candidate instanceof File) || candidate.size === 0) return null;
+  if (!logoMimeExtensions[candidate.type] || candidate.size > 2 * 1024 * 1024)
+    return "invalid" as const;
+  return candidate;
+}
+
+async function uploadProgramLogo(
+  context: Awaited<ReturnType<typeof mutationIncubatorContext>>,
+  programId: string,
+  file: File,
+) {
+  const extension = logoMimeExtensions[file.type];
+  const path = `${context.organization.id}/${context.incubator.id}/${programId}/logo-${randomUUID()}.${extension}`;
+  const { error } = await context.supabase.storage
+    .from("program-logos")
+    .upload(path, new Uint8Array(await file.arrayBuffer()), {
+      contentType: file.type,
+      upsert: false,
+    });
+  if (error) throw error;
+  return path;
 }
 
 export async function createProgramAction(
@@ -130,16 +217,21 @@ export async function createProgramAction(
   incubatorSlug: string,
   formData: FormData,
 ) {
-  const context = await mutationContext(organizationSlug);
+  const context = await mutationIncubatorContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = createProgramSchema.safeParse({
-    incubatorId: value(formData, "incubatorId"),
-    typeId: value(formData, "typeId"),
+    preset: value(formData, "preset"),
+    customName: value(formData, "customName"),
     name: value(formData, "name"),
     description: value(formData, "description"),
     startsOn: value(formData, "startsOn"),
     endsOn: value(formData, "endsOn"),
+    isActive: formData.get("isActive") === "on",
   });
-  if (!parsed.success) {
+  const logo = logoFile(formData);
+  if (!parsed.success || logo === "invalid") {
     redirect(
       feedbackUrl(
         context.organizationSlug,
@@ -151,17 +243,41 @@ export async function createProgramAction(
     );
   }
 
-  const { error } = await context.supabase.from("programs").insert({
-    organization_id: context.organization.id,
-    incubator_id: parsed.data.incubatorId,
-    type_id: parsed.data.typeId,
-    name: parsed.data.name,
-    description: parsed.data.description,
-    starts_on: parsed.data.startsOn,
-    ends_on: parsed.data.endsOn,
-    created_by: context.user.id,
-  });
-  if (error)
+  let typeId: string;
+  try {
+    typeId = await resolveIncubatorProgramType(
+      context,
+      parsed.data.preset,
+      parsed.data.customName,
+    );
+  } catch {
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        "Não foi possível preparar o tipo do programa.",
+      ),
+    );
+  }
+
+  const { data: createdProgram, error } = await context.supabase
+    .from("programs")
+    .insert({
+      organization_id: context.organization.id,
+      incubator_id: context.incubator.id,
+      type_id: typeId,
+      name: parsed.data.name,
+      description: parsed.data.description,
+      starts_on: parsed.data.startsOn,
+      ends_on: parsed.data.endsOn,
+      status: parsed.data.isActive ? "active" : "draft",
+      created_by: context.user.id,
+    })
+    .select("id")
+    .single();
+  if (error || !createdProgram)
     redirect(
       feedbackUrl(
         context.organizationSlug,
@@ -172,14 +288,46 @@ export async function createProgramAction(
       ),
     );
 
-  revalidatePath(`/o/${context.organizationSlug}/programas`);
+  if (logo) {
+    try {
+      const logoPath = await uploadProgramLogo(
+        context,
+        createdProgram.id,
+        logo,
+      );
+      const { error: logoUpdateError } = await context.supabase
+        .from("programs")
+        .update({ logo_path: logoPath })
+        .eq("id", createdProgram.id)
+        .eq("incubator_id", context.incubator.id);
+      if (logoUpdateError) throw logoUpdateError;
+    } catch {
+      await context.supabase.rpc("manage_program_lifecycle", {
+        target_program_id: createdProgram.id,
+        requested_action: "delete",
+      });
+      redirect(
+        feedbackUrl(
+          context.organizationSlug,
+          incubatorSlug,
+          "programas",
+          "error",
+          "A logo não pôde ser enviada. O programa não foi mantido.",
+        ),
+      );
+    }
+  }
+
+  revalidatePath(`/o/${context.organizationSlug}/i/${incubatorSlug}/programas`);
   redirect(
     feedbackUrl(
       context.organizationSlug,
       incubatorSlug,
       "programas",
       "success",
-      "Programa criado em rascunho.",
+      parsed.data.isActive
+        ? "Programa criado e ativado."
+        : "Programa criado como inativo.",
     ),
   );
 }
@@ -189,18 +337,23 @@ export async function updateProgramAction(
   incubatorSlug: string,
   formData: FormData,
 ) {
-  const context = await mutationContext(organizationSlug);
+  const context = await mutationIncubatorContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = updateProgramSchema.safeParse({
     programId: value(formData, "programId"),
-    incubatorId: value(formData, "incubatorId"),
-    typeId: value(formData, "typeId"),
+    preset: value(formData, "preset"),
+    customName: value(formData, "customName"),
     name: value(formData, "name"),
     description: value(formData, "description"),
     startsOn: value(formData, "startsOn"),
     endsOn: value(formData, "endsOn"),
-    status: value(formData, "status"),
+    isActive: formData.get("isActive") === "on",
+    removeLogo: formData.get("removeLogo") === "on",
   });
-  if (!parsed.success) {
+  const logo = logoFile(formData);
+  if (!parsed.success || logo === "invalid") {
     redirect(
       feedbackUrl(
         context.organizationSlug,
@@ -212,19 +365,68 @@ export async function updateProgramAction(
     );
   }
 
+  let typeId: string;
+  try {
+    typeId = await resolveIncubatorProgramType(
+      context,
+      parsed.data.preset,
+      parsed.data.customName,
+    );
+  } catch {
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        "Não foi possível preparar o tipo do programa.",
+      ),
+    );
+  }
+
+  const { data: currentProgram } = await context.supabase
+    .from("programs")
+    .select("logo_path")
+    .eq("id", parsed.data.programId)
+    .eq("organization_id", context.organization.id)
+    .eq("incubator_id", context.incubator.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  let nextLogoPath = parsed.data.removeLogo ? null : currentProgram?.logo_path;
+  if (logo) {
+    try {
+      nextLogoPath = await uploadProgramLogo(
+        context,
+        parsed.data.programId,
+        logo,
+      );
+    } catch {
+      redirect(
+        feedbackUrl(
+          context.organizationSlug,
+          incubatorSlug,
+          "programas",
+          "error",
+          "A nova logo não pôde ser enviada.",
+        ),
+      );
+    }
+  }
+
   const { data: updatedProgram, error } = await context.supabase
     .from("programs")
     .update({
-      type_id: parsed.data.typeId,
+      type_id: typeId,
       name: parsed.data.name,
       description: parsed.data.description,
       starts_on: parsed.data.startsOn,
       ends_on: parsed.data.endsOn,
-      status: parsed.data.status,
+      status: parsed.data.isActive ? "active" : "draft",
+      logo_path: nextLogoPath ?? null,
     })
     .eq("id", parsed.data.programId)
     .eq("organization_id", context.organization.id)
-    .eq("incubator_id", parsed.data.incubatorId)
+    .eq("incubator_id", context.incubator.id)
     .neq("status", "archived")
     .is("deleted_at", null)
     .select("id")
@@ -240,7 +442,17 @@ export async function updateProgramAction(
       ),
     );
 
-  revalidatePath(`/o/${context.organizationSlug}/programas`);
+  if (
+    currentProgram?.logo_path &&
+    currentProgram.logo_path !== nextLogoPath &&
+    (parsed.data.removeLogo || logo)
+  ) {
+    await context.supabase.storage
+      .from("program-logos")
+      .remove([currentProgram.logo_path]);
+  }
+
+  revalidatePath(`/o/${context.organizationSlug}/i/${incubatorSlug}/programas`);
   redirect(
     feedbackUrl(
       context.organizationSlug,
@@ -257,7 +469,10 @@ export async function manageProgramLifecycleAction(
   incubatorSlug: string,
   formData: FormData,
 ) {
-  const context = await mutationContext(organizationSlug);
+  const context = await mutationIncubatorContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = programLifecycleSchema.safeParse({
     programId: value(formData, "programId"),
     action: value(formData, "action"),
@@ -274,6 +489,17 @@ export async function manageProgramLifecycleAction(
     );
   }
 
+  if (!(await programBelongsToCurrentIncubator(context, parsed.data.programId)))
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        "O programa não pertence à incubadora atual.",
+      ),
+    );
+
   const { error } = await context.supabase.rpc("manage_program_lifecycle", {
     target_program_id: parsed.data.programId,
     requested_action: parsed.data.action,
@@ -289,8 +515,8 @@ export async function manageProgramLifecycleAction(
       ),
     );
 
-  revalidatePath(`/o/${context.organizationSlug}/programas`);
-  revalidatePath(`/o/${context.organizationSlug}/startups`);
+  revalidatePath(`/o/${context.organizationSlug}/i/${incubatorSlug}/programas`);
+  revalidatePath(`/o/${context.organizationSlug}/i/${incubatorSlug}/startups`);
   redirect(
     feedbackUrl(
       context.organizationSlug,
@@ -309,13 +535,18 @@ export async function createCohortAction(
   incubatorSlug: string,
   formData: FormData,
 ) {
-  const context = await mutationContext(organizationSlug);
+  const context = await mutationIncubatorContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = createCohortSchema.safeParse({
     programId: value(formData, "programId"),
     name: value(formData, "name"),
+    launchesOn: value(formData, "launchesOn"),
+    enrollmentStartsOn: value(formData, "enrollmentStartsOn"),
+    enrollmentEndsOn: value(formData, "enrollmentEndsOn"),
     startsOn: value(formData, "startsOn"),
     endsOn: value(formData, "endsOn"),
-    capacity: value(formData, "capacity"),
   });
   if (!parsed.success) {
     redirect(
@@ -329,13 +560,26 @@ export async function createCohortAction(
     );
   }
 
+  if (!(await programBelongsToCurrentIncubator(context, parsed.data.programId)))
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        "O programa selecionado não pertence à incubadora atual.",
+      ),
+    );
+
   const { error } = await context.supabase.from("cohorts").insert({
     organization_id: context.organization.id,
     program_id: parsed.data.programId,
     name: parsed.data.name,
+    launches_on: parsed.data.launchesOn,
+    enrollment_starts_on: parsed.data.enrollmentStartsOn,
+    enrollment_ends_on: parsed.data.enrollmentEndsOn,
     starts_on: parsed.data.startsOn,
     ends_on: parsed.data.endsOn,
-    capacity: parsed.data.capacity,
     created_by: context.user.id,
   });
   if (error)
@@ -349,7 +593,7 @@ export async function createCohortAction(
       ),
     );
 
-  revalidatePath(`/o/${context.organizationSlug}/programas`);
+  revalidatePath(`/o/${context.organizationSlug}/i/${incubatorSlug}/programas`);
   redirect(
     feedbackUrl(
       context.organizationSlug,
@@ -366,9 +610,11 @@ export async function createStartupAction(
   incubatorSlug: string,
   formData: FormData,
 ) {
-  const context = await mutationContext(organizationSlug);
+  const context = await mutationIncubatorContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = createStartupSchema.safeParse({
-    incubatorId: value(formData, "incubatorId"),
     name: value(formData, "name"),
     legalName: value(formData, "legalName"),
     taxId: value(formData, "taxId"),
@@ -393,7 +639,7 @@ export async function createStartupAction(
 
   const { error } = await context.supabase.from("startups").insert({
     organization_id: context.organization.id,
-    incubator_id: parsed.data.incubatorId,
+    incubator_id: context.incubator.id,
     name: parsed.data.name,
     legal_name: parsed.data.legalName,
     tax_id: parsed.data.taxId,
@@ -416,7 +662,7 @@ export async function createStartupAction(
       ),
     );
 
-  revalidatePath(`/o/${context.organizationSlug}/startups`);
+  revalidatePath(`/o/${context.organizationSlug}/i/${incubatorSlug}/startups`);
   redirect(
     feedbackUrl(
       context.organizationSlug,
@@ -433,7 +679,10 @@ export async function addStartupMemberAction(
   incubatorSlug: string,
   formData: FormData,
 ) {
-  const context = await mutationContext(organizationSlug);
+  const context = await mutationIncubatorContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = addStartupMemberSchema.safeParse({
     startupId: value(formData, "startupId"),
     fullName: value(formData, "fullName"),
@@ -453,6 +702,17 @@ export async function addStartupMemberAction(
       ),
     );
   }
+
+  if (!(await startupBelongsToCurrentIncubator(context, parsed.data.startupId)))
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "startups",
+        "error",
+        "A startup selecionada não pertence à incubadora atual.",
+      ),
+    );
 
   const { error } = await context.supabase.from("startup_members").insert({
     organization_id: context.organization.id,
@@ -475,7 +735,7 @@ export async function addStartupMemberAction(
       ),
     );
 
-  revalidatePath(`/o/${context.organizationSlug}/startups`);
+  revalidatePath(`/o/${context.organizationSlug}/i/${incubatorSlug}/startups`);
   redirect(
     feedbackUrl(
       context.organizationSlug,
@@ -492,7 +752,10 @@ export async function enrollStartupAction(
   incubatorSlug: string,
   formData: FormData,
 ) {
-  const context = await mutationContext(organizationSlug);
+  const context = await mutationIncubatorContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = enrollStartupSchema.safeParse({
     startupId: value(formData, "startupId"),
     cohortId: value(formData, "cohortId"),
@@ -509,6 +772,21 @@ export async function enrollStartupAction(
       ),
     );
   }
+
+  const [startupIsLocal, cohortIsLocal] = await Promise.all([
+    startupBelongsToCurrentIncubator(context, parsed.data.startupId),
+    cohortBelongsToCurrentIncubator(context, parsed.data.cohortId),
+  ]);
+  if (!startupIsLocal || !cohortIsLocal)
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "startups",
+        "error",
+        "Startup e turma devem pertencer à incubadora atual.",
+      ),
+    );
 
   const { data: currentEnrollment, error: lookupError } = await context.supabase
     .from("startup_enrollments")
@@ -555,7 +833,7 @@ export async function enrollStartupAction(
       ),
     );
 
-  revalidatePath(`/o/${context.organizationSlug}`);
+  revalidatePath(`/o/${context.organizationSlug}/i/${incubatorSlug}/startups`);
   redirect(
     feedbackUrl(
       context.organizationSlug,

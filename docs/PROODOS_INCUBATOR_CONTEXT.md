@@ -9,6 +9,7 @@ Proodos (organização)
 └── Incubadora
     ├── Programas
     │   └── Turmas
+    ├── Pessoas e papéis locais
     ├── Startups
     ├── Diagnósticos
     ├── Planos de ação
@@ -41,4 +42,4 @@ A URL é contexto de navegação, não mecanismo de autorização. O servidor co
 
 ## Próximos módulos
 
-Diagnósticos e planos de ação terão `startup_id` obrigatório e herdarão a incubadora da startup. Mentorias terão atribuição por incubadora. Templates, conteúdos e trilhas poderão ter escopo global Proodos ou escopo privado de incubadora, sem dependência obrigatória de CERNE.
+Diagnósticos e planos de ação terão `startup_id` obrigatório e herdarão a incubadora da startup. Mentorias terão atribuição por incubadora. Tipos e programas são sempre privados da incubadora. Templates, conteúdos e trilhas poderão ter catálogo compartilhado pelo Proodos ou versões privadas da incubadora, sem dependência obrigatória de CERNE.

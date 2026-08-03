@@ -4,12 +4,25 @@ import { useState } from "react";
 
 import { Field, inputClassName } from "@/components/m6/form-controls";
 
-export function ProgramTypeNameField() {
-  const [preset, setPreset] = useState("pre_incubation");
+function initialPreset(currentName?: string) {
+  if (currentName === "Pré-Incubação") return "pre_incubation";
+  if (currentName === "Incubação") return "incubation";
+  if (currentName === "Aceleração") return "acceleration";
+  return currentName ? "other" : "pre_incubation";
+}
+
+export function ProgramTypeNameField({
+  currentName,
+  idSuffix = "new",
+}: {
+  currentName?: string;
+  idSuffix?: string;
+}) {
+  const [preset, setPreset] = useState(initialPreset(currentName));
 
   return (
     <div className="space-y-4">
-      <Field label="Nome" name="preset">
+      <Field label="Tipo" name={`preset-${idSuffix}`}>
         <select
           className={inputClassName}
           name="preset"
@@ -19,7 +32,6 @@ export function ProgramTypeNameField() {
           <option value="pre_incubation">Pré-Incubação</option>
           <option value="incubation">Incubação</option>
           <option value="acceleration">Aceleração</option>
-          <option value="bootcamp">Bootcamp</option>
           <option value="other">Outro</option>
         </select>
       </Field>
@@ -27,7 +39,7 @@ export function ProgramTypeNameField() {
       {preset === "other" && (
         <Field
           label="Nome do outro tipo"
-          name="customName"
+          name={`customName-${idSuffix}`}
           hint="Exemplo: Ideação, residência ou programa setorial."
         >
           <input
@@ -35,6 +47,7 @@ export function ProgramTypeNameField() {
             name="customName"
             required
             maxLength={120}
+            defaultValue={preset === "other" ? currentName : ""}
             autoFocus
           />
         </Field>

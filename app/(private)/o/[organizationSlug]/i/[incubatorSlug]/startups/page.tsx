@@ -28,9 +28,7 @@ export default async function IncubatorStartupsPage({
   ] = await Promise.all([
     supabase
       .from("startups")
-      .select(
-        "id, code, incubator_id, name, legal_name, sector, stage, status, city, state",
-      )
+      .select("id, code, name, legal_name, sector, stage, status, city, state")
       .eq("organization_id", organization.id)
       .eq("incubator_id", incubator.id)
       .is("deleted_at", null)
@@ -86,7 +84,6 @@ export default async function IncubatorStartupsPage({
     <StartupsWorkspace
       organizationSlug={organizationSlug}
       incubatorSlug={incubatorSlug}
-      incubators={[incubator]}
       startups={startupsResult.data ?? []}
       members={(membersResult.data ?? []).filter((item) =>
         startupIds.has(item.startup_id),

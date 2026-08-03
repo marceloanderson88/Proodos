@@ -1,5 +1,4 @@
 import {
-  Building2,
   CircleDot,
   Link2,
   MapPin,
@@ -22,11 +21,9 @@ import {
   SubmitButton,
 } from "@/components/m6/form-controls";
 
-type Incubator = { id: string; name: string };
 type Startup = {
   id: string;
   code: string;
-  incubator_id: string;
   name: string;
   legal_name: string | null;
   sector: string | null;
@@ -77,7 +74,6 @@ const memberRoleLabel: Record<string, string> = {
 export function StartupsWorkspace({
   organizationSlug,
   incubatorSlug,
-  incubators,
   startups,
   members,
   cohorts,
@@ -87,7 +83,6 @@ export function StartupsWorkspace({
 }: {
   organizationSlug: string;
   incubatorSlug: string;
-  incubators: Incubator[];
   startups: Startup[];
   members: StartupMember[];
   cohorts: CohortOption[];
@@ -154,272 +149,247 @@ export function StartupsWorkspace({
 
       <FeedbackBanner success={success} error={error} />
 
-      {incubators.length === 0 ? (
-        <section className="dashboard-card rounded-2xl p-7 text-center">
-          <Building2 className="mx-auto size-8 text-[#921a20]" />
-          <h2 className="mt-3 text-2xl font-black text-[#3f090d]">
-            Cadastre uma incubadora primeiro
-          </h2>
-          <p className="mt-2 text-sm text-[#766868]">
-            Use o módulo Programas para criar a estrutura gestora antes de
-            adicionar startups.
-          </p>
-        </section>
-      ) : (
-        <section className="grid gap-5 xl:grid-cols-3">
-          <details
-            className="dashboard-card group rounded-[1.6rem] p-5"
-            open={startups.length === 0}
+      <section className="grid gap-5 xl:grid-cols-3">
+        <details
+          className="dashboard-card group rounded-[1.6rem] p-5"
+          open={startups.length === 0}
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between">
+            <div>
+              <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
+                Portfólio
+              </p>
+              <h2 className="mt-1 text-xl font-black text-[#3f090d]">
+                Cadastrar startup
+              </h2>
+            </div>
+            <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
+          </summary>
+          <form
+            action={createStartupAction.bind(
+              null,
+              organizationSlug,
+              incubatorSlug,
+            )}
+            className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
           >
-            <summary className="flex cursor-pointer list-none items-center justify-between">
-              <div>
-                <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                  Portfólio
-                </p>
-                <h2 className="mt-1 text-xl font-black text-[#3f090d]">
-                  Cadastrar startup
-                </h2>
-              </div>
-              <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
-            </summary>
-            <form
-              action={createStartupAction.bind(
-                null,
-                organizationSlug,
-                incubatorSlug,
-              )}
-              className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
-            >
-              <Field label="Incubadora" name="incubatorId">
-                <select className={inputClassName} name="incubatorId" required>
-                  <option value="">Selecione</option>
-                  {incubators.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                <Field
-                  label="Nome"
-                  name="name"
-                  hint="O código técnico será criado automaticamente."
-                >
-                  <input
-                    className={inputClassName}
-                    name="name"
-                    required
-                    placeholder="Nome da startup"
-                  />
-                </Field>
-                <Field label="Razão social" name="legalName">
-                  <input className={inputClassName} name="legalName" />
-                </Field>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                <Field label="Estágio" name="stage">
-                  <select
-                    className={inputClassName}
-                    name="stage"
-                    defaultValue="idea"
-                  >
-                    <option value="idea">Ideia</option>
-                    <option value="validation">Validação</option>
-                    <option value="operation">Operação</option>
-                    <option value="traction">Tração</option>
-                    <option value="scale">Escala</option>
-                  </select>
-                </Field>
-                <Field label="Setor" name="sector">
-                  <input
-                    className={inputClassName}
-                    name="sector"
-                    placeholder="Agtech, educação..."
-                  />
-                </Field>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                <Field label="Cidade" name="city">
-                  <input className={inputClassName} name="city" />
-                </Field>
-                <Field label="Estado" name="state">
-                  <input className={inputClassName} name="state" />
-                </Field>
-              </div>
-              <Field label="CNPJ ou registro" name="taxId">
-                <input className={inputClassName} name="taxId" />
-              </Field>
-              <Field label="Site" name="websiteUrl">
-                <input
-                  className={inputClassName}
-                  type="url"
-                  name="websiteUrl"
-                  placeholder="https://"
-                />
-              </Field>
-              <Field label="Modelo de negócio" name="businessModel">
-                <textarea
-                  className={inputClassName}
-                  name="businessModel"
-                  rows={3}
-                />
-              </Field>
-              <SubmitButton>Cadastrar startup</SubmitButton>
-            </form>
-          </details>
-
-          <details
-            className="dashboard-card group rounded-[1.6rem] p-5"
-            open={members.length === 0 && startups.length > 0}
-          >
-            <summary className="flex cursor-pointer list-none items-center justify-between">
-              <div>
-                <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                  Equipe
-                </p>
-                <h2 className="mt-1 text-xl font-black text-[#3f090d]">
-                  Adicionar membro
-                </h2>
-              </div>
-              <UserPlus className="size-5 text-[#921a20]" />
-            </summary>
-            <form
-              action={addStartupMemberAction.bind(
-                null,
-                organizationSlug,
-                incubatorSlug,
-              )}
-              className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
-            >
-              <Field label="Startup" name="startupId">
-                <select className={inputClassName} name="startupId" required>
-                  <option value="">Selecione</option>
-                  {startups.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Nome completo" name="fullName">
-                <input className={inputClassName} name="fullName" required />
-              </Field>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
               <Field
-                label="E-mail"
-                name="email"
-                hint="O cadastro da equipe não cria uma conta de acesso automaticamente."
+                label="Nome"
+                name="name"
+                hint="O código técnico será criado automaticamente."
               >
-                <input className={inputClassName} type="email" name="email" />
-              </Field>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                <Field label="Vínculo" name="role">
-                  <select
-                    className={inputClassName}
-                    name="role"
-                    defaultValue="founder"
-                  >
-                    <option value="founder">Fundador(a)</option>
-                    <option value="cofounder">Cofundador(a)</option>
-                    <option value="representative">Representante</option>
-                    <option value="employee">Colaborador(a)</option>
-                    <option value="advisor">Conselheiro(a)</option>
-                    <option value="other">Outro</option>
-                  </select>
-                </Field>
-                <Field label="Função" name="roleTitle">
-                  <input
-                    className={inputClassName}
-                    name="roleTitle"
-                    placeholder="CEO, Produto..."
-                  />
-                </Field>
-              </div>
-              <label className="flex items-start gap-3 rounded-xl border border-[#751118]/10 bg-[#fbf5ef] p-3 text-xs leading-5 text-[#5b4545]">
-                <input
-                  className="mt-0.5 size-4 accent-[#751118]"
-                  type="checkbox"
-                  name="isRepresentative"
-                />
-                <span>
-                  <strong className="block text-[#3f090d]">
-                    Representa a startup
-                  </strong>
-                  Poderá gerenciar a própria equipe quando a conta for
-                  vinculada.
-                </span>
-              </label>
-              <SubmitButton>Adicionar à equipe</SubmitButton>
-            </form>
-          </details>
-
-          <details
-            className="dashboard-card group rounded-[1.6rem] p-5"
-            open={
-              enrollments.length === 0 &&
-              startups.length > 0 &&
-              cohorts.length > 0
-            }
-          >
-            <summary className="flex cursor-pointer list-none items-center justify-between">
-              <div>
-                <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                  Participação
-                </p>
-                <h2 className="mt-1 text-xl font-black text-[#3f090d]">
-                  Vincular à turma
-                </h2>
-              </div>
-              <Link2 className="size-5 text-[#921a20]" />
-            </summary>
-            <form
-              action={enrollStartupAction.bind(
-                null,
-                organizationSlug,
-                incubatorSlug,
-              )}
-              className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
-            >
-              <Field label="Startup" name="startupId">
-                <select className={inputClassName} name="startupId" required>
-                  <option value="">Selecione</option>
-                  {startups.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Turma" name="cohortId">
-                <select className={inputClassName} name="cohortId" required>
-                  <option value="">Selecione</option>
-                  {cohorts.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.programName} · {item.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Data de entrada" name="entryDate">
                 <input
                   className={inputClassName}
-                  type="date"
-                  name="entryDate"
+                  name="name"
                   required
-                  defaultValue={new Date().toISOString().slice(0, 10)}
+                  placeholder="Nome da startup"
                 />
               </Field>
-              {cohorts.length === 0 && (
-                <p className="rounded-xl bg-[#fff4de] p-3 text-xs leading-5 text-[#70440d]">
-                  Crie uma turma no módulo Programas antes de matricular
-                  startups.
-                </p>
-              )}
-              <SubmitButton>Vincular ou mover startup</SubmitButton>
-            </form>
-          </details>
-        </section>
-      )}
+              <Field label="Razão social" name="legalName">
+                <input className={inputClassName} name="legalName" />
+              </Field>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+              <Field label="Estágio" name="stage">
+                <select
+                  className={inputClassName}
+                  name="stage"
+                  defaultValue="idea"
+                >
+                  <option value="idea">Ideia</option>
+                  <option value="validation">Validação</option>
+                  <option value="operation">Operação</option>
+                  <option value="traction">Tração</option>
+                  <option value="scale">Escala</option>
+                </select>
+              </Field>
+              <Field label="Setor" name="sector">
+                <input
+                  className={inputClassName}
+                  name="sector"
+                  placeholder="Agtech, educação..."
+                />
+              </Field>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+              <Field label="Cidade" name="city">
+                <input className={inputClassName} name="city" />
+              </Field>
+              <Field label="Estado" name="state">
+                <input className={inputClassName} name="state" />
+              </Field>
+            </div>
+            <Field label="CNPJ ou registro" name="taxId">
+              <input className={inputClassName} name="taxId" />
+            </Field>
+            <Field label="Site" name="websiteUrl">
+              <input
+                className={inputClassName}
+                type="url"
+                name="websiteUrl"
+                placeholder="https://"
+              />
+            </Field>
+            <Field label="Modelo de negócio" name="businessModel">
+              <textarea
+                className={inputClassName}
+                name="businessModel"
+                rows={3}
+              />
+            </Field>
+            <SubmitButton>Cadastrar startup</SubmitButton>
+          </form>
+        </details>
+
+        <details
+          className="dashboard-card group rounded-[1.6rem] p-5"
+          open={members.length === 0 && startups.length > 0}
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between">
+            <div>
+              <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
+                Equipe
+              </p>
+              <h2 className="mt-1 text-xl font-black text-[#3f090d]">
+                Adicionar membro
+              </h2>
+            </div>
+            <UserPlus className="size-5 text-[#921a20]" />
+          </summary>
+          <form
+            action={addStartupMemberAction.bind(
+              null,
+              organizationSlug,
+              incubatorSlug,
+            )}
+            className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
+          >
+            <Field label="Startup" name="startupId">
+              <select className={inputClassName} name="startupId" required>
+                <option value="">Selecione</option>
+                {startups.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Nome completo" name="fullName">
+              <input className={inputClassName} name="fullName" required />
+            </Field>
+            <Field
+              label="E-mail"
+              name="email"
+              hint="O cadastro da equipe não cria uma conta de acesso automaticamente."
+            >
+              <input className={inputClassName} type="email" name="email" />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+              <Field label="Vínculo" name="role">
+                <select
+                  className={inputClassName}
+                  name="role"
+                  defaultValue="founder"
+                >
+                  <option value="founder">Fundador(a)</option>
+                  <option value="cofounder">Cofundador(a)</option>
+                  <option value="representative">Representante</option>
+                  <option value="employee">Colaborador(a)</option>
+                  <option value="advisor">Conselheiro(a)</option>
+                  <option value="other">Outro</option>
+                </select>
+              </Field>
+              <Field label="Função" name="roleTitle">
+                <input
+                  className={inputClassName}
+                  name="roleTitle"
+                  placeholder="CEO, Produto..."
+                />
+              </Field>
+            </div>
+            <label className="flex items-start gap-3 rounded-xl border border-[#751118]/10 bg-[#fbf5ef] p-3 text-xs leading-5 text-[#5b4545]">
+              <input
+                className="mt-0.5 size-4 accent-[#751118]"
+                type="checkbox"
+                name="isRepresentative"
+              />
+              <span>
+                <strong className="block text-[#3f090d]">
+                  Representa a startup
+                </strong>
+                Poderá gerenciar a própria equipe quando a conta for vinculada.
+              </span>
+            </label>
+            <SubmitButton>Adicionar à equipe</SubmitButton>
+          </form>
+        </details>
+
+        <details
+          className="dashboard-card group rounded-[1.6rem] p-5"
+          open={
+            enrollments.length === 0 &&
+            startups.length > 0 &&
+            cohorts.length > 0
+          }
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between">
+            <div>
+              <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
+                Participação
+              </p>
+              <h2 className="mt-1 text-xl font-black text-[#3f090d]">
+                Vincular à turma
+              </h2>
+            </div>
+            <Link2 className="size-5 text-[#921a20]" />
+          </summary>
+          <form
+            action={enrollStartupAction.bind(
+              null,
+              organizationSlug,
+              incubatorSlug,
+            )}
+            className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
+          >
+            <Field label="Startup" name="startupId">
+              <select className={inputClassName} name="startupId" required>
+                <option value="">Selecione</option>
+                {startups.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Turma" name="cohortId">
+              <select className={inputClassName} name="cohortId" required>
+                <option value="">Selecione</option>
+                {cohorts.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.programName} · {item.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Data de entrada" name="entryDate">
+              <input
+                className={inputClassName}
+                type="date"
+                name="entryDate"
+                required
+                defaultValue={new Date().toISOString().slice(0, 10)}
+              />
+            </Field>
+            {cohorts.length === 0 && (
+              <p className="rounded-xl bg-[#fff4de] p-3 text-xs leading-5 text-[#70440d]">
+                Crie uma turma no módulo Programas antes de matricular startups.
+              </p>
+            )}
+            <SubmitButton>Vincular ou mover startup</SubmitButton>
+          </form>
+        </details>
+      </section>
 
       <section aria-labelledby="portfolio-startups">
         <div className="mb-4 flex items-end justify-between gap-4">
@@ -442,7 +412,7 @@ export function StartupsWorkspace({
           <div className="dashboard-card rounded-2xl p-8 text-center">
             <Rocket className="mx-auto size-8 text-[#921a20]" />
             <p className="mt-3 text-sm text-[#766868]">
-              Nenhuma startup cadastrada neste tenant.
+              Nenhuma startup cadastrada nesta incubadora.
             </p>
           </div>
         ) : (
@@ -453,9 +423,6 @@ export function StartupsWorkspace({
               );
               const startupEnrollments = enrollments.filter(
                 (enrollment) => enrollment.startup_id === startup.id,
-              );
-              const incubator = incubators.find(
-                (item) => item.id === startup.incubator_id,
               );
               return (
                 <article
@@ -486,10 +453,6 @@ export function StartupsWorkspace({
                       </span>
                     </div>
                     <div className="mt-5 flex flex-wrap gap-3 text-xs text-[#6d5c58]">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Building2 className="size-4 text-[#921a20]" />
-                        {incubator?.name}
-                      </span>
                       {startup.city && (
                         <span className="inline-flex items-center gap-1.5">
                           <MapPin className="size-4 text-[#921a20]" />

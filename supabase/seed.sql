@@ -196,13 +196,14 @@ from public.organizations o
 where o.slug = 'seed-org-a'
 on conflict (id) do nothing;
 
-insert into public.cohorts (id, organization_id, program_id, code, name, starts_on, ends_on, status, capacity, created_by)
+insert into public.cohorts (id, organization_id, program_id, code, name, launches_on, starts_on, ends_on, status, capacity, created_by)
 select
   '95000000-0000-4000-8000-000000000001',
   o.id,
   '94000000-0000-4000-8000-000000000001',
   'T1-2026',
   'Turma Sintética 1',
+  date '2026-01-10',
   date '2026-08-01',
   date '2026-12-15',
   'active',
