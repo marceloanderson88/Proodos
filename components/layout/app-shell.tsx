@@ -2,7 +2,6 @@
 
 import {
   BarChart3,
-  Bell,
   BookOpen,
   Building2,
   ClipboardCheck,
@@ -11,7 +10,6 @@ import {
   Menu,
   PanelLeftClose,
   Rocket,
-  Search,
   Settings,
   Target,
   UsersRound,
@@ -26,16 +24,41 @@ import { IncubatorSwitcher } from "@/components/layout/incubator-switcher";
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { label: "Dashboard", slug: "dashboard", icon: LayoutDashboard },
-  { label: "Startups", slug: "startups", icon: Rocket },
-  { label: "Programas e Turmas", slug: "programas", icon: Target },
-  { label: "Diagnósticos", slug: "diagnosticos", icon: ClipboardCheck },
-  { label: "Planos de Ação", slug: "planos-de-acao", icon: Gauge },
-  { label: "Mentorias", slug: "mentorias", icon: UsersRound },
-  { label: "Conteúdos", slug: "conteudos", icon: BookOpen },
-  { label: "Indicadores", slug: "indicadores", icon: BarChart3 },
-  { label: "Gestão da Incubadora", slug: "gestao-incubadora", icon: Building2 },
-  { label: "Configurações", slug: "configuracoes", icon: Settings },
+  {
+    group: "Visão geral",
+    items: [{ label: "Dashboard", slug: "dashboard", icon: LayoutDashboard }],
+  },
+  {
+    group: "Portfólio",
+    items: [
+      { label: "Programas e turmas", slug: "programas", icon: Target },
+      { label: "Startups", slug: "startups", icon: Rocket },
+    ],
+  },
+  {
+    group: "Desenvolvimento",
+    items: [
+      { label: "Diagnósticos", slug: "diagnosticos", icon: ClipboardCheck },
+      { label: "Planos de ação", slug: "planos-de-acao", icon: Gauge },
+      { label: "Trilhas e conteúdos", slug: "conteudos", icon: BookOpen },
+      { label: "Mentorias", slug: "mentorias", icon: UsersRound },
+    ],
+  },
+  {
+    group: "Resultados",
+    items: [{ label: "Indicadores", slug: "indicadores", icon: BarChart3 }],
+  },
+  {
+    group: "Administração",
+    items: [
+      {
+        label: "Pessoas e configurações",
+        slug: "gestao-incubadora",
+        icon: Building2,
+      },
+      { label: "Integrações", slug: "configuracoes", icon: Settings },
+    ],
+  },
 ] as const;
 
 type AppShellProps = {
@@ -125,41 +148,51 @@ export function AppShell({
           className="mt-2 flex-1 overflow-y-auto px-3 pb-4"
           aria-label="Módulos da plataforma"
         >
-          <ul className="space-y-1">
-            {navigation.map(({ label, slug, icon: Icon }) => {
-              const href = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
-              const active =
-                pathname === href ||
-                (slug !== "dashboard" && pathname.startsWith(`${href}/`));
-              return (
-                <li key={slug}>
-                  <Link
-                    href={href}
-                    onClick={() => setMenuOpen(false)}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-bold text-white/78 transition",
-                      active
-                        ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
-                        : "hover:bg-white/8 hover:text-white",
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        "size-[1.15rem]",
-                        active
-                          ? "text-[#f4c47a]"
-                          : "text-white/68 group-hover:text-white",
-                      )}
-                      strokeWidth={1.8}
-                      aria-hidden="true"
-                    />
-                    <span>{label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="space-y-5">
+            {navigation.map(({ group, items }) => (
+              <section key={group}>
+                <p className="px-3.5 pb-2 text-[0.58rem] font-extrabold tracking-[0.14em] text-white/42 uppercase">
+                  {group}
+                </p>
+                <ul className="space-y-1">
+                  {items.map(({ label, slug, icon: Icon }) => {
+                    const href = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
+                    const active =
+                      pathname === href ||
+                      (slug !== "dashboard" && pathname.startsWith(`${href}/`));
+
+                    return (
+                      <li key={slug}>
+                        <Link
+                          href={href}
+                          onClick={() => setMenuOpen(false)}
+                          aria-current={active ? "page" : undefined}
+                          className={cn(
+                            "group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-bold text-white/78 transition",
+                            active
+                              ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
+                              : "hover:bg-white/8 hover:text-white",
+                          )}
+                        >
+                          <Icon
+                            className={cn(
+                              "size-[1.15rem]",
+                              active
+                                ? "text-[#f4c47a]"
+                                : "text-white/68 group-hover:text-white",
+                            )}
+                            strokeWidth={1.8}
+                            aria-hidden="true"
+                          />
+                          <span>{label}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
+          </div>
         </nav>
         <div className="relative border-t border-white/10 p-4">
           <div
@@ -203,26 +236,14 @@ export function AppShell({
               className="hidden size-5 text-[#9b8e88] lg:block"
               aria-hidden="true"
             />
-            <label className="relative ml-auto hidden max-w-md flex-1 sm:block">
-              <span className="sr-only">Busca indisponível no Marco 1</span>
-              <Search
-                className="absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[#9b8e88]"
-                aria-hidden="true"
-              />
-              <input
-                readOnly
-                value=""
-                placeholder="Busca disponível em marco futuro"
-                className="w-full rounded-xl border border-[#751118]/10 bg-white/80 py-3 pr-4 pl-11 text-sm text-[#625050] shadow-sm outline-none placeholder:text-[#a99e99]"
-              />
-            </label>
-            <button
-              className="relative grid size-11 shrink-0 place-items-center rounded-xl border border-[#751118]/10 bg-white text-[#625050]"
-              aria-label="Notificações demonstrativas"
-            >
-              <Bell className="size-5" />
-              <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-[#ad2b2f]" />
-            </button>
+            <div className="ml-auto hidden min-w-0 sm:block">
+              <p className="truncate text-xs font-extrabold text-[var(--wine-900)]">
+                {currentIncubator.name}
+              </p>
+              <p className="text-[0.65rem] text-[var(--text-muted)]">
+                Ambiente operacional
+              </p>
+            </div>
             <div className="flex items-center gap-3 rounded-xl border border-[#751118]/10 bg-white px-2.5 py-2 shadow-sm">
               <div className="grid size-8 place-items-center rounded-full bg-[#751118] text-xs font-black text-white">
                 {initials}

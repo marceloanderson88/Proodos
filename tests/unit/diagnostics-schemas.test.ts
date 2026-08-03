@@ -1,24 +1,62 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createDiagnosticCampaignSchema,
   createDiagnosticCriterionSchema,
+  createDiagnosticDimensionSchema,
+  diagnosticAssessmentTransitionSchema,
+  duplicateDiagnosticTemplateSchema,
   saveDiagnosticResponseSchema,
 } from "@/lib/diagnostics/schemas";
 
 describe("schemas de diagnósticos", () => {
-  it("aceita critério numérico sem dependência de CERNE", () => {
+  it("aceita critério de maturidade completo sem dependência de CERNE", () => {
     const result = createDiagnosticCriterionSchema.safeParse({
       templateId: "11111111-1111-4111-8111-111111111111",
       dimensionId: "22222222-2222-4222-8222-222222222222",
+      code: "EM1",
       prompt: "A startup validou o problema?",
       helpText: "",
-      responseType: "numeric",
       weight: "1",
-      maximumScore: "5",
       allowsNotApplicable: true,
-      options: "",
+      requiresNotApplicableJustification: true,
+      evidenceRequiredFrom: "3",
+      rubric0: "Não existe evidência de validação.",
+      rubric1: "A hipótese foi registrada.",
+      rubric2: "A hipótese está em teste.",
+      rubric3: "A hipótese foi validada com evidências.",
+      rubric4: "A validação é revisada continuamente.",
     });
     expect(result.success).toBe(true);
+  });
+
+  it("rejeita dimensão e critério sem códigos técnicos válidos", () => {
+    expect(
+      createDiagnosticDimensionSchema.safeParse({
+        templateId: "11111111-1111-4111-8111-111111111111",
+        code: "dimensão 1",
+        name: "Estratégia",
+        description: "",
+        weight: 50,
+        isEssential: true,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("aceita criação de nova versão e transição de avaliação", () => {
+    expect(
+      duplicateDiagnosticTemplateSchema.safeParse({
+        templateId: "11111111-1111-4111-8111-111111111111",
+        versionLabel: "2.0",
+        changelog: "Revisão anual dos critérios.",
+      }).success,
+    ).toBe(true);
+    expect(
+      diagnosticAssessmentTransitionSchema.safeParse({
+        assessmentId: "22222222-2222-4222-8222-222222222222",
+        returnTo: "/o/proodos/i/sertao-maker/diagnosticos/avaliacoes/1",
+      }).success,
+    ).toBe(true);
   });
 
   it("exige justificativa quando a resposta não se aplica", () => {
@@ -31,6 +69,38 @@ describe("schemas de diagnósticos", () => {
       evidenceNotes: "",
       isNotApplicable: true,
       notApplicableJustification: "",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("aceita campanha com período válido e ao menos uma startup", () => {
+    const result = createDiagnosticCampaignSchema.safeParse({
+      name: "Diagnóstico de Maturidade · 2026/2",
+      templateId: "11111111-1111-4111-8111-111111111111",
+      programId: "",
+      cohortId: "",
+      evaluatorId: "",
+      startsAt: "2026-08-10T09:00",
+      endsAt: "2026-08-31T18:00",
+      startupIds: ["22222222-2222-4222-8222-222222222222"],
+      communicationSubject: "Convite",
+      communicationMessage: "Responda até o encerramento.",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejeita campanha sem startup e com período invertido", () => {
+    const result = createDiagnosticCampaignSchema.safeParse({
+      name: "Campanha inválida",
+      templateId: "11111111-1111-4111-8111-111111111111",
+      programId: "",
+      cohortId: "",
+      evaluatorId: "",
+      startsAt: "2026-09-10T09:00",
+      endsAt: "2026-08-31T18:00",
+      startupIds: [],
+      communicationSubject: "",
+      communicationMessage: "",
     });
     expect(result.success).toBe(false);
   });

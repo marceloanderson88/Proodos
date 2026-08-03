@@ -12,6 +12,9 @@ describe("getSafeAuthDestination", () => {
     expect(getSafeAuthDestination("/o/sertao-maker/startups?aba=ativas")).toBe(
       "/o/sertao-maker/startups?aba=ativas",
     );
+    expect(getSafeAuthDestination("/convites/aceitar?token=seguro")).toBe(
+      "/convites/aceitar?token=seguro",
+    );
   });
 
   it("usa o resolvedor de organização como destino padrão", () => {
@@ -31,6 +34,7 @@ describe("getSafeAuthDestination", () => {
     "https://evil.example/o/tenant",
     "//evil.example/o/tenant",
     "/login",
+    "/convites/aceitar-malicioso?token=x",
     "javascript:alert(1)",
     undefined,
   ])("rejeita destino inseguro %s", (value) => {

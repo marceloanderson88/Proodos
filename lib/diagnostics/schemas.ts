@@ -8,30 +8,48 @@ export const createDiagnosticTemplateSchema = z.object({
 
 export const createDiagnosticDimensionSchema = z.object({
   templateId: z.uuid(),
+  code: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z][A-Za-z0-9]{0,9}$/, "Use até 10 letras ou números."),
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(800).default(""),
   weight: z.coerce.number().positive().max(100),
+  isEssential: z.boolean(),
 });
 
 export const createDiagnosticCriterionSchema = z.object({
   templateId: z.uuid(),
   dimensionId: z.uuid(),
+  code: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z][A-Za-z0-9]{0,11}$/, "Use até 12 letras ou números."),
   prompt: z.string().trim().min(3).max(500),
   helpText: z.string().trim().max(800).default(""),
-  responseType: z.enum([
-    "numeric",
-    "text",
-    "single_choice",
-    "currency",
-    "percentage",
-    "date",
-    "link",
-    "file",
-  ]),
   weight: z.coerce.number().positive().max(100),
-  maximumScore: z.coerce.number().positive().max(100),
   allowsNotApplicable: z.boolean(),
-  options: z.string().trim().max(1200).default(""),
+  requiresNotApplicableJustification: z.boolean(),
+  evidenceRequiredFrom: z.union([
+    z.literal(""),
+    z.coerce.number().min(0).max(4),
+  ]),
+  rubric0: z.string().trim().min(2).max(2000),
+  rubric1: z.string().trim().min(2).max(2000),
+  rubric2: z.string().trim().min(2).max(2000),
+  rubric3: z.string().trim().min(2).max(2000),
+  rubric4: z.string().trim().min(2).max(2000),
+});
+
+export const duplicateDiagnosticTemplateSchema = z.object({
+  templateId: z.uuid(),
+  versionLabel: z.string().trim().max(40).default(""),
+  changelog: z.string().trim().max(3000).default(""),
+});
+
+export const diagnosticAssessmentTransitionSchema = z.object({
+  assessmentId: z.uuid(),
+  returnTo: z.string().trim().min(1).max(500),
 });
 
 export const createDiagnosticAssessmentSchema = z.object({
@@ -39,6 +57,28 @@ export const createDiagnosticAssessmentSchema = z.object({
   templateId: z.uuid(),
   cycleLabel: z.string().trim().min(2).max(120),
 });
+
+export const createDiagnosticCampaignSchema = z
+  .object({
+    name: z.string().trim().min(2).max(180),
+    templateId: z.uuid(),
+    programId: z.union([z.literal(""), z.uuid()]).default(""),
+    cohortId: z.union([z.literal(""), z.uuid()]).default(""),
+    evaluatorId: z.union([z.literal(""), z.uuid()]).default(""),
+    startsAt: z.coerce.date(),
+    endsAt: z.coerce.date(),
+    startupIds: z.array(z.uuid()).min(1, "Selecione ao menos uma startup."),
+    communicationSubject: z.string().trim().max(200).default(""),
+    communicationMessage: z.string().trim().max(5000).default(""),
+  })
+  .refine((data) => data.startsAt < data.endsAt, {
+    path: ["endsAt"],
+    message: "O encerramento deve ser posterior ao início.",
+  })
+  .refine((data) => !data.cohortId || Boolean(data.programId), {
+    path: ["programId"],
+    message: "Selecione o programa da turma.",
+  });
 
 export const saveDiagnosticResponseSchema = z
   .object({

@@ -15,6 +15,11 @@ const optionalDate = z
   })
   .transform((value) => value || null);
 
+const optionalInteger = (minimum: number, maximum: number) =>
+  z
+    .union([z.literal(""), z.coerce.number().int().min(minimum).max(maximum)])
+    .transform((entry) => (entry === "" ? null : entry));
+
 export const organizationSlugSchema = z
   .string()
   .trim()
@@ -79,10 +84,12 @@ export const createProgramSchema = z
     customName: optionalText(120),
     name: z.string().trim().min(2).max(160),
     description: optionalText(3000),
-    startsOn: z
-      .string()
-      .trim()
-      .regex(/^\d{4}-\d{2}-\d{2}$/),
+    objectives: optionalText(3000),
+    targetAudience: optionalText(2000),
+    deliveryMode: z.enum(["in_person", "remote", "hybrid"]),
+    durationWeeks: optionalInteger(1, 520),
+    suggestedCapacity: optionalInteger(1, 100000),
+    startsOn: optionalDate,
     endsOn: optionalDate,
     isActive: z.boolean(),
   })
@@ -110,6 +117,7 @@ export const createCohortSchema = z
       .trim()
       .regex(/^\d{4}-\d{2}-\d{2}$/),
     endsOn: optionalDate,
+    capacity: optionalInteger(1, 100000),
   })
   .refine(
     ({ enrollmentStartsOn, enrollmentEndsOn }) =>
@@ -151,6 +159,17 @@ export const removeIncubatorPersonRoleSchema = z.object({
 export const programLifecycleSchema = z.object({
   programId: z.uuid(),
   action: z.enum(["delete", "archive"]),
+});
+
+export const manageProgramMemberSchema = z.object({
+  programId: z.uuid(),
+  userId: z.uuid(),
+  role: z.enum(["coordinator", "staff", "viewer"]),
+});
+
+export const removeProgramMemberSchema = z.object({
+  programId: z.uuid(),
+  programMemberId: z.uuid(),
 });
 
 export const createStartupSchema = z.object({
