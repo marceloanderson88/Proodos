@@ -25,6 +25,7 @@ import {
 type Incubator = { id: string; name: string };
 type Startup = {
   id: string;
+  code: string;
   incubator_id: string;
   name: string;
   legal_name: string | null;
@@ -75,6 +76,7 @@ const memberRoleLabel: Record<string, string> = {
 
 export function StartupsWorkspace({
   organizationSlug,
+  incubatorSlug,
   incubators,
   startups,
   members,
@@ -84,6 +86,7 @@ export function StartupsWorkspace({
   error,
 }: {
   organizationSlug: string;
+  incubatorSlug: string;
   incubators: Incubator[];
   startups: Startup[];
   members: StartupMember[];
@@ -180,7 +183,11 @@ export function StartupsWorkspace({
               <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
             </summary>
             <form
-              action={createStartupAction.bind(null, organizationSlug)}
+              action={createStartupAction.bind(
+                null,
+                organizationSlug,
+                incubatorSlug,
+              )}
               className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
             >
               <Field label="Incubadora" name="incubatorId">
@@ -194,7 +201,11 @@ export function StartupsWorkspace({
                 </select>
               </Field>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                <Field label="Nome" name="name">
+                <Field
+                  label="Nome"
+                  name="name"
+                  hint="O código técnico será criado automaticamente."
+                >
                   <input
                     className={inputClassName}
                     name="name"
@@ -274,7 +285,11 @@ export function StartupsWorkspace({
               <UserPlus className="size-5 text-[#921a20]" />
             </summary>
             <form
-              action={addStartupMemberAction.bind(null, organizationSlug)}
+              action={addStartupMemberAction.bind(
+                null,
+                organizationSlug,
+                incubatorSlug,
+              )}
               className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
             >
               <Field label="Startup" name="startupId">
@@ -358,7 +373,11 @@ export function StartupsWorkspace({
               <Link2 className="size-5 text-[#921a20]" />
             </summary>
             <form
-              action={enrollStartupAction.bind(null, organizationSlug)}
+              action={enrollStartupAction.bind(
+                null,
+                organizationSlug,
+                incubatorSlug,
+              )}
               className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
             >
               <Field label="Startup" name="startupId">
@@ -451,6 +470,9 @@ export function StartupsWorkspace({
                           <Rocket className="size-6" />
                         </span>
                         <div>
+                          <p className="text-[0.6rem] font-black tracking-[0.1em] text-[#921a20]">
+                            {startup.code}
+                          </p>
                           <h3 className="text-2xl font-black text-[#3f090d]">
                             {startup.name}
                           </h3>

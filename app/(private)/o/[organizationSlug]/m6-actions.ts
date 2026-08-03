@@ -6,12 +6,14 @@ import { redirect } from "next/navigation";
 import {
   addStartupMemberSchema,
   createCohortSchema,
-  createIncubatorSchema,
   createProgramSchema,
   createProgramTypeSchema,
   createStartupSchema,
   enrollStartupSchema,
   organizationSlugSchema,
+  programLifecycleSchema,
+  resolveProgramType,
+  updateProgramSchema,
 } from "@/lib/m6/schemas";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -24,12 +26,14 @@ function value(formData: FormData, key: string) {
 
 function feedbackUrl(
   organizationSlug: string,
+  incubatorSlug: string,
   module: ModuleName,
   kind: "success" | "error",
   message: string,
 ) {
   const search = new URLSearchParams({ [kind]: message });
-  return `/o/${organizationSlug}/${module}?${search.toString()}`;
+  const safeIncubatorSlug = organizationSlugSchema.parse(incubatorSlug);
+  return `/o/${organizationSlug}/i/${safeIncubatorSlug}/${module}?${search.toString()}`;
 }
 
 function databaseMessage(code: string | undefined) {
@@ -39,6 +43,8 @@ function databaseMessage(code: string | undefined) {
     return "Um dos vínculos selecionados não está mais disponível.";
   if (code === "42501")
     return "Você não tem permissão para concluir esta operação.";
+  if (code === "23514")
+    return "O programa já possui uma startup vinculada e deve ser arquivado.";
   return "Não foi possível salvar. Revise os dados e tente novamente.";
 }
 
@@ -62,69 +68,24 @@ async function mutationContext(rawSlug: string) {
   return { organization, organizationSlug, supabase, user };
 }
 
-export async function createIncubatorAction(
-  organizationSlug: string,
-  formData: FormData,
-) {
-  const context = await mutationContext(organizationSlug);
-  const parsed = createIncubatorSchema.safeParse({
-    name: value(formData, "name"),
-    slug: value(formData, "slug"),
-  });
-  if (!parsed.success) {
-    redirect(
-      feedbackUrl(
-        context.organizationSlug,
-        "programas",
-        "error",
-        "Confira o nome e o identificador da incubadora.",
-      ),
-    );
-  }
-
-  const { error } = await context.supabase.from("incubators").insert({
-    organization_id: context.organization.id,
-    name: parsed.data.name,
-    slug: parsed.data.slug,
-    created_by: context.user.id,
-  });
-  if (error)
-    redirect(
-      feedbackUrl(
-        context.organizationSlug,
-        "programas",
-        "error",
-        databaseMessage(error.code),
-      ),
-    );
-
-  revalidatePath(`/o/${context.organizationSlug}`);
-  redirect(
-    feedbackUrl(
-      context.organizationSlug,
-      "programas",
-      "success",
-      "Incubadora criada com segurança.",
-    ),
-  );
-}
-
 export async function createProgramTypeAction(
   organizationSlug: string,
+  incubatorSlug: string,
   formData: FormData,
 ) {
   const context = await mutationContext(organizationSlug);
   const rawIncubatorId = value(formData, "incubatorId");
   const parsed = createProgramTypeSchema.safeParse({
     incubatorId: rawIncubatorId || null,
-    code: value(formData, "code"),
-    name: value(formData, "name"),
+    preset: value(formData, "preset"),
+    customName: value(formData, "customName"),
     description: value(formData, "description"),
   });
   if (!parsed.success) {
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "programas",
         "error",
         "Confira os dados do tipo de programa.",
@@ -132,11 +93,12 @@ export async function createProgramTypeAction(
     );
   }
 
+  const programType = resolveProgramType(parsed.data);
   const { error } = await context.supabase.from("program_types").insert({
     organization_id: context.organization.id,
     incubator_id: parsed.data.incubatorId,
-    code: parsed.data.code,
-    name: parsed.data.name,
+    code: programType.code,
+    name: programType.name,
     description: parsed.data.description,
     created_by: context.user.id,
   });
@@ -144,6 +106,7 @@ export async function createProgramTypeAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "programas",
         "error",
         databaseMessage(error.code),
@@ -154,6 +117,7 @@ export async function createProgramTypeAction(
   redirect(
     feedbackUrl(
       context.organizationSlug,
+      incubatorSlug,
       "programas",
       "success",
       "Tipo de programa criado.",
@@ -163,13 +127,13 @@ export async function createProgramTypeAction(
 
 export async function createProgramAction(
   organizationSlug: string,
+  incubatorSlug: string,
   formData: FormData,
 ) {
   const context = await mutationContext(organizationSlug);
   const parsed = createProgramSchema.safeParse({
     incubatorId: value(formData, "incubatorId"),
     typeId: value(formData, "typeId"),
-    code: value(formData, "code"),
     name: value(formData, "name"),
     description: value(formData, "description"),
     startsOn: value(formData, "startsOn"),
@@ -179,9 +143,10 @@ export async function createProgramAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "programas",
         "error",
-        "Confira código, período e demais dados do programa.",
+        "Confira o período e os demais dados do programa.",
       ),
     );
   }
@@ -190,7 +155,6 @@ export async function createProgramAction(
     organization_id: context.organization.id,
     incubator_id: parsed.data.incubatorId,
     type_id: parsed.data.typeId,
-    code: parsed.data.code,
     name: parsed.data.name,
     description: parsed.data.description,
     starts_on: parsed.data.startsOn,
@@ -201,6 +165,7 @@ export async function createProgramAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "programas",
         "error",
         databaseMessage(error.code),
@@ -211,6 +176,7 @@ export async function createProgramAction(
   redirect(
     feedbackUrl(
       context.organizationSlug,
+      incubatorSlug,
       "programas",
       "success",
       "Programa criado em rascunho.",
@@ -218,14 +184,134 @@ export async function createProgramAction(
   );
 }
 
+export async function updateProgramAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await mutationContext(organizationSlug);
+  const parsed = updateProgramSchema.safeParse({
+    programId: value(formData, "programId"),
+    incubatorId: value(formData, "incubatorId"),
+    typeId: value(formData, "typeId"),
+    name: value(formData, "name"),
+    description: value(formData, "description"),
+    startsOn: value(formData, "startsOn"),
+    endsOn: value(formData, "endsOn"),
+    status: value(formData, "status"),
+  });
+  if (!parsed.success) {
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        "Confira os dados da edição do programa.",
+      ),
+    );
+  }
+
+  const { data: updatedProgram, error } = await context.supabase
+    .from("programs")
+    .update({
+      type_id: parsed.data.typeId,
+      name: parsed.data.name,
+      description: parsed.data.description,
+      starts_on: parsed.data.startsOn,
+      ends_on: parsed.data.endsOn,
+      status: parsed.data.status,
+    })
+    .eq("id", parsed.data.programId)
+    .eq("organization_id", context.organization.id)
+    .eq("incubator_id", parsed.data.incubatorId)
+    .neq("status", "archived")
+    .is("deleted_at", null)
+    .select("id")
+    .maybeSingle();
+  if (error || !updatedProgram)
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        databaseMessage(error?.code),
+      ),
+    );
+
+  revalidatePath(`/o/${context.organizationSlug}/programas`);
+  redirect(
+    feedbackUrl(
+      context.organizationSlug,
+      incubatorSlug,
+      "programas",
+      "success",
+      "Programa atualizado.",
+    ),
+  );
+}
+
+export async function manageProgramLifecycleAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await mutationContext(organizationSlug);
+  const parsed = programLifecycleSchema.safeParse({
+    programId: value(formData, "programId"),
+    action: value(formData, "action"),
+  });
+  if (!parsed.success) {
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        "Ação de programa inválida.",
+      ),
+    );
+  }
+
+  const { error } = await context.supabase.rpc("manage_program_lifecycle", {
+    target_program_id: parsed.data.programId,
+    requested_action: parsed.data.action,
+  });
+  if (error)
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        databaseMessage(error.code),
+      ),
+    );
+
+  revalidatePath(`/o/${context.organizationSlug}/programas`);
+  revalidatePath(`/o/${context.organizationSlug}/startups`);
+  redirect(
+    feedbackUrl(
+      context.organizationSlug,
+      incubatorSlug,
+      "programas",
+      "success",
+      parsed.data.action === "delete"
+        ? "Programa excluído com segurança."
+        : "Programa arquivado com todo o histórico preservado.",
+    ),
+  );
+}
+
 export async function createCohortAction(
   organizationSlug: string,
+  incubatorSlug: string,
   formData: FormData,
 ) {
   const context = await mutationContext(organizationSlug);
   const parsed = createCohortSchema.safeParse({
     programId: value(formData, "programId"),
-    code: value(formData, "code"),
     name: value(formData, "name"),
     startsOn: value(formData, "startsOn"),
     endsOn: value(formData, "endsOn"),
@@ -235,9 +321,10 @@ export async function createCohortAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "programas",
         "error",
-        "Confira código, período e capacidade da turma.",
+        "Confira o período e a capacidade da turma.",
       ),
     );
   }
@@ -245,7 +332,6 @@ export async function createCohortAction(
   const { error } = await context.supabase.from("cohorts").insert({
     organization_id: context.organization.id,
     program_id: parsed.data.programId,
-    code: parsed.data.code,
     name: parsed.data.name,
     starts_on: parsed.data.startsOn,
     ends_on: parsed.data.endsOn,
@@ -256,6 +342,7 @@ export async function createCohortAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "programas",
         "error",
         databaseMessage(error.code),
@@ -266,6 +353,7 @@ export async function createCohortAction(
   redirect(
     feedbackUrl(
       context.organizationSlug,
+      incubatorSlug,
       "programas",
       "success",
       "Turma criada e pronta para receber startups.",
@@ -275,6 +363,7 @@ export async function createCohortAction(
 
 export async function createStartupAction(
   organizationSlug: string,
+  incubatorSlug: string,
   formData: FormData,
 ) {
   const context = await mutationContext(organizationSlug);
@@ -294,6 +383,7 @@ export async function createStartupAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "startups",
         "error",
         "Confira os dados institucionais da startup.",
@@ -319,6 +409,7 @@ export async function createStartupAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "startups",
         "error",
         databaseMessage(error.code),
@@ -329,6 +420,7 @@ export async function createStartupAction(
   redirect(
     feedbackUrl(
       context.organizationSlug,
+      incubatorSlug,
       "startups",
       "success",
       "Startup cadastrada no portfólio.",
@@ -338,6 +430,7 @@ export async function createStartupAction(
 
 export async function addStartupMemberAction(
   organizationSlug: string,
+  incubatorSlug: string,
   formData: FormData,
 ) {
   const context = await mutationContext(organizationSlug);
@@ -353,6 +446,7 @@ export async function addStartupMemberAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "startups",
         "error",
         "Confira os dados do membro da equipe.",
@@ -374,6 +468,7 @@ export async function addStartupMemberAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "startups",
         "error",
         databaseMessage(error.code),
@@ -384,6 +479,7 @@ export async function addStartupMemberAction(
   redirect(
     feedbackUrl(
       context.organizationSlug,
+      incubatorSlug,
       "startups",
       "success",
       "Membro adicionado à equipe.",
@@ -393,6 +489,7 @@ export async function addStartupMemberAction(
 
 export async function enrollStartupAction(
   organizationSlug: string,
+  incubatorSlug: string,
   formData: FormData,
 ) {
   const context = await mutationContext(organizationSlug);
@@ -405,6 +502,7 @@ export async function enrollStartupAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "startups",
         "error",
         "Selecione startup, turma e data de entrada.",
@@ -425,6 +523,7 @@ export async function enrollStartupAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "startups",
         "error",
         databaseMessage(lookupError.code),
@@ -449,6 +548,7 @@ export async function enrollStartupAction(
     redirect(
       feedbackUrl(
         context.organizationSlug,
+        incubatorSlug,
         "startups",
         "error",
         databaseMessage(error.code),
@@ -459,6 +559,7 @@ export async function enrollStartupAction(
   redirect(
     feedbackUrl(
       context.organizationSlug,
+      incubatorSlug,
       "startups",
       "success",
       currentEnrollment

@@ -715,7 +715,7 @@ export type Database = {
         };
         Insert: {
           admission_criteria?: Json;
-          code: string;
+          code?: string;
           created_at?: string;
           created_by: string;
           deleted_at?: string | null;
@@ -772,7 +772,7 @@ export type Database = {
         };
         Insert: {
           capacity?: number | null;
-          code: string;
+          code?: string;
           created_at?: string;
           created_by: string;
           deleted_at?: string | null;
@@ -851,6 +851,7 @@ export type Database = {
         Row: {
           business_model: string | null;
           city: string | null;
+          code: string;
           country_code: string;
           created_at: string;
           created_by: string;
@@ -872,6 +873,7 @@ export type Database = {
         Insert: {
           business_model?: string | null;
           city?: string | null;
+          code?: string;
           country_code?: string;
           created_at?: string;
           created_by: string;
@@ -893,6 +895,7 @@ export type Database = {
         Update: {
           business_model?: string | null;
           city?: string | null;
+          code?: string;
           country_code?: string;
           created_at?: string;
           created_by?: string;
@@ -1378,6 +1381,20 @@ export type Database = {
           id: string;
           slug: string;
         }[];
+      };
+      manage_incubator_lifecycle: {
+        Args: {
+          requested_action: string;
+          target_incubator_id: string;
+        };
+        Returns: string;
+      };
+      manage_program_lifecycle: {
+        Args: {
+          requested_action: string;
+          target_program_id: string;
+        };
+        Returns: string;
       };
       transfer_startup_enrollment: {
         Args: {

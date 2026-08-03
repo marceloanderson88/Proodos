@@ -22,7 +22,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { BrandMark } from "@/components/brand-mark";
-import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
+import { IncubatorSwitcher } from "@/components/layout/incubator-switcher";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -39,12 +39,17 @@ const navigation = [
 ] as const;
 
 type AppShellProps = {
-  currentOrganization: {
+  organization: {
     id: string;
     name: string;
     slug: string;
   };
-  organizations: Array<{
+  currentIncubator: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  incubators: Array<{
     id: string;
     name: string;
     slug: string;
@@ -59,8 +64,9 @@ type AppShellProps = {
 };
 
 export function AppShell({
-  currentOrganization,
-  organizations,
+  organization,
+  currentIncubator,
+  incubators,
   user,
   children,
 }: AppShellProps) {
@@ -90,7 +96,23 @@ export function AppShell({
         )}
       >
         <div className="flex items-center justify-between px-5 pt-6 pb-4">
-          <BrandMark inverse />
+          {currentIncubator.slug.includes("sertao-maker") ? (
+            <BrandMark inverse />
+          ) : (
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/10 text-sm font-black text-[#f4c47a]">
+                {currentIncubator.name.slice(0, 2).toUpperCase()}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-black tracking-[0.12em] text-white/55 uppercase">
+                  Proodos
+                </p>
+                <p className="truncate text-sm font-black text-white">
+                  {currentIncubator.name}
+                </p>
+              </div>
+            </div>
+          )}
           <button
             className="grid size-10 place-items-center rounded-xl text-white/75 hover:bg-white/10 lg:hidden"
             aria-label="Fechar menu"
@@ -105,7 +127,7 @@ export function AppShell({
         >
           <ul className="space-y-1">
             {navigation.map(({ label, slug, icon: Icon }) => {
-              const href = `/o/${currentOrganization.slug}/${slug}`;
+              const href = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
               const active =
                 pathname === href ||
                 (slug !== "dashboard" && pathname.startsWith(`${href}/`));
@@ -157,10 +179,10 @@ export function AppShell({
               />
             </svg>
           </div>
-          <OrganizationSwitcher
-            currentOrganization={currentOrganization}
-            organizations={organizations}
-            userId={user.id}
+          <IncubatorSwitcher
+            organizationSlug={organization.slug}
+            currentIncubator={currentIncubator}
+            incubators={incubators}
           />
         </div>
       </aside>
@@ -229,7 +251,7 @@ export function AppShell({
           className="border-b border-[#d97918]/20 bg-[#fff4de] px-4 py-2 text-center text-xs font-bold text-[#70440d] sm:px-6"
           role="status"
         >
-          Tenant protegido por RLS · dados do dashboard continuam demonstrativos
+          Proodos · {currentIncubator.name} · acesso protegido por RLS
         </div>
         <main
           id="conteudo-principal"

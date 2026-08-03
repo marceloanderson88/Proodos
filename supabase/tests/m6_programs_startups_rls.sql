@@ -47,22 +47,22 @@ with inserted as (
 select set_config('test.m6_program_type_a', id::text, true) from inserted;
 
 with inserted as (
-  insert into public.programs (organization_id, incubator_id, type_id, code, name, status, created_by)
-  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_incubator_a')::uuid, current_setting('test.m6_program_type_a')::uuid, 'M6-A', 'Programa M6 A', 'active', '60000000-0000-4000-8000-000000000001')
+  insert into public.programs (organization_id, incubator_id, type_id, name, status, created_by)
+  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_incubator_a')::uuid, current_setting('test.m6_program_type_a')::uuid, 'Programa M6 A', 'active', '60000000-0000-4000-8000-000000000001')
   returning id
 )
 select set_config('test.m6_program_a', id::text, true) from inserted;
 
 with inserted as (
-  insert into public.cohorts (organization_id, program_id, code, name, status, created_by)
-  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_program_a')::uuid, 'T-A', 'Turma M6 A', 'active', '60000000-0000-4000-8000-000000000001')
+  insert into public.cohorts (organization_id, program_id, name, status, created_by)
+  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_program_a')::uuid, 'Turma M6 A', 'active', '60000000-0000-4000-8000-000000000001')
   returning id
 )
 select set_config('test.m6_cohort_a', id::text, true) from inserted;
 
 with inserted as (
-  insert into public.cohorts (organization_id, program_id, code, name, status, created_by)
-  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_program_a')::uuid, 'T-B', 'Turma M6 B', 'planned', '60000000-0000-4000-8000-000000000001')
+  insert into public.cohorts (organization_id, program_id, name, status, created_by)
+  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_program_a')::uuid, 'Turma M6 B', 'planned', '60000000-0000-4000-8000-000000000001')
   returning id
 )
 select set_config('test.m6_cohort_b', id::text, true) from inserted;
@@ -93,6 +93,22 @@ select public.transfer_startup_enrollment(
   current_date
 );
 
+with inserted as (
+  insert into public.programs (organization_id, incubator_id, type_id, name, created_by)
+  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_incubator_a')::uuid, current_setting('test.m6_program_type_a')::uuid, 'Programa descartável M6', '60000000-0000-4000-8000-000000000001')
+  returning id
+)
+select set_config('test.m6_program_disposable', id::text, true) from inserted;
+
+select public.manage_program_lifecycle(current_setting('test.m6_program_disposable')::uuid, 'delete');
+do $$
+begin
+  perform public.manage_program_lifecycle(current_setting('test.m6_program_a')::uuid, 'delete');
+  raise exception 'Programa com startup vinculada foi excluído';
+exception when check_violation then null;
+end $$;
+select public.manage_program_lifecycle(current_setting('test.m6_program_a')::uuid, 'archive');
+
 do $$
 declare visible_count integer;
 declare history_count integer;
@@ -102,6 +118,32 @@ begin
 
   select count(*) into history_count from public.startup_history where startup_id = current_setting('test.m6_startup_a1')::uuid;
   if history_count < 3 then raise exception 'Linha do tempo não registrou cadastro, equipe e matrícula'; end if;
+
+  if not exists (
+    select 1 from public.programs
+    where id = current_setting('test.m6_program_a')::uuid
+      and code ~ '^PRG-[A-F0-9]{12}$'
+      and status = 'archived'
+      and deleted_at is null
+  ) then raise exception 'Programa não recebeu código automático ou não foi arquivado'; end if;
+
+  if exists (
+    select 1 from public.programs
+    where id = current_setting('test.m6_program_disposable')::uuid
+      and deleted_at is null
+  ) then raise exception 'Programa sem startup vinculada não foi excluído logicamente'; end if;
+
+  if not exists (
+    select 1 from public.cohorts
+    where id = current_setting('test.m6_cohort_a')::uuid
+      and code ~ '^TUR-[A-F0-9]{12}$'
+  ) then raise exception 'Turma não recebeu código automático'; end if;
+
+  if not exists (
+    select 1 from public.startups
+    where id = current_setting('test.m6_startup_a1')::uuid
+      and code ~ '^STP-[A-F0-9]{12}$'
+  ) then raise exception 'Startup não recebeu código automático'; end if;
 
   if not exists (select 1 from public.startup_enrollments where startup_id = current_setting('test.m6_startup_a1')::uuid) then
     raise exception 'Matrícula do fluxo vertical não ficou visível';
@@ -187,7 +229,13 @@ begin
   end if;
 
   if has_column_privilege('authenticated', 'public.startups', 'organization_id', 'update')
-    or has_column_privilege('authenticated', 'public.startup_enrollments', 'cohort_id', 'update') then
+    or has_column_privilege('authenticated', 'public.startup_enrollments', 'cohort_id', 'update')
+    or has_column_privilege('authenticated', 'public.programs', 'code', 'insert')
+    or has_column_privilege('authenticated', 'public.programs', 'code', 'update')
+    or has_column_privilege('authenticated', 'public.cohorts', 'code', 'insert')
+    or has_column_privilege('authenticated', 'public.cohorts', 'code', 'update')
+    or has_column_privilege('authenticated', 'public.startups', 'code', 'insert')
+    or has_column_privilege('authenticated', 'public.startups', 'code', 'update') then
     raise exception 'Coluna estrutural pode ser alterada diretamente pelo cliente';
   end if;
 end $$;

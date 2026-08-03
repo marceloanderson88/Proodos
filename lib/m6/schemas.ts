@@ -31,28 +31,55 @@ export const createIncubatorSchema = z.object({
     .max(80),
 });
 
-export const createProgramTypeSchema = z.object({
-  incubatorId: z.uuid().nullable(),
-  code: z
-    .string()
-    .trim()
+export const programTypePresetSchema = z.enum([
+  "pre_incubation",
+  "incubation",
+  "acceleration",
+  "bootcamp",
+  "other",
+]);
+
+export const createProgramTypeSchema = z
+  .object({
+    incubatorId: z.uuid().nullable(),
+    preset: programTypePresetSchema,
+    customName: optionalText(120),
+    description: optionalText(1000),
+  })
+  .refine(({ preset, customName }) => preset !== "other" || customName, {
+    message: "Informe o nome do tipo de programa.",
+    path: ["customName"],
+  });
+
+const programTypeNames = {
+  pre_incubation: "Pré-Incubação",
+  incubation: "Incubação",
+  acceleration: "Aceleração",
+  bootcamp: "Bootcamp",
+} as const;
+
+export function resolveProgramType(
+  input: z.infer<typeof createProgramTypeSchema>,
+) {
+  const name =
+    input.preset === "other"
+      ? (input.customName ?? "")
+      : programTypeNames[input.preset];
+  const code = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .regex(/^[a-z0-9]+(?:_[a-z0-9]+)*$/)
-    .max(60),
-  name: z.string().trim().min(2).max(120),
-  description: optionalText(1000),
-});
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 60);
+
+  return { code, name };
+}
 
 export const createProgramSchema = z
   .object({
     incubatorId: z.uuid(),
     typeId: z.uuid(),
-    code: z
-      .string()
-      .trim()
-      .toUpperCase()
-      .regex(/^[A-Z0-9]+(?:-[A-Z0-9]+)*$/)
-      .max(40),
     name: z.string().trim().min(2).max(160),
     description: optionalText(3000),
     startsOn: optionalDate,
@@ -66,12 +93,6 @@ export const createProgramSchema = z
 export const createCohortSchema = z
   .object({
     programId: z.uuid(),
-    code: z
-      .string()
-      .trim()
-      .toUpperCase()
-      .regex(/^[A-Z0-9]+(?:-[A-Z0-9]+)*$/)
-      .max(40),
     name: z.string().trim().min(2).max(160),
     startsOn: optionalDate,
     endsOn: optionalDate,
@@ -85,6 +106,16 @@ export const createCohortSchema = z
     ({ startsOn, endsOn }) => !startsOn || !endsOn || startsOn <= endsOn,
     { message: "A data final deve ser posterior à inicial.", path: ["endsOn"] },
   );
+
+export const updateProgramSchema = createProgramSchema.safeExtend({
+  programId: z.uuid(),
+  status: z.enum(["draft", "planned", "active", "completed", "cancelled"]),
+});
+
+export const programLifecycleSchema = z.object({
+  programId: z.uuid(),
+  action: z.enum(["delete", "archive"]),
+});
 
 export const createStartupSchema = z.object({
   incubatorId: z.uuid(),

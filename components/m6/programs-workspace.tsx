@@ -1,18 +1,23 @@
 import {
+  Archive,
   CalendarDays,
   CircleDot,
   Factory,
   Flag,
   Layers3,
+  Pencil,
   Plus,
+  Trash2,
   UsersRound,
 } from "lucide-react";
+import Link from "next/link";
 
 import {
   createCohortAction,
-  createIncubatorAction,
   createProgramAction,
   createProgramTypeAction,
+  manageProgramLifecycleAction,
+  updateProgramAction,
 } from "@/app/(private)/o/[organizationSlug]/m6-actions";
 import { FeedbackBanner } from "@/components/m6/feedback-banner";
 import {
@@ -20,6 +25,7 @@ import {
   inputClassName,
   SubmitButton,
 } from "@/components/m6/form-controls";
+import { ProgramTypeNameField } from "@/components/m6/program-type-name-field";
 
 type Incubator = { id: string; name: string };
 type ProgramType = { id: string; name: string; incubator_id: string | null };
@@ -42,7 +48,9 @@ type Program = {
   status: string;
   starts_on: string | null;
   ends_on: string | null;
+  description: string | null;
 };
+type Enrollment = { cohort_id: string; startup_id: string };
 
 const statusLabel: Record<string, string> = {
   draft: "Rascunho",
@@ -50,6 +58,7 @@ const statusLabel: Record<string, string> = {
   active: "Em andamento",
   completed: "Concluído",
   cancelled: "Cancelado",
+  archived: "Arquivado",
 };
 
 function dateLabel(value: string | null) {
@@ -61,18 +70,22 @@ function dateLabel(value: string | null) {
 
 export function ProgramsWorkspace({
   organizationSlug,
+  incubatorSlug,
   incubators,
   programTypes,
   programs,
   cohorts,
+  enrollments,
   success,
   error,
 }: {
   organizationSlug: string;
+  incubatorSlug: string;
   incubators: Incubator[];
   programTypes: ProgramType[];
   programs: Program[];
   cohorts: Cohort[];
+  enrollments: Enrollment[];
   success?: string;
   error?: string;
 }) {
@@ -149,35 +162,12 @@ export function ProgramsWorkspace({
               </p>
             </div>
           </div>
-          <form
-            action={createIncubatorAction.bind(null, organizationSlug)}
-            className="mt-6 grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+          <Link
+            href="/o"
+            className="mt-6 inline-flex rounded-xl bg-[#751118] px-5 py-3 text-sm font-black text-white"
           >
-            <Field label="Nome" name="name">
-              <input
-                className={inputClassName}
-                name="name"
-                required
-                minLength={2}
-                maxLength={160}
-                placeholder="Incubadora Sertão Maker"
-              />
-            </Field>
-            <Field
-              label="Identificador"
-              name="slug"
-              hint="Minúsculas, números e hífens."
-            >
-              <input
-                className={inputClassName}
-                name="slug"
-                required
-                pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-                placeholder="sertao-maker"
-              />
-            </Field>
-            <SubmitButton>Criar incubadora</SubmitButton>
-          </form>
+            Voltar à administração Proodos
+          </Link>
         </section>
       ) : (
         <section className="grid gap-5 xl:grid-cols-3">
@@ -197,12 +187,15 @@ export function ProgramsWorkspace({
               <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
             </summary>
             <form
-              action={createProgramTypeAction.bind(null, organizationSlug)}
+              action={createProgramTypeAction.bind(
+                null,
+                organizationSlug,
+                incubatorSlug,
+              )}
               className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
             >
               <Field label="Escopo" name="incubatorId">
-                <select className={inputClassName} name="incubatorId">
-                  <option value="">Toda a organização</option>
+                <select className={inputClassName} name="incubatorId" required>
                   {incubators.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.name}
@@ -210,24 +203,7 @@ export function ProgramsWorkspace({
                   ))}
                 </select>
               </Field>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                <Field label="Código" name="code">
-                  <input
-                    className={inputClassName}
-                    name="code"
-                    required
-                    placeholder="pre_incubacao"
-                  />
-                </Field>
-                <Field label="Nome" name="name">
-                  <input
-                    className={inputClassName}
-                    name="name"
-                    required
-                    placeholder="Pré-incubação"
-                  />
-                </Field>
-              </div>
+              <ProgramTypeNameField />
               <Field label="Descrição" name="description">
                 <textarea
                   className={inputClassName}
@@ -255,7 +231,11 @@ export function ProgramsWorkspace({
               <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
             </summary>
             <form
-              action={createProgramAction.bind(null, organizationSlug)}
+              action={createProgramAction.bind(
+                null,
+                organizationSlug,
+                incubatorSlug,
+              )}
               className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
             >
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
@@ -284,24 +264,18 @@ export function ProgramsWorkspace({
                   </select>
                 </Field>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                <Field label="Código" name="code">
-                  <input
-                    className={inputClassName}
-                    name="code"
-                    required
-                    placeholder="PRE-2026"
-                  />
-                </Field>
-                <Field label="Nome" name="name">
-                  <input
-                    className={inputClassName}
-                    name="name"
-                    required
-                    placeholder="Ciclo de Pré-incubação"
-                  />
-                </Field>
-              </div>
+              <Field
+                label="Nome"
+                name="name"
+                hint="O código técnico será criado automaticamente."
+              >
+                <input
+                  className={inputClassName}
+                  name="name"
+                  required
+                  placeholder="Ciclo de Pré-incubação"
+                />
+              </Field>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Início" name="startsOn">
                   <input
@@ -341,7 +315,11 @@ export function ProgramsWorkspace({
               <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
             </summary>
             <form
-              action={createCohortAction.bind(null, organizationSlug)}
+              action={createCohortAction.bind(
+                null,
+                organizationSlug,
+                incubatorSlug,
+              )}
               className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
             >
               <Field label="Programa" name="programId">
@@ -354,24 +332,18 @@ export function ProgramsWorkspace({
                   ))}
                 </select>
               </Field>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                <Field label="Código" name="code">
-                  <input
-                    className={inputClassName}
-                    name="code"
-                    required
-                    placeholder="T1-2026"
-                  />
-                </Field>
-                <Field label="Nome" name="name">
-                  <input
-                    className={inputClassName}
-                    name="name"
-                    required
-                    placeholder="Turma 1"
-                  />
-                </Field>
-              </div>
+              <Field
+                label="Nome"
+                name="name"
+                hint="O código técnico será criado automaticamente."
+              >
+                <input
+                  className={inputClassName}
+                  name="name"
+                  required
+                  placeholder="Turma 1"
+                />
+              </Field>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Início" name="startsOn">
                   <input
@@ -428,6 +400,14 @@ export function ProgramsWorkspace({
               const programCohorts = cohorts.filter(
                 (cohort) => cohort.program_id === program.id,
               );
+              const cohortIds = new Set(
+                programCohorts.map((cohort) => cohort.id),
+              );
+              const linkedStartupCount = new Set(
+                enrollments
+                  .filter((enrollment) => cohortIds.has(enrollment.cohort_id))
+                  .map((enrollment) => enrollment.startup_id),
+              ).size;
               const incubator = incubators.find(
                 (item) => item.id === program.incubator_id,
               );
@@ -490,6 +470,143 @@ export function ProgramsWorkspace({
                         </li>
                       ))}
                     </ul>
+                  )}
+                  {program.status !== "archived" && (
+                    <div className="mt-5 border-t border-[#751118]/8 pt-4">
+                      <details className="group/edit rounded-2xl border border-[#751118]/10 bg-white/65 p-4">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-[#5c0c12]">
+                          <span className="inline-flex items-center gap-2">
+                            <Pencil className="size-4" aria-hidden="true" />
+                            Editar programa
+                          </span>
+                          <Plus className="size-4 transition group-open/edit:rotate-45" />
+                        </summary>
+                        <form
+                          action={updateProgramAction.bind(
+                            null,
+                            organizationSlug,
+                            incubatorSlug,
+                          )}
+                          className="mt-4 space-y-4 border-t border-[#751118]/8 pt-4"
+                        >
+                          <input
+                            type="hidden"
+                            name="programId"
+                            value={program.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="incubatorId"
+                            value={program.incubator_id}
+                          />
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <Field label="Nome" name={`name-${program.id}`}>
+                              <input
+                                className={inputClassName}
+                                name="name"
+                                required
+                                defaultValue={program.name}
+                              />
+                            </Field>
+                            <Field label="Tipo" name={`type-${program.id}`}>
+                              <select
+                                className={inputClassName}
+                                name="typeId"
+                                required
+                                defaultValue={program.type_id}
+                              >
+                                {programTypes.map((item) => (
+                                  <option key={item.id} value={item.id}>
+                                    {item.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </Field>
+                          </div>
+                          <div className="grid gap-4 sm:grid-cols-3">
+                            <Field label="Status" name={`status-${program.id}`}>
+                              <select
+                                className={inputClassName}
+                                name="status"
+                                defaultValue={program.status}
+                              >
+                                <option value="draft">Rascunho</option>
+                                <option value="planned">Planejado</option>
+                                <option value="active">Em andamento</option>
+                                <option value="completed">Concluído</option>
+                                <option value="cancelled">Cancelado</option>
+                              </select>
+                            </Field>
+                            <Field label="Início" name={`starts-${program.id}`}>
+                              <input
+                                className={inputClassName}
+                                type="date"
+                                name="startsOn"
+                                defaultValue={program.starts_on ?? ""}
+                              />
+                            </Field>
+                            <Field label="Fim" name={`ends-${program.id}`}>
+                              <input
+                                className={inputClassName}
+                                type="date"
+                                name="endsOn"
+                                defaultValue={program.ends_on ?? ""}
+                              />
+                            </Field>
+                          </div>
+                          <Field
+                            label="Descrição"
+                            name={`description-${program.id}`}
+                          >
+                            <textarea
+                              className={inputClassName}
+                              name="description"
+                              rows={3}
+                              defaultValue={program.description ?? ""}
+                            />
+                          </Field>
+                          <SubmitButton>Salvar alterações</SubmitButton>
+                        </form>
+                      </details>
+
+                      <form
+                        action={manageProgramLifecycleAction.bind(
+                          null,
+                          organizationSlug,
+                          incubatorSlug,
+                        )}
+                        className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#fbf5ef] p-4"
+                      >
+                        <input
+                          type="hidden"
+                          name="programId"
+                          value={program.id}
+                        />
+                        <input
+                          type="hidden"
+                          name="action"
+                          value={linkedStartupCount > 0 ? "archive" : "delete"}
+                        />
+                        <p className="max-w-md text-xs leading-5 text-[#766868]">
+                          {linkedStartupCount > 0
+                            ? `${linkedStartupCount} startup(s) vinculada(s). O histórico será preservado.`
+                            : "Sem startups vinculadas. A exclusão removerá o programa do portfólio ativo."}
+                        </p>
+                        <button
+                          type="submit"
+                          className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#921a20]/20 bg-white px-4 py-2 text-xs font-black text-[#751118] transition hover:border-[#921a20]/40 hover:bg-[#fff8f3]"
+                        >
+                          {linkedStartupCount > 0 ? (
+                            <Archive className="size-4" aria-hidden="true" />
+                          ) : (
+                            <Trash2 className="size-4" aria-hidden="true" />
+                          )}
+                          {linkedStartupCount > 0
+                            ? "Arquivar programa"
+                            : "Excluir programa"}
+                        </button>
+                      </form>
+                    </div>
                   )}
                 </article>
               );

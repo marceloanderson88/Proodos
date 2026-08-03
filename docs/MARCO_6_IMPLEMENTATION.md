@@ -2,6 +2,8 @@
 
 ## Resultado
 
+Após a validação do modelo operacional, o Proodos passou a ser a organização raiz desta implantação. A central `/o` administra todas as incubadoras e os módulos do Marco 6 operam com a incubadora explícita em `/o/[organizationSlug]/i/[incubatorSlug]`. O filtro no servidor complementa — sem substituir — RLS e permissões por escopo.
+
 O Marco 6 inicia o primeiro módulo vertical do MVP com persistência real. As rotas **Programas** e **Startups** deixam de ser placeholders e passam a consultar e alterar o Supabase usando sessão SSR, Server Actions, validação Zod, grants mínimos e RLS.
 
 O corte entregue cobre:
@@ -15,6 +17,10 @@ O corte entregue cobre:
 - matrícula manual em turma;
 - transferência atômica entre turmas com preservação do vínculo anterior;
 - linha do tempo append-only de cadastro, equipe e matrículas.
+- códigos técnicos de programa, turma e startup gerados automaticamente no banco;
+- tipos guiados: Pré-Incubação, Incubação, Aceleração, Bootcamp ou nome livre;
+- edição de programas sem permitir alteração de tenant ou do código técnico;
+- exclusão lógica somente sem matrículas históricas e arquivamento quando existem startups vinculadas.
 
 Nenhuma tabela ou formulário do marco possui dependência CERNE.
 
@@ -49,6 +55,8 @@ O catálogo recebe `program.read`, `program.manage`, `startup.read` e `startup.m
 - colunas estruturais como `organization_id`, `incubator_id`, `program_id`, `startup_id` e `cohort_id` não podem ser trocadas por updates comuns do cliente.
 
 `public.transfer_startup_enrollment` é a exceção transacional necessária ao RF-014. A RPC deriva tenant e incubadora dos registros, verifica as duas permissões, bloqueia a matrícula anterior, marca-a como transferida e cria a nova com `previous_enrollment_id`. O cliente nunca fornece `organization_id` para essa operação.
+
+`public.manage_program_lifecycle` serializa a decisão de exclusão/arquivamento. A função exige `program.manage`, bloqueia o programa durante a verificação e consulta matrículas de todas as suas turmas. Sem vínculos, programa e turmas recebem exclusão lógica; com qualquer vínculo histórico, a exclusão é recusada e somente o arquivamento preservando o histórico é permitido.
 
 ## Interface
 

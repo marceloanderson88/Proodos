@@ -1,7 +1,12 @@
-import { DashboardPreview } from "@/components/dashboard/dashboard-preview";
+import { redirectLegacyOrganizationRoute } from "@/lib/incubators/server-context";
 
-export const metadata = { title: "Dashboard demonstrativo" };
+export const dynamic = "force-dynamic";
 
-export default function DashboardPage() {
-  return <DashboardPreview />;
+export default async function LegacyDashboardPage({
+  params,
+}: {
+  params: Promise<{ organizationSlug: string }>;
+}) {
+  const { organizationSlug } = await params;
+  await redirectLegacyOrganizationRoute(organizationSlug, "dashboard");
 }

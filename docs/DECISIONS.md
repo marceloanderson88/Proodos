@@ -192,3 +192,17 @@ O bootstrap inicial é uma inserção operacional manual pelo PostgreSQL na allo
 **Status:** Aceita e implementada no Marco 6
 **Decisão:** iniciar o MVP operacional pelo fluxo `programa → turma → startup → equipe → matrícula`, mantendo tipos de programa configuráveis e metodologia completamente opcional.
 **Consequências:** `organization_id` permanece em todas as entidades; relações usam FKs compostas; representantes acessam somente a própria startup; transferências de turma são transacionais e preservam o registro anterior. Diagnósticos e planos usarão `startup_id` obrigatório nos marcos seguintes, enquanto templates permanecem catálogos independentes.
+
+## DEC-031 — Códigos internos automáticos e descarte seguro de programas
+
+**Decisão:** programa, turma e startup recebem código técnico imutável no banco, derivado do UUID e sem entrada manual. Um programa sem qualquer matrícula histórica pode ser excluído logicamente; a existência de uma startup vinculada obriga o arquivamento.
+
+**Consequências:** o usuário trabalha apenas com nomes de domínio; concorrência entre verificar vínculos e descartar o programa é tratada por RPC transacional; turmas vazias acompanham a exclusão lógica do programa; histórico, arquivos e matrículas nunca são apagados por essa operação.
+
+## DEC-032 — Proodos como tenant raiz e incubadora como contexto operacional
+
+**Status:** Aceita e implementada após o Marco 6
+
+**Decisão:** nesta implantação, `Proodos` é a organização raiz. `/o` é sua central administrativa e cada módulo de negócio opera sob `/o/[organizationSlug]/i/[incubatorSlug]`. Programas e startups pertencem obrigatoriamente à incubadora ativa; diagnósticos, planos, mentorias e indicadores seguirão o mesmo escopo quando implementados.
+
+**Consequências:** a incubadora fica explícita na URL e nunca concede acesso sem RLS; links antigos escolhem uma incubadora autorizada; incubadoras com histórico são arquivadas e somente incubadoras vazias podem ser excluídas logicamente. A arquitetura multi-tenant permanece preservada para evolução futura.

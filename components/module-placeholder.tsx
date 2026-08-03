@@ -5,12 +5,14 @@ type ModulePlaceholderProps = {
   title: string;
   description: string;
   organizationSlug: string;
+  dashboardHref?: string;
 };
 
 export function ModulePlaceholder({
   title,
   description,
   organizationSlug,
+  dashboardHref,
 }: ModulePlaceholderProps) {
   return (
     <div className="page-enter grid min-h-[65vh] place-items-center py-10">
@@ -36,7 +38,7 @@ export function ModulePlaceholder({
           </p>
         </div>
         <Link
-          href={`/o/${organizationSlug}/dashboard`}
+          href={dashboardHref ?? `/o/${organizationSlug}/dashboard`}
           className="mt-9 inline-flex items-center gap-2 rounded-xl bg-[#751118] px-5 py-3.5 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-[#921a20]"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />

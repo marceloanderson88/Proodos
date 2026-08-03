@@ -8,15 +8,15 @@ Este plano nasceu na Fase A. Os Marcos 1 a 5 foram concluídos em 02/08/2026. O 
 
 ## 2. Marcos
 
-| Marco | Resultado                                                          | Estado                                   |
-| ----- | ------------------------------------------------------------------ | ---------------------------------------- |
-| M0    | Requisitos, arquitetura, decisões, lacunas e plano versionados     | Concluído nesta etapa                    |
-| M1    | Scaffold Next.js, qualidade, design system e shell público/privado | Concluído em 02/08/2026                  |
-| M2    | Autenticação completa e perfil seguro                              | Concluído em 02/08/2026                  |
-| M3    | Fundação multi-tenant, RBAC, RLS e auditoria                       | Concluído em 02/08/2026                  |
-| M4    | Contratos de arquivos/Drive e shell privado integrado              | Concluído sem adapter real em 02/08/2026 |
-| M5    | Segurança, testes cross-tenant, CI e readiness para deploy         | Concluído em 02/08/2026                  |
-| M6    | Programas, turmas, startups, equipes e matrículas                  | Implementado; aguardando gate SQL no CI  |
+| Marco | Resultado                                                          | Estado                                                                         |
+| ----- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| M0    | Requisitos, arquitetura, decisões, lacunas e plano versionados     | Concluído nesta etapa                                                          |
+| M1    | Scaffold Next.js, qualidade, design system e shell público/privado | Concluído em 02/08/2026                                                        |
+| M2    | Autenticação completa e perfil seguro                              | Concluído em 02/08/2026                                                        |
+| M3    | Fundação multi-tenant, RBAC, RLS e auditoria                       | Concluído em 02/08/2026                                                        |
+| M4    | Contratos de arquivos/Drive e shell privado integrado              | Concluído sem adapter real em 02/08/2026                                       |
+| M5    | Segurança, testes cross-tenant, CI e readiness para deploy         | Concluído em 02/08/2026                                                        |
+| M6    | Programas, turmas, startups, equipes e matrículas                  | Implementado; contexto Proodos/incubadora integrado; aguardando gate SQL no CI |
 
 ## 3. Sequência de implementação
 
