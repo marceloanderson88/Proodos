@@ -47,22 +47,22 @@ with inserted as (
 select set_config('test.m6_program_type_a', id::text, true) from inserted;
 
 with inserted as (
-  insert into public.programs (organization_id, incubator_id, type_id, name, status, created_by)
-  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_incubator_a')::uuid, current_setting('test.m6_program_type_a')::uuid, 'Programa M6 A', 'active', '60000000-0000-4000-8000-000000000001')
+  insert into public.programs (organization_id, incubator_id, type_id, name, starts_on, status, created_by)
+  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_incubator_a')::uuid, current_setting('test.m6_program_type_a')::uuid, 'Programa M6 A', date '2026-01-20', 'active', '60000000-0000-4000-8000-000000000001')
   returning id
 )
 select set_config('test.m6_program_a', id::text, true) from inserted;
 
 with inserted as (
-  insert into public.cohorts (organization_id, program_id, name, status, created_by)
-  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_program_a')::uuid, 'Turma M6 A', 'active', '60000000-0000-4000-8000-000000000001')
+  insert into public.cohorts (organization_id, program_id, name, launches_on, starts_on, status, created_by)
+  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_program_a')::uuid, 'Turma M6 A', date '2026-01-05', date '2026-02-01', 'active', '60000000-0000-4000-8000-000000000001')
   returning id
 )
 select set_config('test.m6_cohort_a', id::text, true) from inserted;
 
 with inserted as (
-  insert into public.cohorts (organization_id, program_id, name, status, created_by)
-  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_program_a')::uuid, 'Turma M6 B', 'planned', '60000000-0000-4000-8000-000000000001')
+  insert into public.cohorts (organization_id, program_id, name, launches_on, starts_on, status, created_by)
+  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_program_a')::uuid, 'Turma M6 B', date '2026-05-05', date '2026-06-01', 'planned', '60000000-0000-4000-8000-000000000001')
   returning id
 )
 select set_config('test.m6_cohort_b', id::text, true) from inserted;
@@ -94,8 +94,8 @@ select public.transfer_startup_enrollment(
 );
 
 with inserted as (
-  insert into public.programs (organization_id, incubator_id, type_id, name, created_by)
-  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_incubator_a')::uuid, current_setting('test.m6_program_type_a')::uuid, 'Programa descartável M6', '60000000-0000-4000-8000-000000000001')
+  insert into public.programs (organization_id, incubator_id, type_id, name, starts_on, created_by)
+  values (current_setting('test.m6_org_a')::uuid, current_setting('test.m6_incubator_a')::uuid, current_setting('test.m6_program_type_a')::uuid, 'Programa descartável M6', date '2026-08-01', '60000000-0000-4000-8000-000000000001')
   returning id
 )
 select set_config('test.m6_program_disposable', id::text, true) from inserted;

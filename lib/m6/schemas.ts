@@ -35,13 +35,12 @@ export const programTypePresetSchema = z.enum([
   "pre_incubation",
   "incubation",
   "acceleration",
-  "bootcamp",
   "other",
 ]);
 
 export const createProgramTypeSchema = z
   .object({
-    incubatorId: z.uuid().nullable(),
+    incubatorId: z.uuid(),
     preset: programTypePresetSchema,
     customName: optionalText(120),
     description: optionalText(1000),
@@ -55,7 +54,6 @@ const programTypeNames = {
   pre_incubation: "Pré-Incubação",
   incubation: "Incubação",
   acceleration: "Aceleração",
-  bootcamp: "Bootcamp",
 } as const;
 
 export function resolveProgramType(
@@ -79,11 +77,20 @@ export function resolveProgramType(
 export const createProgramSchema = z
   .object({
     incubatorId: z.uuid(),
-    typeId: z.uuid(),
+    preset: programTypePresetSchema,
+    customName: optionalText(120),
     name: z.string().trim().min(2).max(160),
     description: optionalText(3000),
-    startsOn: optionalDate,
+    startsOn: z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}$/),
     endsOn: optionalDate,
+    isActive: z.boolean(),
+  })
+  .refine(({ preset, customName }) => preset !== "other" || customName, {
+    message: "Informe o outro tipo de programa.",
+    path: ["customName"],
   })
   .refine(
     ({ startsOn, endsOn }) => !startsOn || !endsOn || startsOn <= endsOn,
@@ -94,14 +101,36 @@ export const createCohortSchema = z
   .object({
     programId: z.uuid(),
     name: z.string().trim().min(2).max(160),
-    startsOn: optionalDate,
-    endsOn: optionalDate,
-    capacity: z
+    launchesOn: z
       .string()
       .trim()
-      .transform((value) => (value === "" ? null : Number(value)))
-      .pipe(z.number().int().min(1).max(100000).nullable()),
+      .regex(/^\d{4}-\d{2}-\d{2}$/),
+    enrollmentStartsOn: optionalDate,
+    enrollmentEndsOn: optionalDate,
+    startsOn: z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}$/),
+    endsOn: optionalDate,
   })
+  .refine(
+    ({ enrollmentStartsOn, enrollmentEndsOn }) =>
+      Boolean(enrollmentStartsOn) === Boolean(enrollmentEndsOn),
+    {
+      message: "Informe o início e o fim das inscrições.",
+      path: ["enrollmentEndsOn"],
+    },
+  )
+  .refine(
+    ({ enrollmentStartsOn, enrollmentEndsOn }) =>
+      !enrollmentStartsOn ||
+      !enrollmentEndsOn ||
+      enrollmentStartsOn <= enrollmentEndsOn,
+    {
+      message: "O fim das inscrições deve ser posterior ao início.",
+      path: ["enrollmentEndsOn"],
+    },
+  )
   .refine(
     ({ startsOn, endsOn }) => !startsOn || !endsOn || startsOn <= endsOn,
     { message: "A data final deve ser posterior à inicial.", path: ["endsOn"] },
@@ -109,7 +138,16 @@ export const createCohortSchema = z
 
 export const updateProgramSchema = createProgramSchema.safeExtend({
   programId: z.uuid(),
-  status: z.enum(["draft", "planned", "active", "completed", "cancelled"]),
+  removeLogo: z.boolean(),
+});
+
+export const manageIncubatorPersonRoleSchema = z.object({
+  membershipId: z.uuid(),
+  roleId: z.uuid(),
+});
+
+export const removeIncubatorPersonRoleSchema = z.object({
+  assignmentId: z.uuid(),
 });
 
 export const programLifecycleSchema = z.object({

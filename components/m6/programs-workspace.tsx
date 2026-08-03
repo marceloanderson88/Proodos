@@ -10,12 +10,12 @@ import {
   Trash2,
   UsersRound,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import {
   createCohortAction,
   createProgramAction,
-  createProgramTypeAction,
   manageProgramLifecycleAction,
   updateProgramAction,
 } from "@/app/(private)/o/[organizationSlug]/m6-actions";
@@ -35,9 +35,11 @@ type Cohort = {
   name: string;
   code: string;
   status: string;
-  starts_on: string | null;
+  launches_on: string;
+  enrollment_starts_on: string | null;
+  enrollment_ends_on: string | null;
+  starts_on: string;
   ends_on: string | null;
-  capacity: number | null;
 };
 type Program = {
   id: string;
@@ -46,9 +48,10 @@ type Program = {
   name: string;
   code: string;
   status: string;
-  starts_on: string | null;
+  starts_on: string;
   ends_on: string | null;
   description: string | null;
+  logo_url: string | null;
 };
 type Enrollment = { cohort_id: string; startup_id: string };
 
@@ -170,59 +173,15 @@ export function ProgramsWorkspace({
           </Link>
         </section>
       ) : (
-        <section className="grid gap-5 xl:grid-cols-3">
+        <section className="grid gap-5 xl:grid-cols-2">
           <details
             className="dashboard-card group rounded-[1.6rem] p-5"
-            open={programTypes.length === 0}
+            open={programs.length === 0}
           >
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
               <div>
                 <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                  Etapa 1
-                </p>
-                <h2 className="mt-1 text-xl font-black text-[#3f090d]">
-                  Tipo de programa
-                </h2>
-              </div>
-              <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
-            </summary>
-            <form
-              action={createProgramTypeAction.bind(
-                null,
-                organizationSlug,
-                incubatorSlug,
-              )}
-              className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
-            >
-              <Field label="Escopo" name="incubatorId">
-                <select className={inputClassName} name="incubatorId" required>
-                  {incubators.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <ProgramTypeNameField />
-              <Field label="Descrição" name="description">
-                <textarea
-                  className={inputClassName}
-                  name="description"
-                  rows={2}
-                />
-              </Field>
-              <SubmitButton>Criar tipo</SubmitButton>
-            </form>
-          </details>
-
-          <details
-            className="dashboard-card group rounded-[1.6rem] p-5"
-            open={programs.length === 0 && programTypes.length > 0}
-          >
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-              <div>
-                <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                  Etapa 2
+                  Programa
                 </p>
                 <h2 className="mt-1 text-xl font-black text-[#3f090d]">
                   Novo programa
@@ -238,34 +197,8 @@ export function ProgramsWorkspace({
               )}
               className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
             >
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                <Field label="Incubadora" name="incubatorId">
-                  <select
-                    className={inputClassName}
-                    name="incubatorId"
-                    required
-                  >
-                    <option value="">Selecione</option>
-                    {incubators.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Tipo" name="typeId">
-                  <select className={inputClassName} name="typeId" required>
-                    <option value="">Selecione</option>
-                    {programTypes.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
               <Field
-                label="Nome"
+                label="Nome do programa"
                 name="name"
                 hint="O código técnico será criado automaticamente."
               >
@@ -276,12 +209,26 @@ export function ProgramsWorkspace({
                   placeholder="Ciclo de Pré-incubação"
                 />
               </Field>
+              <Field
+                label="Logo"
+                name="logo"
+                hint="PNG, JPG ou WebP, com até 2 MB. Ativo visual privado da incubadora."
+              >
+                <input
+                  className={inputClassName}
+                  type="file"
+                  name="logo"
+                  accept="image/png,image/jpeg,image/webp"
+                />
+              </Field>
+              <ProgramTypeNameField />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Início" name="startsOn">
                   <input
                     className={inputClassName}
                     type="date"
                     name="startsOn"
+                    required
                   />
                 </Field>
                 <Field label="Fim" name="endsOn">
@@ -295,6 +242,14 @@ export function ProgramsWorkspace({
                   rows={2}
                 />
               </Field>
+              <label className="flex items-center gap-3 rounded-xl border border-[#751118]/10 bg-white/70 px-4 py-3 text-sm font-bold text-[#5c0c12]">
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  className="size-4 accent-[#751118]"
+                />
+                Programa ativo
+              </label>
               <SubmitButton>Criar programa</SubmitButton>
             </form>
           </details>
@@ -306,7 +261,7 @@ export function ProgramsWorkspace({
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
               <div>
                 <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                  Etapa 3
+                  Turma
                 </p>
                 <h2 className="mt-1 text-xl font-black text-[#3f090d]">
                   Nova turma
@@ -333,7 +288,7 @@ export function ProgramsWorkspace({
                 </select>
               </Field>
               <Field
-                label="Nome"
+                label="Nome da turma"
                 name="name"
                 hint="O código técnico será criado automaticamente."
               >
@@ -344,28 +299,51 @@ export function ProgramsWorkspace({
                   placeholder="Turma 1"
                 />
               </Field>
+              <Field label="Data de lançamento" name="launchesOn">
+                <input
+                  className={inputClassName}
+                  type="date"
+                  name="launchesOn"
+                  required
+                />
+              </Field>
+              <fieldset className="rounded-2xl border border-[#751118]/10 p-4">
+                <legend className="px-2 text-xs font-black tracking-[0.08em] text-[#751118] uppercase">
+                  Período de inscrições (opcional)
+                </legend>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Abertura" name="enrollmentStartsOn">
+                    <input
+                      className={inputClassName}
+                      type="date"
+                      name="enrollmentStartsOn"
+                    />
+                  </Field>
+                  <Field label="Encerramento" name="enrollmentEndsOn">
+                    <input
+                      className={inputClassName}
+                      type="date"
+                      name="enrollmentEndsOn"
+                    />
+                  </Field>
+                </div>
+              </fieldset>
+              <p className="text-xs font-black tracking-[0.08em] text-[#751118] uppercase">
+                Ciclo da turma
+              </p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Início" name="startsOn">
                   <input
                     className={inputClassName}
                     type="date"
                     name="startsOn"
+                    required
                   />
                 </Field>
                 <Field label="Fim" name="endsOn">
                   <input className={inputClassName} type="date" name="endsOn" />
                 </Field>
               </div>
-              <Field label="Capacidade" name="capacity">
-                <input
-                  className={inputClassName}
-                  type="number"
-                  name="capacity"
-                  min={1}
-                  max={100000}
-                  placeholder="20"
-                />
-              </Field>
               <SubmitButton>Criar turma</SubmitButton>
             </form>
           </details>
@@ -419,6 +397,18 @@ export function ProgramsWorkspace({
                   key={program.id}
                   className="dashboard-card stagger-item rounded-[1.6rem] p-5"
                 >
+                  {program.logo_url && (
+                    <div className="mb-5 flex h-28 items-center justify-center overflow-hidden rounded-2xl border border-[#751118]/8 bg-white p-4">
+                      <Image
+                        src={program.logo_url}
+                        alt={`Logo do programa ${program.name}`}
+                        width={320}
+                        height={112}
+                        unoptimized
+                        className="h-full w-auto max-w-full object-contain"
+                      />
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -462,10 +452,12 @@ export function ProgramsWorkspace({
                             {cohort.name}
                           </p>
                           <p className="mt-1 text-[0.62rem] text-[#887875]">
-                            {cohort.code} ·{" "}
-                            {cohort.capacity
-                              ? `${cohort.capacity} vagas`
-                              : "sem limite definido"}
+                            {cohort.code} · lançamento em{" "}
+                            {dateLabel(cohort.launches_on)}
+                          </p>
+                          <p className="mt-1 text-[0.62rem] text-[#887875]">
+                            Ciclo: {dateLabel(cohort.starts_on)} —{" "}
+                            {dateLabel(cohort.ends_on)}
                           </p>
                         </li>
                       ))}
@@ -494,11 +486,6 @@ export function ProgramsWorkspace({
                             name="programId"
                             value={program.id}
                           />
-                          <input
-                            type="hidden"
-                            name="incubatorId"
-                            value={program.incubator_id}
-                          />
                           <div className="grid gap-4 sm:grid-cols-2">
                             <Field label="Nome" name={`name-${program.id}`}>
                               <input
@@ -508,41 +495,19 @@ export function ProgramsWorkspace({
                                 defaultValue={program.name}
                               />
                             </Field>
-                            <Field label="Tipo" name={`type-${program.id}`}>
-                              <select
-                                className={inputClassName}
-                                name="typeId"
-                                required
-                                defaultValue={program.type_id}
-                              >
-                                {programTypes.map((item) => (
-                                  <option key={item.id} value={item.id}>
-                                    {item.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </Field>
+                            <ProgramTypeNameField
+                              currentName={type?.name}
+                              idSuffix={program.id}
+                            />
                           </div>
-                          <div className="grid gap-4 sm:grid-cols-3">
-                            <Field label="Status" name={`status-${program.id}`}>
-                              <select
-                                className={inputClassName}
-                                name="status"
-                                defaultValue={program.status}
-                              >
-                                <option value="draft">Rascunho</option>
-                                <option value="planned">Planejado</option>
-                                <option value="active">Em andamento</option>
-                                <option value="completed">Concluído</option>
-                                <option value="cancelled">Cancelado</option>
-                              </select>
-                            </Field>
+                          <div className="grid gap-4 sm:grid-cols-2">
                             <Field label="Início" name={`starts-${program.id}`}>
                               <input
                                 className={inputClassName}
                                 type="date"
                                 name="startsOn"
                                 defaultValue={program.starts_on ?? ""}
+                                required
                               />
                             </Field>
                             <Field label="Fim" name={`ends-${program.id}`}>
@@ -553,6 +518,39 @@ export function ProgramsWorkspace({
                                 defaultValue={program.ends_on ?? ""}
                               />
                             </Field>
+                          </div>
+                          <Field
+                            label="Substituir logo"
+                            name={`logo-${program.id}`}
+                            hint="Opcional. PNG, JPG ou WebP, com até 2 MB."
+                          >
+                            <input
+                              className={inputClassName}
+                              type="file"
+                              name="logo"
+                              accept="image/png,image/jpeg,image/webp"
+                            />
+                          </Field>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <label className="flex items-center gap-3 rounded-xl border border-[#751118]/10 bg-white/70 px-4 py-3 text-sm font-bold text-[#5c0c12]">
+                              <input
+                                type="checkbox"
+                                name="isActive"
+                                defaultChecked={program.status === "active"}
+                                className="size-4 accent-[#751118]"
+                              />
+                              Programa ativo
+                            </label>
+                            {program.logo_url && (
+                              <label className="flex items-center gap-3 rounded-xl border border-[#751118]/10 bg-white/70 px-4 py-3 text-sm font-bold text-[#5c0c12]">
+                                <input
+                                  type="checkbox"
+                                  name="removeLogo"
+                                  className="size-4 accent-[#751118]"
+                                />
+                                Remover logo atual
+                              </label>
+                            )}
                           </div>
                           <Field
                             label="Descrição"

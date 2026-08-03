@@ -14,11 +14,13 @@ describe("contratos do Marco 6", () => {
   it("não exige código e normaliza campos opcionais de programa", () => {
     const result = createProgramSchema.parse({
       incubatorId: "10000000-0000-4000-8000-000000000001",
-      typeId: "10000000-0000-4000-8000-000000000002",
+      preset: "pre_incubation",
+      customName: "",
       name: " Pré-incubação 2026 ",
       description: "",
       startsOn: "2026-08-01",
       endsOn: "2026-12-10",
+      isActive: true,
     });
 
     expect(result.name).toBe("Pré-incubação 2026");
@@ -27,7 +29,7 @@ describe("contratos do Marco 6", () => {
 
   it("resolve tipo predefinido e exige nome quando a opção é outro", () => {
     const preset = createProgramTypeSchema.parse({
-      incubatorId: null,
+      incubatorId: "10000000-0000-4000-8000-000000000001",
       preset: "pre_incubation",
       customName: "",
       description: "",
@@ -39,7 +41,7 @@ describe("contratos do Marco 6", () => {
     });
     expect(
       createProgramTypeSchema.safeParse({
-        incubatorId: null,
+        incubatorId: "10000000-0000-4000-8000-000000000001",
         preset: "other",
         customName: "",
         description: "",
@@ -52,11 +54,42 @@ describe("contratos do Marco 6", () => {
       createCohortSchema.safeParse({
         programId: "10000000-0000-4000-8000-000000000001",
         name: "Turma um",
+        launchesOn: "2026-07-01",
+        enrollmentStartsOn: "",
+        enrollmentEndsOn: "",
         startsOn: "2026-12-01",
         endsOn: "2026-08-01",
-        capacity: "20",
       }).success,
     ).toBe(false);
+  });
+
+  it("exige as duas datas quando houver período de inscrições", () => {
+    expect(
+      createCohortSchema.safeParse({
+        programId: "10000000-0000-4000-8000-000000000001",
+        name: "Turma dois",
+        launchesOn: "2026-07-01",
+        enrollmentStartsOn: "2026-07-10",
+        enrollmentEndsOn: "",
+        startsOn: "2026-08-01",
+        endsOn: "",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("permite programa inativo com fim opcional", () => {
+    expect(
+      createProgramSchema.safeParse({
+        incubatorId: "10000000-0000-4000-8000-000000000001",
+        preset: "other",
+        customName: "Residência",
+        name: "Residência de inovação",
+        description: "",
+        startsOn: "2026-09-01",
+        endsOn: "",
+        isActive: false,
+      }).success,
+    ).toBe(true);
   });
 
   it("aceita somente excluir ou arquivar no ciclo de vida", () => {
