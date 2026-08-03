@@ -32,11 +32,18 @@ export function Field({
   );
 }
 
-export function SubmitButton({ children }: { children: React.ReactNode }) {
+export function SubmitButton({
+  children,
+  disabled = false,
+}: {
+  children: React.ReactNode;
+  disabled?: boolean;
+}) {
   return (
     <button
       type="submit"
-      className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#751118] px-5 py-3 text-sm font-black text-white shadow-[0_10px_24px_rgb(117_17_24/18%)] transition hover:-translate-y-0.5 hover:bg-[#921a20] active:translate-y-0"
+      disabled={disabled}
+      className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#751118] px-5 py-3 text-sm font-black text-white shadow-[0_10px_24px_rgb(117_17_24/18%)] transition hover:-translate-y-0.5 hover:bg-[#921a20] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
     >
       {children}
     </button>

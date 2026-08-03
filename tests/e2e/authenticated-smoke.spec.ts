@@ -45,7 +45,7 @@ test.describe("smoke autenticado", () => {
     await page.goto("/o/seed-org-b/i/incubadora-sintetica-sertao/dashboard");
     await expect(page).toHaveURL(/\/o$/);
 
-    await page.getByRole("button", { name: "Sair da conta" }).click();
+    await page.getByRole("button", { name: "Sair", exact: true }).click();
     await expect(page).toHaveURL(/\/login$/);
   });
 });
