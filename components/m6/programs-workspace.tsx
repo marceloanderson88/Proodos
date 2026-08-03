@@ -2,7 +2,6 @@ import {
   Archive,
   CalendarDays,
   CircleDot,
-  Factory,
   Flag,
   Layers3,
   Pencil,
@@ -11,7 +10,6 @@ import {
   UsersRound,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
 import {
   createCohortAction,
@@ -27,8 +25,7 @@ import {
 } from "@/components/m6/form-controls";
 import { ProgramTypeNameField } from "@/components/m6/program-type-name-field";
 
-type Incubator = { id: string; name: string };
-type ProgramType = { id: string; name: string; incubator_id: string | null };
+type ProgramType = { id: string; name: string };
 type Cohort = {
   id: string;
   program_id: string;
@@ -43,7 +40,6 @@ type Cohort = {
 };
 type Program = {
   id: string;
-  incubator_id: string;
   type_id: string;
   name: string;
   code: string;
@@ -74,7 +70,6 @@ function dateLabel(value: string | null) {
 export function ProgramsWorkspace({
   organizationSlug,
   incubatorSlug,
-  incubators,
   programTypes,
   programs,
   cohorts,
@@ -84,7 +79,6 @@ export function ProgramsWorkspace({
 }: {
   organizationSlug: string;
   incubatorSlug: string;
-  incubators: Incubator[];
   programTypes: ProgramType[];
   programs: Program[];
   cohorts: Cohort[];
@@ -149,206 +143,181 @@ export function ProgramsWorkspace({
 
       <FeedbackBanner success={success} error={error} />
 
-      {incubators.length === 0 ? (
-        <section className="dashboard-card rounded-[1.7rem] p-6 sm:p-8">
-          <div className="flex items-start gap-4">
-            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#f3dfd0] text-[#751118]">
-              <Factory className="size-6" />
-            </span>
+      <section className="grid gap-5 xl:grid-cols-2">
+        <details
+          className="dashboard-card group rounded-[1.6rem] p-5"
+          open={programs.length === 0}
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-black text-[#3f090d]">
-                Primeiro, identifique a incubadora
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-[#766868]">
-                Programas e startups pertencem a uma incubadora concreta dentro
-                da organização.
+              <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
+                Programa
               </p>
+              <h2 className="mt-1 text-xl font-black text-[#3f090d]">
+                Novo programa
+              </h2>
             </div>
-          </div>
-          <Link
-            href="/o"
-            className="mt-6 inline-flex rounded-xl bg-[#751118] px-5 py-3 text-sm font-black text-white"
+            <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
+          </summary>
+          <form
+            action={createProgramAction.bind(
+              null,
+              organizationSlug,
+              incubatorSlug,
+            )}
+            className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
           >
-            Voltar à administração Proodos
-          </Link>
-        </section>
-      ) : (
-        <section className="grid gap-5 xl:grid-cols-2">
-          <details
-            className="dashboard-card group rounded-[1.6rem] p-5"
-            open={programs.length === 0}
-          >
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-              <div>
-                <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                  Programa
-                </p>
-                <h2 className="mt-1 text-xl font-black text-[#3f090d]">
-                  Novo programa
-                </h2>
-              </div>
-              <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
-            </summary>
-            <form
-              action={createProgramAction.bind(
-                null,
-                organizationSlug,
-                incubatorSlug,
-              )}
-              className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
+            <Field
+              label="Nome do programa"
+              name="name"
+              hint="O código técnico será criado automaticamente."
             >
-              <Field
-                label="Nome do programa"
+              <input
+                className={inputClassName}
                 name="name"
-                hint="O código técnico será criado automaticamente."
-              >
-                <input
-                  className={inputClassName}
-                  name="name"
-                  required
-                  placeholder="Ciclo de Pré-incubação"
-                />
-              </Field>
-              <Field
-                label="Logo"
+                required
+                placeholder="Ciclo de Pré-incubação"
+              />
+            </Field>
+            <Field
+              label="Logo"
+              name="logo"
+              hint="PNG, JPG ou WebP, com até 2 MB. Ativo visual privado da incubadora."
+            >
+              <input
+                className={inputClassName}
+                type="file"
                 name="logo"
-                hint="PNG, JPG ou WebP, com até 2 MB. Ativo visual privado da incubadora."
-              >
-                <input
-                  className={inputClassName}
-                  type="file"
-                  name="logo"
-                  accept="image/png,image/jpeg,image/webp"
-                />
-              </Field>
-              <ProgramTypeNameField />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Início" name="startsOn">
-                  <input
-                    className={inputClassName}
-                    type="date"
-                    name="startsOn"
-                    required
-                  />
-                </Field>
-                <Field label="Fim" name="endsOn">
-                  <input className={inputClassName} type="date" name="endsOn" />
-                </Field>
-              </div>
-              <Field label="Descrição" name="description">
-                <textarea
-                  className={inputClassName}
-                  name="description"
-                  rows={2}
-                />
-              </Field>
-              <label className="flex items-center gap-3 rounded-xl border border-[#751118]/10 bg-white/70 px-4 py-3 text-sm font-bold text-[#5c0c12]">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  className="size-4 accent-[#751118]"
-                />
-                Programa ativo
-              </label>
-              <SubmitButton>Criar programa</SubmitButton>
-            </form>
-          </details>
-
-          <details
-            className="dashboard-card group rounded-[1.6rem] p-5"
-            open={cohorts.length === 0 && programs.length > 0}
-          >
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-              <div>
-                <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                  Turma
-                </p>
-                <h2 className="mt-1 text-xl font-black text-[#3f090d]">
-                  Nova turma
-                </h2>
-              </div>
-              <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
-            </summary>
-            <form
-              action={createCohortAction.bind(
-                null,
-                organizationSlug,
-                incubatorSlug,
-              )}
-              className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
-            >
-              <Field label="Programa" name="programId">
-                <select className={inputClassName} name="programId" required>
-                  <option value="">Selecione</option>
-                  {programs.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field
-                label="Nome da turma"
-                name="name"
-                hint="O código técnico será criado automaticamente."
-              >
-                <input
-                  className={inputClassName}
-                  name="name"
-                  required
-                  placeholder="Turma 1"
-                />
-              </Field>
-              <Field label="Data de lançamento" name="launchesOn">
+                accept="image/png,image/jpeg,image/webp"
+              />
+            </Field>
+            <ProgramTypeNameField />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Início" name="startsOn">
                 <input
                   className={inputClassName}
                   type="date"
-                  name="launchesOn"
+                  name="startsOn"
                   required
                 />
               </Field>
-              <fieldset className="rounded-2xl border border-[#751118]/10 p-4">
-                <legend className="px-2 text-xs font-black tracking-[0.08em] text-[#751118] uppercase">
-                  Período de inscrições (opcional)
-                </legend>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Abertura" name="enrollmentStartsOn">
-                    <input
-                      className={inputClassName}
-                      type="date"
-                      name="enrollmentStartsOn"
-                    />
-                  </Field>
-                  <Field label="Encerramento" name="enrollmentEndsOn">
-                    <input
-                      className={inputClassName}
-                      type="date"
-                      name="enrollmentEndsOn"
-                    />
-                  </Field>
-                </div>
-              </fieldset>
-              <p className="text-xs font-black tracking-[0.08em] text-[#751118] uppercase">
-                Ciclo da turma
+              <Field label="Fim" name="endsOn">
+                <input className={inputClassName} type="date" name="endsOn" />
+              </Field>
+            </div>
+            <Field label="Descrição" name="description">
+              <textarea
+                className={inputClassName}
+                name="description"
+                rows={2}
+              />
+            </Field>
+            <label className="flex items-center gap-3 rounded-xl border border-[#751118]/10 bg-white/70 px-4 py-3 text-sm font-bold text-[#5c0c12]">
+              <input
+                type="checkbox"
+                name="isActive"
+                className="size-4 accent-[#751118]"
+              />
+              Programa ativo
+            </label>
+            <SubmitButton>Criar programa</SubmitButton>
+          </form>
+        </details>
+
+        <details
+          className="dashboard-card group rounded-[1.6rem] p-5"
+          open={cohorts.length === 0 && programs.length > 0}
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+            <div>
+              <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
+                Turma
               </p>
+              <h2 className="mt-1 text-xl font-black text-[#3f090d]">
+                Nova turma
+              </h2>
+            </div>
+            <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
+          </summary>
+          <form
+            action={createCohortAction.bind(
+              null,
+              organizationSlug,
+              incubatorSlug,
+            )}
+            className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
+          >
+            <Field label="Programa" name="programId">
+              <select className={inputClassName} name="programId" required>
+                <option value="">Selecione</option>
+                {programs.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field
+              label="Nome da turma"
+              name="name"
+              hint="O código técnico será criado automaticamente."
+            >
+              <input
+                className={inputClassName}
+                name="name"
+                required
+                placeholder="Turma 1"
+              />
+            </Field>
+            <Field label="Data de lançamento" name="launchesOn">
+              <input
+                className={inputClassName}
+                type="date"
+                name="launchesOn"
+                required
+              />
+            </Field>
+            <fieldset className="rounded-2xl border border-[#751118]/10 p-4">
+              <legend className="px-2 text-xs font-black tracking-[0.08em] text-[#751118] uppercase">
+                Período de inscrições (opcional)
+              </legend>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Início" name="startsOn">
+                <Field label="Abertura" name="enrollmentStartsOn">
                   <input
                     className={inputClassName}
                     type="date"
-                    name="startsOn"
-                    required
+                    name="enrollmentStartsOn"
                   />
                 </Field>
-                <Field label="Fim" name="endsOn">
-                  <input className={inputClassName} type="date" name="endsOn" />
+                <Field label="Encerramento" name="enrollmentEndsOn">
+                  <input
+                    className={inputClassName}
+                    type="date"
+                    name="enrollmentEndsOn"
+                  />
                 </Field>
               </div>
-              <SubmitButton>Criar turma</SubmitButton>
-            </form>
-          </details>
-        </section>
-      )}
+            </fieldset>
+            <p className="text-xs font-black tracking-[0.08em] text-[#751118] uppercase">
+              Ciclo da turma
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Início" name="startsOn">
+                <input
+                  className={inputClassName}
+                  type="date"
+                  name="startsOn"
+                  required
+                />
+              </Field>
+              <Field label="Fim" name="endsOn">
+                <input className={inputClassName} type="date" name="endsOn" />
+              </Field>
+            </div>
+            <SubmitButton>Criar turma</SubmitButton>
+          </form>
+        </details>
+      </section>
 
       <section aria-labelledby="portfolio-programas">
         <div className="mb-4 flex items-end justify-between gap-4">
@@ -386,9 +355,6 @@ export function ProgramsWorkspace({
                   .filter((enrollment) => cohortIds.has(enrollment.cohort_id))
                   .map((enrollment) => enrollment.startup_id),
               ).size;
-              const incubator = incubators.find(
-                (item) => item.id === program.incubator_id,
-              );
               const type = programTypes.find(
                 (item) => item.id === program.type_id,
               );
@@ -422,9 +388,6 @@ export function ProgramsWorkspace({
                       <h3 className="mt-3 text-2xl font-black text-[#3f090d]">
                         {program.name}
                       </h3>
-                      <p className="mt-1 text-xs text-[#806f6b]">
-                        {incubator?.name}
-                      </p>
                     </div>
                     <span className="rounded-full bg-[#f7ebe4] px-3 py-1.5 text-[0.65rem] font-black text-[#751118]">
                       {statusLabel[program.status] ?? program.status}

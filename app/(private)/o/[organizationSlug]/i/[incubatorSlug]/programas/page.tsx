@@ -23,7 +23,7 @@ export default async function IncubatorProgramsPage({
     await Promise.all([
       supabase
         .from("program_types")
-        .select("id, name, incubator_id")
+        .select("id, name")
         .eq("organization_id", organization.id)
         .eq("is_active", true)
         .eq("incubator_id", incubator.id)
@@ -31,7 +31,7 @@ export default async function IncubatorProgramsPage({
       supabase
         .from("programs")
         .select(
-          "id, incubator_id, type_id, name, code, description, status, starts_on, ends_on, logo_path",
+          "id, type_id, name, code, description, status, starts_on, ends_on, logo_path",
         )
         .eq("organization_id", organization.id)
         .eq("incubator_id", incubator.id)
@@ -83,7 +83,6 @@ export default async function IncubatorProgramsPage({
     <ProgramsWorkspace
       organizationSlug={organizationSlug}
       incubatorSlug={incubatorSlug}
-      incubators={[incubator]}
       programTypes={typesResult.data ?? []}
       programs={programs}
       cohorts={cohorts}

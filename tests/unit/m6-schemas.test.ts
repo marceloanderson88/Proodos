@@ -13,7 +13,6 @@ import {
 describe("contratos do Marco 6", () => {
   it("não exige código e normaliza campos opcionais de programa", () => {
     const result = createProgramSchema.parse({
-      incubatorId: "10000000-0000-4000-8000-000000000001",
       preset: "pre_incubation",
       customName: "",
       name: " Pré-incubação 2026 ",
@@ -29,7 +28,6 @@ describe("contratos do Marco 6", () => {
 
   it("resolve tipo predefinido e exige nome quando a opção é outro", () => {
     const preset = createProgramTypeSchema.parse({
-      incubatorId: "10000000-0000-4000-8000-000000000001",
       preset: "pre_incubation",
       customName: "",
       description: "",
@@ -41,7 +39,6 @@ describe("contratos do Marco 6", () => {
     });
     expect(
       createProgramTypeSchema.safeParse({
-        incubatorId: "10000000-0000-4000-8000-000000000001",
         preset: "other",
         customName: "",
         description: "",
@@ -80,7 +77,6 @@ describe("contratos do Marco 6", () => {
   it("permite programa inativo com fim opcional", () => {
     expect(
       createProgramSchema.safeParse({
-        incubatorId: "10000000-0000-4000-8000-000000000001",
         preset: "other",
         customName: "Residência",
         name: "Residência de inovação",
@@ -109,7 +105,6 @@ describe("contratos do Marco 6", () => {
 
   it("não exige vínculo CERNE para cadastrar startup", () => {
     const result = createStartupSchema.safeParse({
-      incubatorId: "10000000-0000-4000-8000-000000000001",
       name: "Agro Sertão",
       legalName: "",
       taxId: "",

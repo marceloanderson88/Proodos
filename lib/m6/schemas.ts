@@ -40,7 +40,6 @@ export const programTypePresetSchema = z.enum([
 
 export const createProgramTypeSchema = z
   .object({
-    incubatorId: z.uuid(),
     preset: programTypePresetSchema,
     customName: optionalText(120),
     description: optionalText(1000),
@@ -76,7 +75,6 @@ export function resolveProgramType(
 
 export const createProgramSchema = z
   .object({
-    incubatorId: z.uuid(),
     preset: programTypePresetSchema,
     customName: optionalText(120),
     name: z.string().trim().min(2).max(160),
@@ -156,7 +154,6 @@ export const programLifecycleSchema = z.object({
 });
 
 export const createStartupSchema = z.object({
-  incubatorId: z.uuid(),
   name: z.string().trim().min(2).max(160),
   legalName: optionalText(200),
   taxId: optionalText(32),

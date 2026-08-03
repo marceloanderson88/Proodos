@@ -213,4 +213,12 @@ O bootstrap inicial é uma inserção operacional manual pelo PostgreSQL na allo
 
 **Decisão:** todo tipo de programa pertence obrigatoriamente a uma incubadora. A interface cria ou reutiliza internamente o tipo selecionado (Pré-Incubação, Incubação, Aceleração ou Outro), sem expor campo de escopo ou cadastro prévio separado. Programas exigem data inicial e podem ser ativados; turmas permanecem agregados separados com lançamento, inscrição opcional e ciclo próprio. Papéis de pessoas são atribuídos no escopo explícito da incubadora.
 
+## DEC-034 — A rota define a incubadora operacional
+
+**Decisão:** dentro de `/o/[organizationSlug]/i/[incubatorSlug]`, a incubadora
+não é selecionável nos formulários. O contexto validado da rota define
+automaticamente o pertencimento de programas e startups e limita as opções de
+turmas, equipes e demais vínculos. As Server Actions repetem essa validação para
+impedir que um ID manipulado associe dados a outra incubadora.
+
 **Consequências:** programas de uma incubadora não são reutilizados por outra; logos de até 2 MB ficam em bucket privado do Supabase Storage, enquanto arquivos grandes continuam no Google Drive; a autorização de pessoas permanece em `role_assignments`, sem flags no frontend ou metadata editável.

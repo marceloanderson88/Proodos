@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { label: "Dashboard", slug: "dashboard", icon: LayoutDashboard },
   { label: "Startups", slug: "startups", icon: Rocket },
-  { label: "Programas", slug: "programas", icon: Target },
+  { label: "Programas e Turmas", slug: "programas", icon: Target },
   { label: "Diagnósticos", slug: "diagnosticos", icon: ClipboardCheck },
   { label: "Planos de Ação", slug: "planos-de-acao", icon: Gauge },
   { label: "Mentorias", slug: "mentorias", icon: UsersRound },

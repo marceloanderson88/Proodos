@@ -67,12 +67,17 @@ As páginas mantêm a identidade Sertão Maker e distinguem claramente dados rea
 
 Fluxo recomendado na interface:
 
-1. criar ou selecionar uma incubadora;
-2. criar o programa escolhendo seu tipo no mesmo formulário;
+1. entrar na incubadora que será administrada;
+2. criar o programa escolhendo seu tipo no mesmo formulário, sem informar escopo ou incubadora;
 3. criar uma turma vinculada ao programa;
 4. atribuir papéis às pessoas da incubadora;
 5. cadastrar startup e equipe;
 6. vincular ou mover a startup para uma turma.
+
+Nas rotas `/o/[organizationSlug]/i/[incubatorSlug]`, o segmento `incubatorSlug`
+é a fonte única do contexto operacional. Programas, turmas, startups, equipes e
+matrículas são validados no servidor contra essa incubadora; IDs enviados pelo
+formulário não podem mudar esse pertencimento.
 
 ## Testes
 
