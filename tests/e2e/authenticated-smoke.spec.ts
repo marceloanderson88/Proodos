@@ -22,8 +22,7 @@ test.describe("smoke autenticado", () => {
       page.getByRole("heading", { name: /Uma visão do Proodos/ }),
     ).toBeVisible();
 
-    const incubatorPath =
-      "/o/seed-org-a/i/incubadora-sintetica-sertao";
+    const incubatorPath = "/o/seed-org-a/i/incubadora-sintetica-sertao";
 
     await page.goto(`${incubatorPath}/programas`);
     await expect(
@@ -43,9 +42,7 @@ test.describe("smoke autenticado", () => {
     ).toBeVisible();
     await expect(page.getByText("Portfólio real e protegido")).toBeVisible();
 
-    await page.goto(
-      "/o/seed-org-b/i/incubadora-sintetica-sertao/dashboard",
-    );
+    await page.goto("/o/seed-org-b/i/incubadora-sintetica-sertao/dashboard");
     await expect(page).toHaveURL(/\/o$/);
 
     await page.getByRole("button", { name: "Sair da conta" }).click();

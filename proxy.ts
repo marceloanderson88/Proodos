@@ -11,7 +11,8 @@ export async function proxy(request: NextRequest) {
     VERCEL_ENV: process.env.VERCEL_ENV,
     NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    PRODUCTION_SUPABASE_PROJECT_REF: process.env.PRODUCTION_SUPABASE_PROJECT_REF,
+    PRODUCTION_SUPABASE_PROJECT_REF:
+      process.env.PRODUCTION_SUPABASE_PROJECT_REF,
   });
   if (process.env.VERCEL_ENV === "preview" && !environment.success) {
     return new NextResponse(
