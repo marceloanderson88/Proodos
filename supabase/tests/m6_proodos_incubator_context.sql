@@ -19,8 +19,15 @@ begin
   insert into public.organization_memberships (organization_id, user_id, status, joined_at, created_by)
   values (test_org_id, test_user_id, 'active', now(), test_user_id)
   returning id into membership_id;
-  insert into public.roles (organization_id, code, name, scope_type, is_system)
-  values (test_org_id, 'organization_admin', 'Administrador', 'organization', true)
+  insert into public.roles (organization_id, code, name, description, scope_type, is_system)
+  values (
+    test_org_id,
+    'organization_admin',
+    'Administrador',
+    'Administrador de teste da organização.',
+    'organization',
+    true
+  )
   returning id into admin_role_id;
   insert into public.role_permissions (organization_id, role_id, permission_code)
   values (test_org_id, admin_role_id, 'incubator.manage'), (test_org_id, admin_role_id, 'incubator.read');
