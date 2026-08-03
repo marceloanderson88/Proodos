@@ -22,6 +22,19 @@ export const incubatorLifecycleSchema = z.object({
   action: z.enum(["delete", "archive", "restore"]),
 });
 
+export const updateIncubatorOperationsSchema = z.object({
+  description: z.string().trim().max(1200).default(""),
+  contactEmail: z.union([z.literal(""), z.email()]).default(""),
+  phone: z.string().trim().max(40).default(""),
+  website: z.union([z.literal(""), z.url()]).default(""),
+  timezone: z.string().trim().min(1).max(100),
+  locale: z.string().trim().min(2).max(20),
+  diagnosticsEnabled: z.boolean(),
+  actionPlansEnabled: z.boolean(),
+  mentoringEnabled: z.boolean(),
+  learningTrailsEnabled: z.boolean(),
+});
+
 export function slugifyIncubatorName(name: string) {
   return name
     .normalize("NFD")

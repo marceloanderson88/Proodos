@@ -222,3 +222,11 @@ turmas, equipes e demais vínculos. As Server Actions repetem essa validação p
 impedir que um ID manipulado associe dados a outra incubadora.
 
 **Consequências:** programas de uma incubadora não são reutilizados por outra; logos de até 2 MB ficam em bucket privado do Supabase Storage, enquanto arquivos grandes continuam no Google Drive; a autorização de pessoas permanece em `role_assignments`, sem flags no frontend ou metadata editável.
+
+## DEC-035 — Diagnósticos por startup e metodologia versionada
+
+**Status:** Aceita e implementada no Marco 7
+
+**Decisão:** modelos pertencem à incubadora ativa, são compostos por dimensões e critérios e se tornam imutáveis após publicação. Cada aplicação exige uma startup da mesma incubadora e preserva a versão aplicada. Autoavaliação e validação são campos distintos; “não se aplica” exige justificativa. CERNE é apenas uma possível metodologia e nunca uma dependência estrutural.
+
+**Consequências:** mudanças metodológicas exigem nova versão; aplicações históricas não mudam silenciosamente; RLS combina permissões `diagnostic.*` com o vínculo real à startup.

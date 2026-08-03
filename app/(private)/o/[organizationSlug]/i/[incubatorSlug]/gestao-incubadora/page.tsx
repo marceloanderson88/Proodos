@@ -73,6 +73,11 @@ export default async function IncubatorPeoplePage({
       organizationSlug={organizationSlug}
       incubatorSlug={incubatorSlug}
       incubatorName={incubator.name}
+      incubatorSettings={{
+        timezone: incubator.timezone,
+        locale: incubator.locale,
+        settings: incubator.settings,
+      }}
       people={people}
       roles={rolesResult.data ?? []}
       assignments={(assignmentsResult.data ?? []).map((assignment) => ({

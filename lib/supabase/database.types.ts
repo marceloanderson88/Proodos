@@ -55,6 +55,469 @@ export type Database = {
           },
         ];
       };
+      cohorts: {
+        Row: {
+          capacity: number | null;
+          code: string;
+          created_at: string;
+          created_by: string;
+          deleted_at: string | null;
+          ends_on: string | null;
+          enrollment_ends_on: string | null;
+          enrollment_starts_on: string | null;
+          id: string;
+          launches_on: string;
+          name: string;
+          organization_id: string;
+          program_id: string;
+          settings: Json;
+          starts_on: string;
+          status: Database["public"]["Enums"]["cohort_status"];
+          updated_at: string;
+        };
+        Insert: {
+          capacity?: number | null;
+          code?: string;
+          created_at?: string;
+          created_by: string;
+          deleted_at?: string | null;
+          ends_on?: string | null;
+          enrollment_ends_on?: string | null;
+          enrollment_starts_on?: string | null;
+          id?: string;
+          launches_on: string;
+          name: string;
+          organization_id: string;
+          program_id: string;
+          settings?: Json;
+          starts_on: string;
+          status?: Database["public"]["Enums"]["cohort_status"];
+          updated_at?: string;
+        };
+        Update: {
+          capacity?: number | null;
+          code?: string;
+          created_at?: string;
+          created_by?: string;
+          deleted_at?: string | null;
+          ends_on?: string | null;
+          enrollment_ends_on?: string | null;
+          enrollment_starts_on?: string | null;
+          id?: string;
+          launches_on?: string;
+          name?: string;
+          organization_id?: string;
+          program_id?: string;
+          settings?: Json;
+          starts_on?: string;
+          status?: Database["public"]["Enums"]["cohort_status"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cohorts_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cohorts_program_same_org";
+            columns: ["organization_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "programs";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_assessments: {
+        Row: {
+          created_at: string;
+          cycle_label: string;
+          evaluator_id: string | null;
+          id: string;
+          incubator_id: string;
+          organization_id: string;
+          self_score: number | null;
+          started_by: string;
+          startup_id: string;
+          status: Database["public"]["Enums"]["diagnostic_assessment_status"];
+          submitted_at: string | null;
+          template_id: string;
+          updated_at: string;
+          validated_at: string | null;
+          validated_score: number | null;
+        };
+        Insert: {
+          created_at?: string;
+          cycle_label: string;
+          evaluator_id?: string | null;
+          id?: string;
+          incubator_id: string;
+          organization_id: string;
+          self_score?: number | null;
+          started_by: string;
+          startup_id: string;
+          status?: Database["public"]["Enums"]["diagnostic_assessment_status"];
+          submitted_at?: string | null;
+          template_id: string;
+          updated_at?: string;
+          validated_at?: string | null;
+          validated_score?: number | null;
+        };
+        Update: {
+          created_at?: string;
+          cycle_label?: string;
+          evaluator_id?: string | null;
+          id?: string;
+          incubator_id?: string;
+          organization_id?: string;
+          self_score?: number | null;
+          started_by?: string;
+          startup_id?: string;
+          status?: Database["public"]["Enums"]["diagnostic_assessment_status"];
+          submitted_at?: string | null;
+          template_id?: string;
+          updated_at?: string;
+          validated_at?: string | null;
+          validated_score?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_assessments_evaluator_id_fkey";
+            columns: ["evaluator_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_assessments_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_assessments_organization_id_startup_id_fkey";
+            columns: ["organization_id", "startup_id"];
+            isOneToOne: false;
+            referencedRelation: "startups";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_assessments_organization_id_template_id_fkey";
+            columns: ["organization_id", "template_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_templates";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_assessments_started_by_fkey";
+            columns: ["started_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      diagnostic_criteria: {
+        Row: {
+          allows_not_applicable: boolean;
+          created_at: string;
+          dimension_id: string;
+          evidence_required_from: number | null;
+          help_text: string;
+          id: string;
+          incubator_id: string;
+          is_required: boolean;
+          maximum_score: number;
+          options: Json;
+          organization_id: string;
+          position: number;
+          prompt: string;
+          response_type: Database["public"]["Enums"]["diagnostic_response_type"];
+          rubric: Json;
+          template_id: string;
+          updated_at: string;
+          weight: number;
+        };
+        Insert: {
+          allows_not_applicable?: boolean;
+          created_at?: string;
+          dimension_id: string;
+          evidence_required_from?: number | null;
+          help_text?: string;
+          id?: string;
+          incubator_id: string;
+          is_required?: boolean;
+          maximum_score?: number;
+          options?: Json;
+          organization_id: string;
+          position?: number;
+          prompt: string;
+          response_type?: Database["public"]["Enums"]["diagnostic_response_type"];
+          rubric?: Json;
+          template_id: string;
+          updated_at?: string;
+          weight?: number;
+        };
+        Update: {
+          allows_not_applicable?: boolean;
+          created_at?: string;
+          dimension_id?: string;
+          evidence_required_from?: number | null;
+          help_text?: string;
+          id?: string;
+          incubator_id?: string;
+          is_required?: boolean;
+          maximum_score?: number;
+          options?: Json;
+          organization_id?: string;
+          position?: number;
+          prompt?: string;
+          response_type?: Database["public"]["Enums"]["diagnostic_response_type"];
+          rubric?: Json;
+          template_id?: string;
+          updated_at?: string;
+          weight?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_criteria_organization_id_dimension_id_fkey";
+            columns: ["organization_id", "dimension_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_dimensions";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_criteria_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_criteria_organization_id_template_id_fkey";
+            columns: ["organization_id", "template_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_templates";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_dimensions: {
+        Row: {
+          created_at: string;
+          description: string;
+          id: string;
+          incubator_id: string;
+          name: string;
+          organization_id: string;
+          position: number;
+          template_id: string;
+          updated_at: string;
+          weight: number;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          incubator_id: string;
+          name: string;
+          organization_id: string;
+          position?: number;
+          template_id: string;
+          updated_at?: string;
+          weight?: number;
+        };
+        Update: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          incubator_id?: string;
+          name?: string;
+          organization_id?: string;
+          position?: number;
+          template_id?: string;
+          updated_at?: string;
+          weight?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_dimensions_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_dimensions_organization_id_template_id_fkey";
+            columns: ["organization_id", "template_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_templates";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_responses: {
+        Row: {
+          assessment_id: string;
+          created_at: string;
+          criterion_id: string;
+          evaluator_comment: string;
+          evidence_notes: string;
+          id: string;
+          incubator_id: string;
+          is_not_applicable: boolean;
+          not_applicable_justification: string | null;
+          organization_id: string;
+          self_comment: string;
+          self_value: Json | null;
+          updated_at: string;
+          validated_at: string | null;
+          validated_by: string | null;
+          validated_value: Json | null;
+        };
+        Insert: {
+          assessment_id: string;
+          created_at?: string;
+          criterion_id: string;
+          evaluator_comment?: string;
+          evidence_notes?: string;
+          id?: string;
+          incubator_id: string;
+          is_not_applicable?: boolean;
+          not_applicable_justification?: string | null;
+          organization_id: string;
+          self_comment?: string;
+          self_value?: Json | null;
+          updated_at?: string;
+          validated_at?: string | null;
+          validated_by?: string | null;
+          validated_value?: Json | null;
+        };
+        Update: {
+          assessment_id?: string;
+          created_at?: string;
+          criterion_id?: string;
+          evaluator_comment?: string;
+          evidence_notes?: string;
+          id?: string;
+          incubator_id?: string;
+          is_not_applicable?: boolean;
+          not_applicable_justification?: string | null;
+          organization_id?: string;
+          self_comment?: string;
+          self_value?: Json | null;
+          updated_at?: string;
+          validated_at?: string | null;
+          validated_by?: string | null;
+          validated_value?: Json | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_responses_organization_id_assessment_id_fkey";
+            columns: ["organization_id", "assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_assessments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_responses_organization_id_criterion_id_fkey";
+            columns: ["organization_id", "criterion_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_criteria";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_responses_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_responses_validated_by_fkey";
+            columns: ["validated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      diagnostic_templates: {
+        Row: {
+          archived_at: string | null;
+          created_at: string;
+          created_by: string;
+          description: string;
+          family_id: string;
+          id: string;
+          incubator_id: string;
+          instructions: string;
+          name: string;
+          organization_id: string;
+          published_at: string | null;
+          status: Database["public"]["Enums"]["diagnostic_template_status"];
+          updated_at: string;
+          version: number;
+        };
+        Insert: {
+          archived_at?: string | null;
+          created_at?: string;
+          created_by: string;
+          description?: string;
+          family_id?: string;
+          id?: string;
+          incubator_id: string;
+          instructions?: string;
+          name: string;
+          organization_id: string;
+          published_at?: string | null;
+          status?: Database["public"]["Enums"]["diagnostic_template_status"];
+          updated_at?: string;
+          version?: number;
+        };
+        Update: {
+          archived_at?: string | null;
+          created_at?: string;
+          created_by?: string;
+          description?: string;
+          family_id?: string;
+          id?: string;
+          incubator_id?: string;
+          instructions?: string;
+          name?: string;
+          organization_id?: string;
+          published_at?: string | null;
+          status?: Database["public"]["Enums"]["diagnostic_template_status"];
+          updated_at?: string;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_templates_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_templates_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_templates_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
       file_access_logs: {
         Row: {
           created_at: string;
@@ -652,6 +1115,117 @@ export type Database = {
         };
         Relationships: [];
       };
+      permissions: {
+        Row: {
+          category: string;
+          code: string;
+          created_at: string;
+          description: string;
+          name: string;
+        };
+        Insert: {
+          category: string;
+          code: string;
+          created_at?: string;
+          description: string;
+          name: string;
+        };
+        Update: {
+          category?: string;
+          code?: string;
+          created_at?: string;
+          description?: string;
+          name?: string;
+        };
+        Relationships: [];
+      };
+      profiles: {
+        Row: {
+          avatar_url: string | null;
+          created_at: string;
+          display_name: string | null;
+          email: string | null;
+          id: string;
+          locale: string;
+          timezone: string;
+          updated_at: string;
+        };
+        Insert: {
+          avatar_url?: string | null;
+          created_at?: string;
+          display_name?: string | null;
+          email?: string | null;
+          id: string;
+          locale?: string;
+          timezone?: string;
+          updated_at?: string;
+        };
+        Update: {
+          avatar_url?: string | null;
+          created_at?: string;
+          display_name?: string | null;
+          email?: string | null;
+          id?: string;
+          locale?: string;
+          timezone?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      program_members: {
+        Row: {
+          active_from: string;
+          active_until: string | null;
+          created_at: string;
+          created_by: string;
+          id: string;
+          organization_id: string;
+          program_id: string;
+          role: Database["public"]["Enums"]["program_member_role"];
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          active_from?: string;
+          active_until?: string | null;
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          organization_id: string;
+          program_id: string;
+          role?: Database["public"]["Enums"]["program_member_role"];
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          active_from?: string;
+          active_until?: string | null;
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          organization_id?: string;
+          program_id?: string;
+          role?: Database["public"]["Enums"]["program_member_role"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "program_members_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "program_members_program_same_org";
+            columns: ["organization_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "programs";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
       program_types: {
         Row: {
           code: string;
@@ -692,7 +1266,22 @@ export type Database = {
           settings?: Json;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "program_types_incubator_same_org";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "program_types_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       programs: {
         Row: {
@@ -752,376 +1341,29 @@ export type Database = {
           type_id?: string;
           updated_at?: string;
         };
-        Relationships: [];
-      };
-      cohorts: {
-        Row: {
-          capacity: number | null;
-          code: string;
-          created_at: string;
-          created_by: string;
-          deleted_at: string | null;
-          ends_on: string | null;
-          enrollment_ends_on: string | null;
-          enrollment_starts_on: string | null;
-          id: string;
-          launches_on: string;
-          name: string;
-          organization_id: string;
-          program_id: string;
-          settings: Json;
-          starts_on: string;
-          status: Database["public"]["Enums"]["cohort_status"];
-          updated_at: string;
-        };
-        Insert: {
-          capacity?: number | null;
-          code?: string;
-          created_at?: string;
-          created_by: string;
-          deleted_at?: string | null;
-          ends_on?: string | null;
-          enrollment_ends_on?: string | null;
-          enrollment_starts_on?: string | null;
-          id?: string;
-          launches_on: string;
-          name: string;
-          organization_id: string;
-          program_id: string;
-          settings?: Json;
-          starts_on: string;
-          status?: Database["public"]["Enums"]["cohort_status"];
-          updated_at?: string;
-        };
-        Update: {
-          capacity?: number | null;
-          code?: string;
-          created_at?: string;
-          created_by?: string;
-          deleted_at?: string | null;
-          ends_on?: string | null;
-          enrollment_ends_on?: string | null;
-          enrollment_starts_on?: string | null;
-          id?: string;
-          launches_on?: string;
-          name?: string;
-          organization_id?: string;
-          program_id?: string;
-          settings?: Json;
-          starts_on?: string;
-          status?: Database["public"]["Enums"]["cohort_status"];
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      program_members: {
-        Row: {
-          active_from: string;
-          active_until: string | null;
-          created_at: string;
-          created_by: string;
-          id: string;
-          organization_id: string;
-          program_id: string;
-          role: Database["public"]["Enums"]["program_member_role"];
-          updated_at: string;
-          user_id: string;
-        };
-        Insert: {
-          active_from?: string;
-          active_until?: string | null;
-          created_at?: string;
-          created_by: string;
-          id?: string;
-          organization_id: string;
-          program_id: string;
-          role?: Database["public"]["Enums"]["program_member_role"];
-          updated_at?: string;
-          user_id: string;
-        };
-        Update: {
-          active_from?: string;
-          active_until?: string | null;
-          created_at?: string;
-          created_by?: string;
-          id?: string;
-          organization_id?: string;
-          program_id?: string;
-          role?: Database["public"]["Enums"]["program_member_role"];
-          updated_at?: string;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
-      startups: {
-        Row: {
-          business_model: string | null;
-          city: string | null;
-          code: string;
-          country_code: string;
-          created_at: string;
-          created_by: string;
-          custom_fields: Json;
-          deleted_at: string | null;
-          id: string;
-          incubator_id: string;
-          legal_name: string | null;
-          name: string;
-          organization_id: string;
-          sector: string | null;
-          stage: Database["public"]["Enums"]["startup_stage"];
-          state: string | null;
-          status: Database["public"]["Enums"]["startup_status"];
-          tax_id: string | null;
-          updated_at: string;
-          website_url: string | null;
-        };
-        Insert: {
-          business_model?: string | null;
-          city?: string | null;
-          code?: string;
-          country_code?: string;
-          created_at?: string;
-          created_by: string;
-          custom_fields?: Json;
-          deleted_at?: string | null;
-          id?: string;
-          incubator_id: string;
-          legal_name?: string | null;
-          name: string;
-          organization_id: string;
-          sector?: string | null;
-          stage?: Database["public"]["Enums"]["startup_stage"];
-          state?: string | null;
-          status?: Database["public"]["Enums"]["startup_status"];
-          tax_id?: string | null;
-          updated_at?: string;
-          website_url?: string | null;
-        };
-        Update: {
-          business_model?: string | null;
-          city?: string | null;
-          code?: string;
-          country_code?: string;
-          created_at?: string;
-          created_by?: string;
-          custom_fields?: Json;
-          deleted_at?: string | null;
-          id?: string;
-          incubator_id?: string;
-          legal_name?: string | null;
-          name?: string;
-          organization_id?: string;
-          sector?: string | null;
-          stage?: Database["public"]["Enums"]["startup_stage"];
-          state?: string | null;
-          status?: Database["public"]["Enums"]["startup_status"];
-          tax_id?: string | null;
-          updated_at?: string;
-          website_url?: string | null;
-        };
-        Relationships: [];
-      };
-      startup_members: {
-        Row: {
-          competencies: string[];
-          created_at: string;
-          created_by: string;
-          dedication_hours_per_week: number | null;
-          email: string | null;
-          equity_percentage: number | null;
-          full_name: string;
-          id: string;
-          is_representative: boolean;
-          joined_on: string | null;
-          left_on: string | null;
-          organization_id: string;
-          role: Database["public"]["Enums"]["startup_member_role"];
-          role_title: string | null;
-          startup_id: string;
-          status: Database["public"]["Enums"]["startup_member_status"];
-          updated_at: string;
-          user_id: string | null;
-        };
-        Insert: {
-          competencies?: string[];
-          created_at?: string;
-          created_by: string;
-          dedication_hours_per_week?: number | null;
-          email?: string | null;
-          equity_percentage?: number | null;
-          full_name: string;
-          id?: string;
-          is_representative?: boolean;
-          joined_on?: string | null;
-          left_on?: string | null;
-          organization_id: string;
-          role?: Database["public"]["Enums"]["startup_member_role"];
-          role_title?: string | null;
-          startup_id: string;
-          status?: Database["public"]["Enums"]["startup_member_status"];
-          updated_at?: string;
-          user_id?: string | null;
-        };
-        Update: {
-          competencies?: string[];
-          created_at?: string;
-          created_by?: string;
-          dedication_hours_per_week?: number | null;
-          email?: string | null;
-          equity_percentage?: number | null;
-          full_name?: string;
-          id?: string;
-          is_representative?: boolean;
-          joined_on?: string | null;
-          left_on?: string | null;
-          organization_id?: string;
-          role?: Database["public"]["Enums"]["startup_member_role"];
-          role_title?: string | null;
-          startup_id?: string;
-          status?: Database["public"]["Enums"]["startup_member_status"];
-          updated_at?: string;
-          user_id?: string | null;
-        };
-        Relationships: [];
-      };
-      startup_enrollments: {
-        Row: {
-          cohort_id: string;
-          created_at: string;
-          created_by: string;
-          entry_date: string;
-          exit_date: string | null;
-          exit_reason: string | null;
-          id: string;
-          organization_id: string;
-          previous_enrollment_id: string | null;
-          source: Database["public"]["Enums"]["enrollment_source"];
-          startup_id: string;
-          status: Database["public"]["Enums"]["enrollment_status"];
-          updated_at: string;
-        };
-        Insert: {
-          cohort_id: string;
-          created_at?: string;
-          created_by: string;
-          entry_date?: string;
-          exit_date?: string | null;
-          exit_reason?: string | null;
-          id?: string;
-          organization_id: string;
-          previous_enrollment_id?: string | null;
-          source?: Database["public"]["Enums"]["enrollment_source"];
-          startup_id: string;
-          status?: Database["public"]["Enums"]["enrollment_status"];
-          updated_at?: string;
-        };
-        Update: {
-          cohort_id?: string;
-          created_at?: string;
-          created_by?: string;
-          entry_date?: string;
-          exit_date?: string | null;
-          exit_reason?: string | null;
-          id?: string;
-          organization_id?: string;
-          previous_enrollment_id?: string | null;
-          source?: Database["public"]["Enums"]["enrollment_source"];
-          startup_id?: string;
-          status?: Database["public"]["Enums"]["enrollment_status"];
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      startup_history: {
-        Row: {
-          actor_user_id: string | null;
-          event_type: string;
-          id: number;
-          metadata: Json;
-          occurred_at: string;
-          organization_id: string;
-          startup_id: string;
-          title: string;
-        };
-        Insert: {
-          actor_user_id?: string | null;
-          event_type: string;
-          id?: never;
-          metadata?: Json;
-          occurred_at?: string;
-          organization_id: string;
-          startup_id: string;
-          title: string;
-        };
-        Update: {
-          actor_user_id?: string | null;
-          event_type?: string;
-          id?: never;
-          metadata?: Json;
-          occurred_at?: string;
-          organization_id?: string;
-          startup_id?: string;
-          title?: string;
-        };
-        Relationships: [];
-      };
-      permissions: {
-        Row: {
-          category: string;
-          code: string;
-          created_at: string;
-          description: string;
-          name: string;
-        };
-        Insert: {
-          category: string;
-          code: string;
-          created_at?: string;
-          description: string;
-          name: string;
-        };
-        Update: {
-          category?: string;
-          code?: string;
-          created_at?: string;
-          description?: string;
-          name?: string;
-        };
-        Relationships: [];
-      };
-      profiles: {
-        Row: {
-          avatar_url: string | null;
-          created_at: string;
-          display_name: string | null;
-          email: string | null;
-          id: string;
-          locale: string;
-          timezone: string;
-          updated_at: string;
-        };
-        Insert: {
-          avatar_url?: string | null;
-          created_at?: string;
-          display_name?: string | null;
-          email?: string | null;
-          id: string;
-          locale?: string;
-          timezone?: string;
-          updated_at?: string;
-        };
-        Update: {
-          avatar_url?: string | null;
-          created_at?: string;
-          display_name?: string | null;
-          email?: string | null;
-          id?: string;
-          locale?: string;
-          timezone?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "programs_incubator_same_org";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "programs_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "programs_type_same_org";
+            columns: ["organization_id", "type_id"];
+            isOneToOne: false;
+            referencedRelation: "program_types";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
       };
       role_assignments: {
         Row: {
@@ -1275,6 +1517,293 @@ export type Database = {
           },
         ];
       };
+      startup_enrollments: {
+        Row: {
+          cohort_id: string;
+          created_at: string;
+          created_by: string;
+          entry_date: string;
+          exit_date: string | null;
+          exit_reason: string | null;
+          id: string;
+          organization_id: string;
+          previous_enrollment_id: string | null;
+          source: Database["public"]["Enums"]["enrollment_source"];
+          startup_id: string;
+          status: Database["public"]["Enums"]["enrollment_status"];
+          updated_at: string;
+        };
+        Insert: {
+          cohort_id: string;
+          created_at?: string;
+          created_by: string;
+          entry_date?: string;
+          exit_date?: string | null;
+          exit_reason?: string | null;
+          id?: string;
+          organization_id: string;
+          previous_enrollment_id?: string | null;
+          source?: Database["public"]["Enums"]["enrollment_source"];
+          startup_id: string;
+          status?: Database["public"]["Enums"]["enrollment_status"];
+          updated_at?: string;
+        };
+        Update: {
+          cohort_id?: string;
+          created_at?: string;
+          created_by?: string;
+          entry_date?: string;
+          exit_date?: string | null;
+          exit_reason?: string | null;
+          id?: string;
+          organization_id?: string;
+          previous_enrollment_id?: string | null;
+          source?: Database["public"]["Enums"]["enrollment_source"];
+          startup_id?: string;
+          status?: Database["public"]["Enums"]["enrollment_status"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "startup_enrollments_cohort_same_org";
+            columns: ["organization_id", "cohort_id"];
+            isOneToOne: false;
+            referencedRelation: "cohorts";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "startup_enrollments_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "startup_enrollments_previous_same_org";
+            columns: ["organization_id", "previous_enrollment_id"];
+            isOneToOne: false;
+            referencedRelation: "startup_enrollments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "startup_enrollments_startup_same_org";
+            columns: ["organization_id", "startup_id"];
+            isOneToOne: false;
+            referencedRelation: "startups";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      startup_history: {
+        Row: {
+          actor_user_id: string | null;
+          event_type: string;
+          id: number;
+          metadata: Json;
+          occurred_at: string;
+          organization_id: string;
+          startup_id: string;
+          title: string;
+        };
+        Insert: {
+          actor_user_id?: string | null;
+          event_type: string;
+          id?: never;
+          metadata?: Json;
+          occurred_at?: string;
+          organization_id: string;
+          startup_id: string;
+          title: string;
+        };
+        Update: {
+          actor_user_id?: string | null;
+          event_type?: string;
+          id?: never;
+          metadata?: Json;
+          occurred_at?: string;
+          organization_id?: string;
+          startup_id?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "startup_history_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "startup_history_startup_same_org";
+            columns: ["organization_id", "startup_id"];
+            isOneToOne: false;
+            referencedRelation: "startups";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      startup_members: {
+        Row: {
+          competencies: string[];
+          created_at: string;
+          created_by: string;
+          dedication_hours_per_week: number | null;
+          email: string | null;
+          equity_percentage: number | null;
+          full_name: string;
+          id: string;
+          is_representative: boolean;
+          joined_on: string | null;
+          left_on: string | null;
+          organization_id: string;
+          role: Database["public"]["Enums"]["startup_member_role"];
+          role_title: string | null;
+          startup_id: string;
+          status: Database["public"]["Enums"]["startup_member_status"];
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          competencies?: string[];
+          created_at?: string;
+          created_by: string;
+          dedication_hours_per_week?: number | null;
+          email?: string | null;
+          equity_percentage?: number | null;
+          full_name: string;
+          id?: string;
+          is_representative?: boolean;
+          joined_on?: string | null;
+          left_on?: string | null;
+          organization_id: string;
+          role?: Database["public"]["Enums"]["startup_member_role"];
+          role_title?: string | null;
+          startup_id: string;
+          status?: Database["public"]["Enums"]["startup_member_status"];
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          competencies?: string[];
+          created_at?: string;
+          created_by?: string;
+          dedication_hours_per_week?: number | null;
+          email?: string | null;
+          equity_percentage?: number | null;
+          full_name?: string;
+          id?: string;
+          is_representative?: boolean;
+          joined_on?: string | null;
+          left_on?: string | null;
+          organization_id?: string;
+          role?: Database["public"]["Enums"]["startup_member_role"];
+          role_title?: string | null;
+          startup_id?: string;
+          status?: Database["public"]["Enums"]["startup_member_status"];
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "startup_members_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "startup_members_startup_same_org";
+            columns: ["organization_id", "startup_id"];
+            isOneToOne: false;
+            referencedRelation: "startups";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      startups: {
+        Row: {
+          business_model: string | null;
+          city: string | null;
+          code: string;
+          country_code: string;
+          created_at: string;
+          created_by: string;
+          custom_fields: Json;
+          deleted_at: string | null;
+          id: string;
+          incubator_id: string;
+          legal_name: string | null;
+          name: string;
+          organization_id: string;
+          sector: string | null;
+          stage: Database["public"]["Enums"]["startup_stage"];
+          state: string | null;
+          status: Database["public"]["Enums"]["startup_status"];
+          tax_id: string | null;
+          updated_at: string;
+          website_url: string | null;
+        };
+        Insert: {
+          business_model?: string | null;
+          city?: string | null;
+          code?: string;
+          country_code?: string;
+          created_at?: string;
+          created_by: string;
+          custom_fields?: Json;
+          deleted_at?: string | null;
+          id?: string;
+          incubator_id: string;
+          legal_name?: string | null;
+          name: string;
+          organization_id: string;
+          sector?: string | null;
+          stage?: Database["public"]["Enums"]["startup_stage"];
+          state?: string | null;
+          status?: Database["public"]["Enums"]["startup_status"];
+          tax_id?: string | null;
+          updated_at?: string;
+          website_url?: string | null;
+        };
+        Update: {
+          business_model?: string | null;
+          city?: string | null;
+          code?: string;
+          country_code?: string;
+          created_at?: string;
+          created_by?: string;
+          custom_fields?: Json;
+          deleted_at?: string | null;
+          id?: string;
+          incubator_id?: string;
+          legal_name?: string | null;
+          name?: string;
+          organization_id?: string;
+          sector?: string | null;
+          stage?: Database["public"]["Enums"]["startup_stage"];
+          state?: string | null;
+          status?: Database["public"]["Enums"]["startup_status"];
+          tax_id?: string | null;
+          updated_at?: string;
+          website_url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "startups_incubator_same_org";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "startups_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       upload_sessions: {
         Row: {
           acknowledged_offset_bytes: number;
@@ -1392,19 +1921,14 @@ export type Database = {
         }[];
       };
       manage_incubator_lifecycle: {
-        Args: {
-          requested_action: string;
-          target_incubator_id: string;
-        };
+        Args: { requested_action: string; target_incubator_id: string };
         Returns: string;
       };
       manage_program_lifecycle: {
-        Args: {
-          requested_action: string;
-          target_program_id: string;
-        };
+        Args: { requested_action: string; target_program_id: string };
         Returns: string;
       };
+      system_readiness: { Args: never; Returns: boolean };
       transfer_startup_enrollment: {
         Args: {
           target_cohort_id: string;
@@ -1413,12 +1937,35 @@ export type Database = {
         };
         Returns: string;
       };
-      system_readiness: {
-        Args: never;
-        Returns: boolean;
-      };
     };
     Enums: {
+      cohort_status:
+        "planned" | "enrollment_open" | "active" | "completed" | "cancelled";
+      diagnostic_assessment_status:
+        | "draft"
+        | "in_progress"
+        | "submitted"
+        | "under_review"
+        | "validated"
+        | "cancelled";
+      diagnostic_response_type:
+        | "numeric"
+        | "text"
+        | "single_choice"
+        | "currency"
+        | "percentage"
+        | "date"
+        | "link"
+        | "file";
+      diagnostic_template_status: "draft" | "published" | "archived";
+      enrollment_source: "manual" | "invitation" | "selection_process";
+      enrollment_status:
+        | "invited"
+        | "active"
+        | "suspended"
+        | "completed"
+        | "withdrawn"
+        | "transferred";
       file_access_operation:
         | "metadata"
         | "preview"
@@ -1460,11 +2007,18 @@ export type Database = {
       invitation_status: "pending" | "accepted" | "revoked" | "expired";
       membership_status: "invited" | "active" | "suspended" | "removed";
       organization_status: "active" | "inactive" | "suspended";
+      program_member_role: "coordinator" | "staff" | "viewer";
       program_status:
         "draft" | "planned" | "active" | "completed" | "cancelled" | "archived";
-      cohort_status:
-        "planned" | "enrollment_open" | "active" | "completed" | "cancelled";
-      program_member_role: "coordinator" | "staff" | "viewer";
+      role_scope_type: "organization" | "unit" | "incubator";
+      startup_member_role:
+        | "founder"
+        | "cofounder"
+        | "representative"
+        | "employee"
+        | "advisor"
+        | "other";
+      startup_member_status: "active" | "inactive";
       startup_stage:
         | "idea"
         | "validation"
@@ -1474,23 +2028,6 @@ export type Database = {
         | "graduated";
       startup_status:
         "active" | "inactive" | "graduated" | "withdrawn" | "archived";
-      startup_member_role:
-        | "founder"
-        | "cofounder"
-        | "representative"
-        | "employee"
-        | "advisor"
-        | "other";
-      startup_member_status: "active" | "inactive";
-      enrollment_status:
-        | "invited"
-        | "active"
-        | "suspended"
-        | "completed"
-        | "withdrawn"
-        | "transferred";
-      enrollment_source: "manual" | "invitation" | "selection_process";
-      role_scope_type: "organization" | "unit" | "incubator";
       upload_session_status:
         | "pending"
         | "ready"
@@ -1627,6 +2164,41 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      cohort_status: [
+        "planned",
+        "enrollment_open",
+        "active",
+        "completed",
+        "cancelled",
+      ],
+      diagnostic_assessment_status: [
+        "draft",
+        "in_progress",
+        "submitted",
+        "under_review",
+        "validated",
+        "cancelled",
+      ],
+      diagnostic_response_type: [
+        "numeric",
+        "text",
+        "single_choice",
+        "currency",
+        "percentage",
+        "date",
+        "link",
+        "file",
+      ],
+      diagnostic_template_status: ["draft", "published", "archived"],
+      enrollment_source: ["manual", "invitation", "selection_process"],
+      enrollment_status: [
+        "invited",
+        "active",
+        "suspended",
+        "completed",
+        "withdrawn",
+        "transferred",
+      ],
       file_access_operation: [
         "metadata",
         "preview",
@@ -1670,6 +2242,7 @@ export const Constants = {
       invitation_status: ["pending", "accepted", "revoked", "expired"],
       membership_status: ["invited", "active", "suspended", "removed"],
       organization_status: ["active", "inactive", "suspended"],
+      program_member_role: ["coordinator", "staff", "viewer"],
       program_status: [
         "draft",
         "planned",
@@ -1678,14 +2251,16 @@ export const Constants = {
         "cancelled",
         "archived",
       ],
-      cohort_status: [
-        "planned",
-        "enrollment_open",
-        "active",
-        "completed",
-        "cancelled",
+      role_scope_type: ["organization", "unit", "incubator"],
+      startup_member_role: [
+        "founder",
+        "cofounder",
+        "representative",
+        "employee",
+        "advisor",
+        "other",
       ],
-      program_member_role: ["coordinator", "staff", "viewer"],
+      startup_member_status: ["active", "inactive"],
       startup_stage: [
         "idea",
         "validation",
@@ -1701,25 +2276,6 @@ export const Constants = {
         "withdrawn",
         "archived",
       ],
-      startup_member_role: [
-        "founder",
-        "cofounder",
-        "representative",
-        "employee",
-        "advisor",
-        "other",
-      ],
-      startup_member_status: ["active", "inactive"],
-      enrollment_status: [
-        "invited",
-        "active",
-        "suspended",
-        "completed",
-        "withdrawn",
-        "transferred",
-      ],
-      enrollment_source: ["manual", "invitation", "selection_process"],
-      role_scope_type: ["organization", "unit", "incubator"],
       upload_session_status: [
         "pending",
         "ready",
