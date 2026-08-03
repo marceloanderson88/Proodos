@@ -3,6 +3,7 @@ begin;
 
 drop policy if exists profiles_select_own on public.profiles;
 drop policy if exists profiles_select_shared_organization_manager on public.profiles;
+drop policy if exists profiles_select_own_or_shared_manager on public.profiles;
 
 create policy profiles_select_own_or_shared_manager
 on public.profiles
