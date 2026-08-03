@@ -31,7 +31,7 @@ export default async function IncubatorProgramsPage({
       supabase
         .from("programs")
         .select(
-          "id, type_id, name, code, description, status, starts_on, ends_on, logo_path",
+          "id, type_id, name, code, description, objectives, target_audience, delivery_mode, duration_weeks, suggested_capacity, status, starts_on, ends_on, logo_path",
         )
         .eq("organization_id", organization.id)
         .eq("incubator_id", incubator.id)
@@ -40,7 +40,7 @@ export default async function IncubatorProgramsPage({
       supabase
         .from("cohorts")
         .select(
-          "id, program_id, name, code, status, launches_on, enrollment_starts_on, enrollment_ends_on, starts_on, ends_on",
+          "id, program_id, name, code, status, launches_on, enrollment_starts_on, enrollment_ends_on, starts_on, ends_on, capacity",
         )
         .eq("organization_id", organization.id)
         .is("deleted_at", null)

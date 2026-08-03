@@ -38,10 +38,18 @@ export default async function ProodosAdministrationPage({
     (organizations ?? [])[0];
   if (!organization) redirect("/sem-organizacao");
 
-  const [incubatorsResult, programsResult, startupsResult] = await Promise.all([
+  const [
+    incubatorsResult,
+    programsResult,
+    startupsResult,
+    assignmentsResult,
+    invitationsResult,
+  ] = await Promise.all([
     supabase
       .from("incubators")
-      .select("id, name, slug, status, timezone, locale")
+      .select(
+        "id, name, slug, status, timezone, locale, kind, custom_kind, short_description, logo_path, contact_email, city, state, responsible_name",
+      )
       .eq("organization_id", organization.id)
       .is("deleted_at", null)
       .order("status")
@@ -56,19 +64,56 @@ export default async function ProodosAdministrationPage({
       .select("id, incubator_id")
       .eq("organization_id", organization.id)
       .is("deleted_at", null),
+    supabase
+      .from("role_assignments")
+      .select("id, incubator_id")
+      .eq("organization_id", organization.id)
+      .not("incubator_id", "is", null),
+    supabase
+      .from("invitations")
+      .select("id, incubator_id")
+      .eq("organization_id", organization.id)
+      .eq("status", "pending")
+      .not("incubator_id", "is", null),
   ]);
-  if (incubatorsResult.error || programsResult.error || startupsResult.error)
+  if (
+    incubatorsResult.error ||
+    programsResult.error ||
+    startupsResult.error ||
+    assignmentsResult.error ||
+    invitationsResult.error
+  )
     throw new Error("Falha ao carregar a administração do Proodos.");
 
   const programs = programsResult.data ?? [];
   const startups = startupsResult.data ?? [];
-  const incubators = (incubatorsResult.data ?? []).map((incubator) => ({
-    ...incubator,
-    programCount: programs.filter((item) => item.incubator_id === incubator.id)
-      .length,
-    startupCount: startups.filter((item) => item.incubator_id === incubator.id)
-      .length,
-  }));
+  const incubators = await Promise.all(
+    (incubatorsResult.data ?? []).map(async (incubator) => {
+      const logoUrl = incubator.logo_path
+        ? ((
+            await supabase.storage
+              .from("incubator-logos")
+              .createSignedUrl(incubator.logo_path, 60 * 60)
+          ).data?.signedUrl ?? null)
+        : null;
+      return {
+        ...incubator,
+        logoUrl,
+        programCount: programs.filter(
+          (item) => item.incubator_id === incubator.id,
+        ).length,
+        startupCount: startups.filter(
+          (item) => item.incubator_id === incubator.id,
+        ).length,
+        peopleCount: (assignmentsResult.data ?? []).filter(
+          (item) => item.incubator_id === incubator.id,
+        ).length,
+        pendingInvitationCount: (invitationsResult.data ?? []).filter(
+          (item) => item.incubator_id === incubator.id,
+        ).length,
+      };
+    }),
+  );
 
   return (
     <ProodosAdmin

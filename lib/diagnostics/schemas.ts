@@ -40,6 +40,28 @@ export const createDiagnosticAssessmentSchema = z.object({
   cycleLabel: z.string().trim().min(2).max(120),
 });
 
+export const createDiagnosticCampaignSchema = z
+  .object({
+    name: z.string().trim().min(2).max(180),
+    templateId: z.uuid(),
+    programId: z.union([z.literal(""), z.uuid()]).default(""),
+    cohortId: z.union([z.literal(""), z.uuid()]).default(""),
+    evaluatorId: z.union([z.literal(""), z.uuid()]).default(""),
+    startsAt: z.coerce.date(),
+    endsAt: z.coerce.date(),
+    startupIds: z.array(z.uuid()).min(1, "Selecione ao menos uma startup."),
+    communicationSubject: z.string().trim().max(200).default(""),
+    communicationMessage: z.string().trim().max(5000).default(""),
+  })
+  .refine((data) => data.startsAt < data.endsAt, {
+    path: ["endsAt"],
+    message: "O encerramento deve ser posterior ao início.",
+  })
+  .refine((data) => !data.cohortId || Boolean(data.programId), {
+    path: ["programId"],
+    message: "Selecione o programa da turma.",
+  });
+
 export const saveDiagnosticResponseSchema = z
   .object({
     assessmentId: z.uuid(),

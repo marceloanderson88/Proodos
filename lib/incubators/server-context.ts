@@ -36,7 +36,9 @@ export async function getIncubatorServerContext(
 
   const { data: incubator } = await supabase
     .from("incubators")
-    .select("id, name, slug, timezone, locale, settings")
+    .select(
+      "id, name, slug, timezone, locale, settings, kind, custom_kind, legal_name, short_description, logo_path, contact_email, phone, website_url, city, state, country_code, responsible_name, onboarding_completed_at",
+    )
     .eq("organization_id", organization.id)
     .eq("slug", rawIncubatorSlug)
     .eq("status", "active")

@@ -12,7 +12,9 @@ import {
   createStartupSchema,
   enrollStartupSchema,
   organizationSlugSchema,
+  manageProgramMemberSchema,
   programLifecycleSchema,
+  removeProgramMemberSchema,
   resolveProgramType,
   updateProgramSchema,
 } from "@/lib/m6/schemas";
@@ -226,6 +228,11 @@ export async function createProgramAction(
     customName: value(formData, "customName"),
     name: value(formData, "name"),
     description: value(formData, "description"),
+    objectives: value(formData, "objectives"),
+    targetAudience: value(formData, "targetAudience"),
+    deliveryMode: value(formData, "deliveryMode"),
+    durationWeeks: value(formData, "durationWeeks"),
+    suggestedCapacity: value(formData, "suggestedCapacity"),
     startsOn: value(formData, "startsOn"),
     endsOn: value(formData, "endsOn"),
     isActive: formData.get("isActive") === "on",
@@ -265,11 +272,17 @@ export async function createProgramAction(
   const { data: createdProgram, error } = await context.supabase
     .from("programs")
     .insert({
+      code: "",
       organization_id: context.organization.id,
       incubator_id: context.incubator.id,
       type_id: typeId,
       name: parsed.data.name,
       description: parsed.data.description,
+      objectives: parsed.data.objectives,
+      target_audience: parsed.data.targetAudience,
+      delivery_mode: parsed.data.deliveryMode,
+      duration_weeks: parsed.data.durationWeeks,
+      suggested_capacity: parsed.data.suggestedCapacity,
       starts_on: parsed.data.startsOn,
       ends_on: parsed.data.endsOn,
       status: parsed.data.isActive ? "active" : "draft",
@@ -326,8 +339,8 @@ export async function createProgramAction(
       "programas",
       "success",
       parsed.data.isActive
-        ? "Programa criado e ativado."
-        : "Programa criado como inativo.",
+        ? "Programa publicado e disponível para novas turmas."
+        : "Programa salvo como rascunho.",
     ),
   );
 }
@@ -347,6 +360,11 @@ export async function updateProgramAction(
     customName: value(formData, "customName"),
     name: value(formData, "name"),
     description: value(formData, "description"),
+    objectives: value(formData, "objectives"),
+    targetAudience: value(formData, "targetAudience"),
+    deliveryMode: value(formData, "deliveryMode"),
+    durationWeeks: value(formData, "durationWeeks"),
+    suggestedCapacity: value(formData, "suggestedCapacity"),
     startsOn: value(formData, "startsOn"),
     endsOn: value(formData, "endsOn"),
     isActive: formData.get("isActive") === "on",
@@ -419,6 +437,11 @@ export async function updateProgramAction(
       type_id: typeId,
       name: parsed.data.name,
       description: parsed.data.description,
+      objectives: parsed.data.objectives,
+      target_audience: parsed.data.targetAudience,
+      delivery_mode: parsed.data.deliveryMode,
+      duration_weeks: parsed.data.durationWeeks,
+      suggested_capacity: parsed.data.suggestedCapacity,
       starts_on: parsed.data.startsOn,
       ends_on: parsed.data.endsOn,
       status: parsed.data.isActive ? "active" : "draft",
@@ -453,14 +476,11 @@ export async function updateProgramAction(
   }
 
   revalidatePath(`/o/${context.organizationSlug}/i/${incubatorSlug}/programas`);
+  revalidatePath(
+    `/o/${context.organizationSlug}/i/${incubatorSlug}/programas/${parsed.data.programId}`,
+  );
   redirect(
-    feedbackUrl(
-      context.organizationSlug,
-      incubatorSlug,
-      "programas",
-      "success",
-      "Programa atualizado.",
-    ),
+    `/o/${context.organizationSlug}/i/${incubatorSlug}/programas/${parsed.data.programId}?success=${encodeURIComponent("Programa atualizado.")}`,
   );
 }
 
@@ -530,6 +550,111 @@ export async function manageProgramLifecycleAction(
   );
 }
 
+export async function addProgramMemberAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await mutationIncubatorContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = manageProgramMemberSchema.safeParse({
+    programId: value(formData, "programId"),
+    userId: value(formData, "userId"),
+    role: value(formData, "role"),
+  });
+  if (
+    !parsed.success ||
+    !(await programBelongsToCurrentIncubator(context, parsed.data.programId))
+  ) {
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        "Pessoa, papel ou programa inválido.",
+      ),
+    );
+  }
+  const { error } = await context.supabase.from("program_members").insert({
+    organization_id: context.organization.id,
+    program_id: parsed.data.programId,
+    user_id: parsed.data.userId,
+    role: parsed.data.role,
+    created_by: context.user.id,
+  });
+  if (error)
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        error.code === "23505"
+          ? "Essa pessoa já participa do programa."
+          : databaseMessage(error.code),
+      ),
+    );
+  revalidatePath(
+    `/o/${context.organizationSlug}/i/${incubatorSlug}/programas/${parsed.data.programId}`,
+  );
+  redirect(
+    `/o/${context.organizationSlug}/i/${incubatorSlug}/programas/${parsed.data.programId}?success=${encodeURIComponent("Pessoa adicionada à equipe do programa.")}`,
+  );
+}
+
+export async function removeProgramMemberAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await mutationIncubatorContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = removeProgramMemberSchema.safeParse({
+    programId: value(formData, "programId"),
+    programMemberId: value(formData, "programMemberId"),
+  });
+  if (
+    !parsed.success ||
+    !(await programBelongsToCurrentIncubator(context, parsed.data.programId))
+  )
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        "Vínculo inválido.",
+      ),
+    );
+  const { error } = await context.supabase
+    .from("program_members")
+    .delete()
+    .eq("id", parsed.data.programMemberId)
+    .eq("organization_id", context.organization.id)
+    .eq("program_id", parsed.data.programId);
+  if (error)
+    redirect(
+      feedbackUrl(
+        context.organizationSlug,
+        incubatorSlug,
+        "programas",
+        "error",
+        databaseMessage(error.code),
+      ),
+    );
+  revalidatePath(
+    `/o/${context.organizationSlug}/i/${incubatorSlug}/programas/${parsed.data.programId}`,
+  );
+  redirect(
+    `/o/${context.organizationSlug}/i/${incubatorSlug}/programas/${parsed.data.programId}?success=${encodeURIComponent("Pessoa removida da equipe do programa.")}`,
+  );
+}
+
 export async function createCohortAction(
   organizationSlug: string,
   incubatorSlug: string,
@@ -547,6 +672,7 @@ export async function createCohortAction(
     enrollmentEndsOn: value(formData, "enrollmentEndsOn"),
     startsOn: value(formData, "startsOn"),
     endsOn: value(formData, "endsOn"),
+    capacity: value(formData, "capacity"),
   });
   if (!parsed.success) {
     redirect(
@@ -572,6 +698,7 @@ export async function createCohortAction(
     );
 
   const { error } = await context.supabase.from("cohorts").insert({
+    code: "",
     organization_id: context.organization.id,
     program_id: parsed.data.programId,
     name: parsed.data.name,
@@ -580,6 +707,7 @@ export async function createCohortAction(
     enrollment_ends_on: parsed.data.enrollmentEndsOn,
     starts_on: parsed.data.startsOn,
     ends_on: parsed.data.endsOn,
+    capacity: parsed.data.capacity,
     created_by: context.user.id,
   });
   if (error)
@@ -638,6 +766,7 @@ export async function createStartupAction(
   }
 
   const { error } = await context.supabase.from("startups").insert({
+    code: "",
     organization_id: context.organization.id,
     incubator_id: context.incubator.id,
     name: parsed.data.name,

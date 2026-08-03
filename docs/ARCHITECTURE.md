@@ -252,7 +252,15 @@ Os vínculos de arquivo agora possuem `program_id` e `startup_id` com FKs compos
 
 Leitura de programas pode ocorrer por `program.read` no escopo ou participação explícita em `program_members`. Leitura de startups pode ocorrer por `startup.read` no escopo ou vínculo ativo em `startup_members`; representantes ativos podem gerenciar somente a equipe da própria startup. Tipos organizacionais são reutilizáveis, enquanto tipos de incubadora não podem ser associados a outra incubadora.
 
-### 8.2 Fundação de arquivos implementada
+### 8.2 Fluxos operacionais consolidados
+
+A central `/o` governa a rede Proodos e inicia cada incubadora com um perfil institucional completo. O ambiente `/o/[organizationSlug]/i/[incubatorSlug]` não apresenta seletores redundantes de incubadora: o contexto validado na URL e repetido nas Server Actions determina todo pertencimento.
+
+Pessoas externas entram por `invitations`: a aplicação cria token aleatório, persiste somente SHA-256, dispara o convite pelo cliente administrativo server-only e conclui o aceite por RPC. Pessoas já vinculadas podem receber papéis adicionais diretamente. Convites pendentes possuem reenvio e revogação explícitos.
+
+Programa é um modelo reutilizável dentro de uma única incubadora; turma é sua execução temporal. A página de detalhe do programa concentra edição, equipe, turmas e atalhos para recursos de desenvolvimento. Startups são matriculadas em turmas, não diretamente no programa.
+
+### 8.3 Fundação de arquivos implementada
 
 `files` concentra escopo, classificação e estado; `file_versions` preserva versões físicas; `file_links` usa somente destinos com FKs disponíveis; `upload_sessions` armazena idempotência, offset e hash de correlação, nunca a URL resumível; `file_access_logs` é append-only. O helper `private.can_view_file` impede que usuários somente leitores vejam versões ou vínculos antes de `available`.
 

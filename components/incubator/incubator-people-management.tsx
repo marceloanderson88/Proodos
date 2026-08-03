@@ -1,5 +1,9 @@
 import {
   Building2,
+  Check,
+  Clock3,
+  Mail,
+  RefreshCw,
   ShieldCheck,
   Trash2,
   UserRoundPlus,
@@ -8,15 +12,19 @@ import {
 
 import {
   assignIncubatorPersonRoleAction,
+  inviteIncubatorPersonAction,
+  manageInvitationAction,
   removeIncubatorPersonRoleAction,
   updateIncubatorOperationsAction,
 } from "@/app/(private)/o/[organizationSlug]/i/[incubatorSlug]/people-actions";
 import { FeedbackBanner } from "@/components/m6/feedback-banner";
-import {
-  Field,
-  inputClassName,
-  SubmitButton,
-} from "@/components/m6/form-controls";
+import { Button } from "@/components/ui/button";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FileUpload } from "@/components/ui/file-upload";
+import { controlClassName, FormField } from "@/components/ui/form-field";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 type Person = {
   membershipId: string;
@@ -24,14 +32,17 @@ type Person = {
   displayName: string;
   email: string;
 };
-
 type Role = { id: string; name: string; description: string };
-type Assignment = {
+type Assignment = { id: string; membershipId: string; roleId: string };
+type Invitation = {
   id: string;
-  membershipId: string;
-  roleId: string;
+  invited_name: string | null;
+  email: string;
+  role_id: string;
+  status: string;
+  expires_at: string;
+  created_at: string;
 };
-
 type SettingsObject = Record<string, unknown>;
 
 export function IncubatorPeopleManagement({
@@ -42,6 +53,7 @@ export function IncubatorPeopleManagement({
   people,
   roles,
   assignments,
+  invitations,
   success,
   error,
 }: {
@@ -49,13 +61,32 @@ export function IncubatorPeopleManagement({
   incubatorSlug: string;
   incubatorName: string;
   incubatorSettings: {
+    name: string;
     timezone: string;
     locale: string;
     settings: unknown;
+    kind:
+      | "incubator"
+      | "accelerator"
+      | "innovation_hub"
+      | "innovation_center"
+      | "other";
+    customKind: string | null;
+    legalName: string | null;
+    description: string | null;
+    logoUrl: string | null;
+    contactEmail: string | null;
+    phone: string | null;
+    website: string | null;
+    city: string | null;
+    state: string | null;
+    countryCode: string;
+    responsibleName: string | null;
   };
   people: Person[];
   roles: Role[];
   assignments: Assignment[];
+  invitations: Invitation[];
   success?: string;
   error?: string;
 }) {
@@ -65,51 +96,85 @@ export function IncubatorPeopleManagement({
     !Array.isArray(incubatorSettings.settings)
       ? (incubatorSettings.settings as SettingsObject)
       : {};
-  const contact =
-    settings.contact && typeof settings.contact === "object"
-      ? (settings.contact as SettingsObject)
-      : {};
   const resources =
     settings.resources && typeof settings.resources === "object"
       ? (settings.resources as SettingsObject)
       : {};
+  const assignedPeople = people.filter((person) =>
+    assignments.some((item) => item.membershipId === person.membershipId),
+  );
+  const profileReady = Boolean(
+    incubatorSettings.description &&
+    incubatorSettings.contactEmail &&
+    incubatorSettings.city &&
+    incubatorSettings.state &&
+    incubatorSettings.responsibleName,
+  );
+  const teamReady = assignedPeople.length > 0;
+
   return (
     <div className="page-enter space-y-6">
-      <header className="overflow-hidden rounded-[2rem] border border-[#751118]/10 bg-[#fffdf9] shadow-[0_18px_45px_rgb(63_9_13/7%)]">
-        <div className="relative px-6 py-8 sm:px-8">
-          <div
-            className="dot-field absolute inset-y-0 right-0 w-64 opacity-35"
-            aria-hidden="true"
-          />
-          <div className="relative max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#edf7ee] px-3 py-1.5 text-[0.65rem] font-black tracking-[0.12em] text-[#27643a] uppercase">
-              <ShieldCheck className="size-3" aria-hidden="true" />
-              Papéis protegidos por RLS
-            </div>
-            <h1 className="mt-4 text-4xl font-black tracking-[-0.045em] text-[#3f090d] sm:text-5xl">
-              Pessoas da incubadora
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-[#766868]">
-              Defina quem atua na {incubatorName} e qual papel cada pessoa
-              exerce. Uma mesma pessoa pode acumular papéis quando necessário.
-            </p>
-          </div>
-        </div>
-      </header>
-
+      <PageHeader
+        eyebrow="Administração da incubadora"
+        title="Identidade, pessoas e acesso"
+        description={`Mantenha o perfil institucional de ${incubatorName}, convide a equipe e conceda somente os papéis necessários.`}
+        icon={ShieldCheck}
+      />
       <FeedbackBanner success={success} error={error} />
 
-      <section className="dashboard-card rounded-[1.6rem] p-5 sm:p-6">
+      <section
+        className="surface-card grid gap-4 p-5 sm:grid-cols-3 sm:p-6"
+        aria-label="Progresso de implantação"
+      >
+        {[
+          [
+            profileReady,
+            "Perfil institucional",
+            "Identidade, contato e território",
+          ],
+          [teamReady, "Primeiro gestor", "Pessoa ativa com papel local"],
+          [
+            invitations.length === 0,
+            "Convites organizados",
+            invitations.length
+              ? `${invitations.length} pendente(s)`
+              : "Nenhuma pendência",
+          ],
+        ].map(([done, title, description]) => (
+          <div
+            key={String(title)}
+            className="flex gap-3 rounded-2xl bg-[var(--surface-subtle)] p-4"
+          >
+            <span
+              className={`grid size-9 shrink-0 place-items-center rounded-full ${done ? "bg-[#e8f5e9] text-[#28713c]" : "bg-[#fff1d8] text-[#87500e]"}`}
+            >
+              {done ? (
+                <Check className="size-4" />
+              ) : (
+                <Clock3 className="size-4" />
+              )}
+            </span>
+            <div>
+              <p className="text-sm font-extrabold text-[var(--text-strong)]">
+                {String(title)}
+              </p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                {String(description)}
+              </p>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section className="surface-card p-5 sm:p-7">
         <div className="flex items-center gap-3">
-          <span className="grid size-11 place-items-center rounded-2xl bg-[#f3dfd0] text-[#751118]">
-            <Building2 className="size-5" aria-hidden="true" />
+          <span className="grid size-11 place-items-center rounded-2xl bg-[var(--surface-muted)] text-[var(--wine-800)]">
+            <Building2 className="size-5" />
           </span>
           <div>
-            <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-              Identidade e operação
-            </p>
-            <h2 className="text-xl font-black text-[#3f090d]">
-              Configurações da incubadora
+            <p className="eyebrow">Perfil institucional</p>
+            <h2 className="operational-heading mt-1 text-xl">
+              Configurações da operação
             </h2>
           </div>
         </div>
@@ -119,61 +184,172 @@ export function IncubatorPeopleManagement({
             organizationSlug,
             incubatorSlug,
           )}
-          className="mt-5 grid gap-4 border-t border-[#751118]/8 pt-5 lg:grid-cols-2"
+          className="mt-6 space-y-6 border-t border-[var(--border)] pt-6"
         >
-          <Field label="Descrição" name="description">
-            <textarea
-              className={`${inputClassName} min-h-28 resize-y`}
-              name="description"
-              defaultValue={
-                typeof settings.description === "string"
-                  ? settings.description
-                  : ""
-              }
-            />
-          </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="E-mail de contato" name="contactEmail">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <FormField label="Nome" htmlFor="settings-name" required>
               <input
-                className={inputClassName}
-                name="contactEmail"
-                type="email"
-                defaultValue={
-                  typeof contact.email === "string" ? contact.email : ""
-                }
-              />
-            </Field>
-            <Field label="Telefone" name="phone">
-              <input
-                className={inputClassName}
-                name="phone"
-                defaultValue={
-                  typeof contact.phone === "string" ? contact.phone : ""
-                }
-              />
-            </Field>
-            <Field label="Site" name="website">
-              <input
-                className={inputClassName}
-                name="website"
-                type="url"
-                defaultValue={
-                  typeof contact.website === "string" ? contact.website : ""
-                }
-              />
-            </Field>
-            <Field label="Fuso horário" name="timezone">
-              <input
-                className={inputClassName}
-                name="timezone"
+                id="settings-name"
+                className={controlClassName}
+                name="name"
+                defaultValue={incubatorSettings.name}
                 required
-                defaultValue={incubatorSettings.timezone}
               />
-            </Field>
+            </FormField>
+            <FormField
+              label="Natureza da operação"
+              htmlFor="settings-kind"
+              required
+            >
+              <select
+                id="settings-kind"
+                className={controlClassName}
+                name="kind"
+                defaultValue={incubatorSettings.kind}
+              >
+                <option value="incubator">Incubadora</option>
+                <option value="accelerator">Aceleradora</option>
+                <option value="innovation_hub">Hub de inovação</option>
+                <option value="innovation_center">Núcleo de inovação</option>
+                <option value="other">Outro</option>
+              </select>
+            </FormField>
+            <FormField
+              label="Outro tipo"
+              htmlFor="settings-custom-kind"
+              hint="Preencha somente quando a natureza selecionada for Outro."
+            >
+              <input
+                id="settings-custom-kind"
+                className={controlClassName}
+                name="customKind"
+                defaultValue={incubatorSettings.customKind ?? ""}
+              />
+            </FormField>
+            <FormField
+              label="Instituição mantenedora"
+              htmlFor="settings-legal-name"
+            >
+              <input
+                id="settings-legal-name"
+                className={controlClassName}
+                name="legalName"
+                defaultValue={incubatorSettings.legalName ?? ""}
+              />
+            </FormField>
+            <FormField
+              className="lg:col-span-2"
+              label="Descrição"
+              htmlFor="settings-description"
+              required
+            >
+              <textarea
+                id="settings-description"
+                className={`${controlClassName} min-h-28 resize-y`}
+                name="description"
+                defaultValue={incubatorSettings.description ?? ""}
+                required
+              />
+            </FormField>
+            <FileUpload
+              className="lg:col-span-2"
+              name="logo"
+              removeName="removeLogo"
+              label="Logo da incubadora"
+              hint="PNG, JPG ou WebP, até 2 MB."
+              currentImageUrl={incubatorSettings.logoUrl}
+            />
+          </div>
+
+          <div className="grid gap-4 border-t border-[var(--border)] pt-6 md:grid-cols-2 lg:grid-cols-3">
+            <FormField
+              label="E-mail institucional"
+              htmlFor="settings-email"
+              required
+            >
+              <input
+                id="settings-email"
+                type="email"
+                className={controlClassName}
+                name="contactEmail"
+                defaultValue={incubatorSettings.contactEmail ?? ""}
+                required
+              />
+            </FormField>
+            <FormField label="Telefone" htmlFor="settings-phone">
+              <input
+                id="settings-phone"
+                className={controlClassName}
+                name="phone"
+                defaultValue={incubatorSettings.phone ?? ""}
+              />
+            </FormField>
+            <FormField label="Site" htmlFor="settings-website">
+              <input
+                id="settings-website"
+                type="url"
+                className={controlClassName}
+                name="website"
+                defaultValue={incubatorSettings.website ?? ""}
+              />
+            </FormField>
+            <FormField label="Cidade" htmlFor="settings-city" required>
+              <input
+                id="settings-city"
+                className={controlClassName}
+                name="city"
+                defaultValue={incubatorSettings.city ?? ""}
+                required
+              />
+            </FormField>
+            <FormField label="Estado" htmlFor="settings-state" required>
+              <input
+                id="settings-state"
+                className={controlClassName}
+                name="state"
+                defaultValue={incubatorSettings.state ?? ""}
+                required
+              />
+            </FormField>
+            <FormField
+              label="Responsável pela implantação"
+              htmlFor="settings-responsible"
+              required
+            >
+              <input
+                id="settings-responsible"
+                className={controlClassName}
+                name="responsibleName"
+                defaultValue={incubatorSettings.responsibleName ?? ""}
+                required
+              />
+            </FormField>
+            <FormField
+              label="Fuso horário"
+              htmlFor="settings-timezone"
+              required
+            >
+              <select
+                id="settings-timezone"
+                className={controlClassName}
+                name="timezone"
+                defaultValue={incubatorSettings.timezone}
+              >
+                <option value="America/Sao_Paulo">Brasília (UTC−03)</option>
+                <option value="America/Manaus">Manaus (UTC−04)</option>
+                <option value="America/Rio_Branco">Rio Branco (UTC−05)</option>
+              </select>
+            </FormField>
           </div>
           <input type="hidden" name="locale" value={incubatorSettings.locale} />
-          <fieldset className="lg:col-span-2">
-            <legend className="text-xs font-black text-[#4d2524]">
+          <input
+            type="hidden"
+            name="countryCode"
+            value={incubatorSettings.countryCode}
+          />
+
+          <fieldset className="border-t border-[var(--border)] pt-6">
+            <legend className="operational-heading text-sm text-[var(--text-strong)]">
               Módulos habilitados
             </legend>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -189,64 +365,73 @@ export function IncubatorPeopleManagement({
               ].map(([name, label, checked]) => (
                 <label
                   key={String(name)}
-                  className="flex items-center gap-3 rounded-xl border border-[#751118]/10 bg-white p-3 text-sm font-bold text-[#4d2524]"
+                  className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-white p-3 text-sm font-bold text-[var(--text)]"
                 >
                   <input
                     type="checkbox"
                     name={String(name)}
                     defaultChecked={checked !== false}
-                    className="size-4 accent-[#82151d]"
+                    className="size-4 accent-[var(--wine-800)]"
                   />
                   {String(label)}
                 </label>
               ))}
             </div>
           </fieldset>
-          <div className="lg:col-span-2">
-            <SubmitButton>Salvar configurações</SubmitButton>
-          </div>
+          <Button type="submit">Salvar perfil e módulos</Button>
         </form>
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
-        <div className="dashboard-card rounded-[1.6rem] p-5 sm:p-6">
+        <div className="surface-card p-5 sm:p-6">
           <div className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-2xl bg-[#f3dfd0] text-[#751118]">
-              <UserRoundPlus className="size-5" aria-hidden="true" />
+            <span className="grid size-11 place-items-center rounded-2xl bg-[var(--surface-muted)] text-[var(--wine-800)]">
+              <UserRoundPlus className="size-5" />
             </span>
             <div>
-              <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                Nova atribuição
-              </p>
-              <h2 className="text-xl font-black text-[#3f090d]">
-                Pessoa e papel
+              <p className="eyebrow">Novo acesso</p>
+              <h2 className="operational-heading mt-1 text-xl">
+                Convidar pessoa
               </h2>
             </div>
           </div>
           <form
-            action={assignIncubatorPersonRoleAction.bind(
+            action={inviteIncubatorPersonAction.bind(
               null,
               organizationSlug,
               incubatorSlug,
             )}
-            className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
+            className="mt-5 space-y-4 border-t border-[var(--border)] pt-5"
           >
-            <Field
-              label="Pessoa"
-              name="membershipId"
-              hint="São exibidos os membros ativos do Proodos."
+            <FormField label="Nome" htmlFor="invite-name" required>
+              <input
+                id="invite-name"
+                className={controlClassName}
+                name="invitedName"
+                required
+              />
+            </FormField>
+            <FormField
+              label="E-mail"
+              htmlFor="invite-email"
+              required
+              hint="A pessoa receberá um link seguro para criar a conta ou entrar."
             >
-              <select className={inputClassName} name="membershipId" required>
-                <option value="">Selecione</option>
-                {people.map((person) => (
-                  <option key={person.membershipId} value={person.membershipId}>
-                    {person.displayName} · {person.email}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Papel na incubadora" name="roleId">
-              <select className={inputClassName} name="roleId" required>
+              <input
+                id="invite-email"
+                type="email"
+                className={controlClassName}
+                name="email"
+                required
+              />
+            </FormField>
+            <FormField label="Papel inicial" htmlFor="invite-role" required>
+              <select
+                id="invite-role"
+                className={controlClassName}
+                name="roleId"
+                required
+              >
                 <option value="">Selecione</option>
                 {roles.map((role) => (
                   <option key={role.id} value={role.id}>
@@ -254,85 +439,240 @@ export function IncubatorPeopleManagement({
                   </option>
                 ))}
               </select>
-            </Field>
-            <SubmitButton>Atribuir papel</SubmitButton>
+            </FormField>
+            <FormField label="Validade" htmlFor="invite-expiry">
+              <select
+                id="invite-expiry"
+                className={controlClassName}
+                name="expiresInDays"
+                defaultValue="7"
+              >
+                <option value="3">3 dias</option>
+                <option value="7">7 dias</option>
+                <option value="14">14 dias</option>
+                <option value="30">30 dias</option>
+              </select>
+            </FormField>
+            <Button type="submit">
+              <Mail className="size-4" /> Enviar convite
+            </Button>
           </form>
-          <p className="mt-4 rounded-xl bg-[#fff4de] px-4 py-3 text-xs leading-5 text-[#70440d]">
-            Para uma pessoa aparecer aqui, ela precisa ter uma conta e um
-            vínculo ativo com o Proodos. O envio automatizado de convites por
-            e-mail será tratado no fluxo de convites.
-          </p>
+
+          <div className="mt-7 border-t border-[var(--border)] pt-5">
+            <p className="operational-heading text-sm">
+              Adicionar papel a pessoa existente
+            </p>
+            <form
+              action={assignIncubatorPersonRoleAction.bind(
+                null,
+                organizationSlug,
+                incubatorSlug,
+              )}
+              className="mt-3 space-y-3"
+            >
+              <select
+                aria-label="Pessoa ativa"
+                className={controlClassName}
+                name="membershipId"
+                required
+              >
+                <option value="">Selecione a pessoa</option>
+                {people.map((person) => (
+                  <option key={person.membershipId} value={person.membershipId}>
+                    {person.displayName} · {person.email}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="Novo papel"
+                className={controlClassName}
+                name="roleId"
+                required
+              >
+                <option value="">Selecione o papel</option>
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
+              <Button type="submit" variant="secondary">
+                Atribuir outro papel
+              </Button>
+            </form>
+          </div>
         </div>
 
-        <div className="dashboard-card rounded-[1.6rem] p-5 sm:p-6">
-          <div className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-2xl bg-[#f3dfd0] text-[#751118]">
-              <UsersRound className="size-5" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                Equipe atual
-              </p>
-              <h2 className="text-xl font-black text-[#3f090d]">
-                Papéis atribuídos
-              </h2>
+        <div className="space-y-5">
+          <section className="surface-card p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <span className="grid size-11 place-items-center rounded-2xl bg-[var(--surface-muted)] text-[var(--wine-800)]">
+                <UsersRound className="size-5" />
+              </span>
+              <div>
+                <p className="eyebrow">Equipe ativa</p>
+                <h2 className="operational-heading mt-1 text-xl">
+                  Pessoas e papéis
+                </h2>
+              </div>
             </div>
-          </div>
-
-          {assignments.length === 0 ? (
-            <p className="mt-5 rounded-2xl border border-dashed border-[#751118]/15 p-8 text-center text-sm text-[#806f6b]">
-              Nenhum papel local foi atribuído nesta incubadora.
-            </p>
-          ) : (
-            <ul className="mt-5 space-y-3">
-              {assignments.map((assignment) => {
-                const person = people.find(
-                  (item) => item.membershipId === assignment.membershipId,
-                );
-                const role = roles.find(
-                  (item) => item.id === assignment.roleId,
-                );
-                return (
-                  <li
-                    key={assignment.id}
-                    className="flex items-center justify-between gap-4 rounded-2xl border border-[#751118]/8 bg-white/70 p-4"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-[#3f090d]">
-                        {person?.displayName ?? "Pessoa indisponível"}
-                      </p>
-                      <p className="mt-1 text-xs font-bold text-[#921a20]">
-                        {role?.name ?? "Papel indisponível"}
-                      </p>
-                      <p className="mt-1 truncate text-[0.65rem] text-[#887875]">
-                        {person?.email}
-                      </p>
-                    </div>
-                    <form
-                      action={removeIncubatorPersonRoleAction.bind(
-                        null,
-                        organizationSlug,
-                        incubatorSlug,
-                      )}
+            {assignedPeople.length === 0 ? (
+              <div className="mt-5">
+                <EmptyState
+                  icon={UsersRound}
+                  title="Nenhuma pessoa com papel local"
+                  description="Convide o primeiro gestor para concluir a implantação da incubadora."
+                />
+              </div>
+            ) : (
+              <ul className="mt-5 divide-y divide-[var(--border)]">
+                {assignedPeople.map((person) => {
+                  const personAssignments = assignments.filter(
+                    (item) => item.membershipId === person.membershipId,
+                  );
+                  return (
+                    <li
+                      key={person.membershipId}
+                      className="py-4 first:pt-0 last:pb-0"
                     >
-                      <input
-                        type="hidden"
-                        name="assignmentId"
-                        value={assignment.id}
-                      />
-                      <button
-                        type="submit"
-                        className="grid size-10 place-items-center rounded-xl border border-[#921a20]/15 text-[#751118] transition hover:bg-[#fff1eb]"
-                        aria-label={`Remover papel ${role?.name ?? "atribuído"} de ${person?.displayName ?? "pessoa"}`}
-                      >
-                        <Trash2 className="size-4" aria-hidden="true" />
-                      </button>
-                    </form>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-extrabold text-[var(--text-strong)]">
+                            {person.displayName}
+                          </p>
+                          <p className="mt-1 text-xs text-[var(--text-muted)]">
+                            {person.email}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {personAssignments.map((assignment) => {
+                            const role = roles.find(
+                              (item) => item.id === assignment.roleId,
+                            );
+                            return (
+                              <form
+                                key={assignment.id}
+                                action={removeIncubatorPersonRoleAction.bind(
+                                  null,
+                                  organizationSlug,
+                                  incubatorSlug,
+                                )}
+                              >
+                                <input
+                                  type="hidden"
+                                  name="assignmentId"
+                                  value={assignment.id}
+                                />
+                                <button
+                                  className="group inline-flex items-center gap-1.5 rounded-full bg-[var(--surface-muted)] px-3 py-1.5 text-[0.68rem] font-extrabold text-[var(--wine-800)] hover:bg-[#fde7e8]"
+                                  aria-label={`Remover papel ${role?.name ?? "atribuído"} de ${person.displayName}`}
+                                >
+                                  {role?.name ?? "Papel"}
+                                  <Trash2 className="size-3 opacity-55 group-hover:opacity-100" />
+                                </button>
+                              </form>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
+          <section className="surface-card p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="eyebrow">Aguardando aceite</p>
+                <h2 className="operational-heading mt-1 text-xl">
+                  Convites pendentes
+                </h2>
+              </div>
+              <StatusBadge tone={invitations.length ? "warning" : "success"}>
+                {invitations.length}
+              </StatusBadge>
+            </div>
+            {invitations.length === 0 ? (
+              <p className="mt-5 rounded-2xl bg-[var(--surface-subtle)] p-5 text-center text-sm text-[var(--text-muted)]">
+                Não há convites pendentes.
+              </p>
+            ) : (
+              <ul className="mt-5 space-y-3">
+                {invitations.map((invitation) => {
+                  const role = roles.find(
+                    (item) => item.id === invitation.role_id,
+                  );
+                  return (
+                    <li
+                      key={invitation.id}
+                      className="rounded-2xl border border-[var(--border)] bg-white p-4"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-extrabold text-[var(--text-strong)]">
+                            {invitation.invited_name ?? invitation.email}
+                          </p>
+                          <p className="mt-1 text-xs text-[var(--text-muted)]">
+                            {invitation.email}
+                          </p>
+                          <p className="mt-2 text-[0.68rem] font-bold text-[var(--wine-700)]">
+                            {role?.name ?? "Papel indisponível"} · expira em{" "}
+                            {new Intl.DateTimeFormat("pt-BR").format(
+                              new Date(invitation.expires_at),
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <form
+                            action={manageInvitationAction.bind(
+                              null,
+                              organizationSlug,
+                              incubatorSlug,
+                            )}
+                          >
+                            <input
+                              type="hidden"
+                              name="invitationId"
+                              value={invitation.id}
+                            />
+                            <input type="hidden" name="action" value="resend" />
+                            <Button
+                              type="submit"
+                              variant="secondary"
+                              className="px-3"
+                            >
+                              <RefreshCw className="size-3.5" /> Reenviar
+                            </Button>
+                          </form>
+                          <form
+                            action={manageInvitationAction.bind(
+                              null,
+                              organizationSlug,
+                              incubatorSlug,
+                            )}
+                          >
+                            <input
+                              type="hidden"
+                              name="invitationId"
+                              value={invitation.id}
+                            />
+                            <input type="hidden" name="action" value="revoke" />
+                            <ConfirmSubmitButton
+                              message={`Revogar o convite enviado para ${invitation.email}?`}
+                            >
+                              <Trash2 className="size-3.5" /> Revogar
+                            </ConfirmSubmitButton>
+                          </form>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
         </div>
       </section>
     </div>

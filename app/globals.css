@@ -17,6 +17,20 @@
   --line: #e9ded6;
   --success: #3d8b51;
   --warning: #d97918;
+  --danger: #b4232c;
+  --info: #2c6684;
+  --surface: #fffdf9;
+  --surface-subtle: #fbf6f1;
+  --surface-muted: #f4e9df;
+  --text-strong: #321416;
+  --text: #4d3635;
+  --text-muted: #7d6d68;
+  --border: rgb(117 17 24 / 12%);
+  --focus: #eab15d;
+  --radius-sm: 0.65rem;
+  --radius-md: 0.9rem;
+  --radius-lg: 1.35rem;
+  --radius-xl: 1.75rem;
   --font-body: "Manrope Variable", sans-serif;
   --font-display: "Fraunces Variable", serif;
 }
@@ -64,7 +78,7 @@ select {
 }
 
 :focus-visible {
-  outline: 3px solid #eab15d;
+  outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
 
@@ -120,6 +134,27 @@ select {
     0 1px 1px rgb(63 9 13 / 3%),
     0 12px 32px rgb(63 9 13 / 6%);
   backdrop-filter: blur(12px);
+}
+
+.surface-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 14px 36px rgb(63 9 13 / 6%);
+}
+
+.eyebrow {
+  color: var(--wine-700);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.operational-heading {
+  font-family: var(--font-body);
+  font-weight: 850;
+  letter-spacing: -0.025em;
 }
 
 .page-enter {
