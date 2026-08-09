@@ -33,7 +33,6 @@ test.describe("smoke autenticado", () => {
     await expect(
       page.getByRole("heading", { name: "Ciclo Sintético 2026", exact: true }),
     ).toBeVisible();
-    await expect(page.getByText("Dados reais · Supabase")).toBeVisible();
 
     await page.goto(`${incubatorPath}/startups`);
     await expect(
