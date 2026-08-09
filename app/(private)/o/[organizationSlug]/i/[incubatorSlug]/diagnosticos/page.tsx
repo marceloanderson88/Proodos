@@ -55,14 +55,14 @@ export default async function DiagnosticsPage({
     supabase
       .from("diagnostic_assessments")
       .select(
-        "id,startup_id,template_id,cycle_label,status,self_score,validated_score,classification_code,updated_at",
+        "id,startup_id,template_id,cycle_label,status,self_score,validated_score,classification_code,updated_at,execution_mode",
       )
       .match(scope)
       .neq("status", "cancelled")
       .order("updated_at", { ascending: false }),
     supabase
       .from("startups")
-      .select("id,name")
+      .select("id,name,custom_fields")
       .match(scope)
       .is("deleted_at", null)
       .order("name"),

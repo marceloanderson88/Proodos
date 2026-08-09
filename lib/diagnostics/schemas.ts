@@ -127,6 +127,7 @@ export const createDiagnosticCampaignSchema = z
     programId: z.union([z.literal(""), z.uuid()]).default(""),
     cohortId: z.union([z.literal(""), z.uuid()]).default(""),
     evaluatorId: z.union([z.literal(""), z.uuid()]).default(""),
+    executionMode: z.enum(["self_assessment", "facilitated"]),
     startsAt: z.coerce.date(),
     endsAt: z.coerce.date(),
     startupIds: z.array(z.uuid()).min(1, "Selecione ao menos uma startup."),
@@ -140,7 +141,24 @@ export const createDiagnosticCampaignSchema = z
   .refine((data) => !data.cohortId || Boolean(data.programId), {
     path: ["programId"],
     message: "Selecione o programa da turma.",
-  });
+  })
+  .refine(
+    (data) => data.executionMode !== "facilitated" || Boolean(data.evaluatorId),
+    {
+      path: ["evaluatorId"],
+      message: "Selecione quem conduzirá o diagnóstico.",
+    },
+  );
+
+export const addDiagnosticAssessmentNoteSchema = z.object({
+  assessmentId: z.uuid(),
+  body: z.string().trim().min(2).max(4000),
+  returnTo: z.string().trim().min(1).max(500),
+});
+
+export const installDiagnosticDemoCasesSchema = z.object({
+  confirmation: z.literal("INSTALL_DEMOS"),
+});
 
 export const saveDiagnosticResponseSchema = z
   .object({

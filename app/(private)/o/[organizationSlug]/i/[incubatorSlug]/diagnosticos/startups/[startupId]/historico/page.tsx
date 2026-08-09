@@ -7,14 +7,17 @@ export const dynamic = "force-dynamic";
 
 export default async function DiagnosticStartupHistoryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{
     organizationSlug: string;
     incubatorSlug: string;
     startupId: string;
   }>;
+  searchParams: Promise<{ family?: string | string[] }>;
 }) {
-  const { organizationSlug, incubatorSlug, startupId } = await params;
+  const [{ organizationSlug, incubatorSlug, startupId }, query] =
+    await Promise.all([params, searchParams]);
   const { organization, incubator, supabase } = await getIncubatorServerContext(
     organizationSlug,
     incubatorSlug,
@@ -45,7 +48,7 @@ export default async function DiagnosticStartupHistoryPage({
     templateIds.length
       ? supabase
           .from("diagnostic_templates")
-          .select("id,name,version,version_label")
+          .select("id,name,version,version_label,family_id")
           .in("id", templateIds)
           .match(scope)
       : Promise.resolve({ data: [], error: null }),
@@ -70,6 +73,31 @@ export default async function DiagnosticStartupHistoryPage({
   const templates = new Map(
     (templatesResult.data ?? []).map((item) => [item.id, item]),
   );
+  const requestedFamily = Array.isArray(query.family)
+    ? query.family[0]
+    : query.family;
+  const activeFamily =
+    (requestedFamily &&
+    (templatesResult.data ?? []).some(
+      (template) => template.family_id === requestedFamily,
+    )
+      ? requestedFamily
+      : templates.get(assessments[0]?.template_id ?? "")?.family_id) ?? null;
+  const filteredAssessments = assessments
+    .filter(
+      (assessment) =>
+        templates.get(assessment.template_id)?.family_id === activeFamily,
+    )
+    .sort((left, right) => {
+      const leftDate =
+        left.validated_at ?? left.submitted_at ?? left.created_at;
+      const rightDate =
+        right.validated_at ?? right.submitted_at ?? right.created_at;
+      return new Date(leftDate).getTime() - new Date(rightDate).getTime();
+    });
+  const activeTemplateIds = new Set(
+    filteredAssessments.map((item) => item.template_id),
+  );
   const scores = scoresResult.data ?? [];
   const dimensionById = new Map(
     (dimensionsResult.data ?? []).map((item) => [
@@ -79,10 +107,12 @@ export default async function DiagnosticStartupHistoryPage({
   );
   const dimensionNames = Array.from(
     new Map(
-      (dimensionsResult.data ?? []).map((item) => [
-        item.code ?? item.name,
-        { id: item.code ?? item.name, code: item.code, name: item.name },
-      ]),
+      (dimensionsResult.data ?? [])
+        .filter((item) => activeTemplateIds.has(item.template_id))
+        .map((item) => [
+          item.code ?? item.name,
+          { id: item.code ?? item.name, code: item.code, name: item.name },
+        ]),
     ).values(),
   );
   const base = `/o/${organizationSlug}/i/${incubatorSlug}/diagnosticos`;
@@ -91,7 +121,16 @@ export default async function DiagnosticStartupHistoryPage({
     <DiagnosticHistory
       base={base}
       startup={startupResult.data}
-      cycles={assessments.map((assessment) => {
+      families={Array.from(
+        new Map(
+          (templatesResult.data ?? []).map((template) => [
+            template.family_id,
+            { id: template.family_id, name: template.name },
+          ]),
+        ).values(),
+      )}
+      activeFamily={activeFamily}
+      cycles={filteredAssessments.map((assessment) => {
         const template = templates.get(assessment.template_id);
         return {
           id: assessment.id,
@@ -102,6 +141,7 @@ export default async function DiagnosticStartupHistoryPage({
             assessment.created_at,
           version: template?.version_label ?? String(template?.version ?? "—"),
           status: assessment.status,
+          executionMode: assessment.execution_mode,
           selfScore:
             assessment.self_score == null
               ? null

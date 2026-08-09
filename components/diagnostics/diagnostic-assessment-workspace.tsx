@@ -7,6 +7,7 @@ import {
   ExternalLink,
   FileText,
   MailPlus,
+  MessageSquareText,
   ShieldCheck,
   UserCheck,
   UserRoundPlus,
@@ -16,6 +17,7 @@ import Link from "next/link";
 
 import {
   addDiagnosticExternalEvidenceAction,
+  addDiagnosticAssessmentNoteAction,
   assignDiagnosticEvaluatorAction,
   assignDiagnosticRespondentAction,
   deleteDiagnosticEvidenceAction,
@@ -86,6 +88,7 @@ export function DiagnosticAssessmentWorkspace({
   indicatorValues,
   respondentInvitationRoles,
   pendingRespondentInvitations,
+  notes,
   success,
   error,
 }: {
@@ -118,6 +121,13 @@ export function DiagnosticAssessmentWorkspace({
     status: string;
     expires_at: string;
     respondentRole: "primary" | "collaborator" | "viewer";
+  }[];
+  notes: {
+    id: string;
+    author_id: string;
+    authorName: string;
+    body: string;
+    created_at: string;
   }[];
   success?: string;
   error?: string;
@@ -175,6 +185,11 @@ export function DiagnosticAssessmentWorkspace({
     organizationSlug,
     incubatorSlug,
   );
+  const addNote = addDiagnosticAssessmentNoteAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
   const deleteEvidence = deleteDiagnosticEvidenceAction.bind(
     null,
     organizationSlug,
@@ -196,7 +211,9 @@ export function DiagnosticAssessmentWorkspace({
     (result) => result.status === "triggered",
   );
   const canRespond = ["draft", "in_progress"].includes(assessment.status);
-  const canValidate = ["submitted", "under_review"].includes(assessment.status);
+  const selfAssessment = assessment.execution_mode === "self_assessment";
+  const canValidate =
+    selfAssessment && ["submitted", "under_review"].includes(assessment.status);
   const canSubmit = criteria.length > 0 && answered === criteria.length;
   const canFinalize = criteria.length > 0 && validated === criteria.length;
 
@@ -221,6 +238,9 @@ export function DiagnosticAssessmentWorkspace({
             <span className="rounded-full bg-[#f2e8e3] px-3 py-1 text-xs font-black text-[#6f201f]">
               {assessment.status.replaceAll("_", " ")}
             </span>
+            <span className="rounded-full bg-[#fff0dd] px-3 py-1 text-xs font-black text-[#8a5216]">
+              {selfAssessment ? "Autodiagnóstico" : "Aplicação assistida"}
+            </span>
           </div>
           <p className="mt-3 text-sm text-[#806f6b]">
             {template.name} · v{template.version_label ?? template.version} ·{" "}
@@ -230,7 +250,7 @@ export function DiagnosticAssessmentWorkspace({
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-[#fff0ea] px-5 py-3 text-center">
             <p className="text-[0.62rem] font-black text-[#8c6a64] uppercase">
-              Autodeclarado
+              {selfAssessment ? "Autodeclarado" : "Resultado técnico"}
             </p>
             <p className="text-3xl font-black text-[#7a1018]">
               {assessment.self_score == null
@@ -258,7 +278,10 @@ export function DiagnosticAssessmentWorkspace({
             Fluxo da avaliação
           </p>
           <h2 className="mt-1 font-black text-[#481014]">
-            {canRespond && "Preencha, revise e envie a autoavaliação."}
+            {canRespond &&
+              (selfAssessment
+                ? "A startup preenche, revisa e envia o autodiagnóstico."
+                : "O responsável conduz o diagnóstico e conclui a aplicação.")}
             {canValidate &&
               "A autoavaliação foi enviada e aguarda validação oficial."}
             {assessment.status === "validated" &&
@@ -279,7 +302,10 @@ export function DiagnosticAssessmentWorkspace({
               <input type="hidden" name="assessmentId" value={assessment.id} />
               <input type="hidden" name="returnTo" value={currentPath} />
               <SubmitButton disabled={!canSubmit}>
-                <ClipboardCheck className="size-4" /> Enviar para validação
+                <ClipboardCheck className="size-4" />{" "}
+                {selfAssessment
+                  ? "Enviar para validação"
+                  : "Concluir diagnóstico"}
               </SubmitButton>
             </form>
           )}
@@ -306,6 +332,67 @@ export function DiagnosticAssessmentWorkspace({
                 </SubmitButton>
               </form>
             </>
+          )}
+        </div>
+      </section>
+
+      <section className="dashboard-card rounded-[1.5rem] p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[#f8e8df] text-[#7b161c]">
+            <MessageSquareText className="size-5" />
+          </span>
+          <div>
+            <h2 className="font-black text-[#481014]">
+              Observações da aplicação
+            </h2>
+            <p className="mt-1 text-xs leading-5 text-[#806f6b]">
+              Registre contexto, ressalvas e recomendações. Cada observação
+              preserva autor e data no histórico.
+            </p>
+          </div>
+        </div>
+        <form
+          action={addNote}
+          className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end"
+        >
+          <input type="hidden" name="assessmentId" value={assessment.id} />
+          <input type="hidden" name="returnTo" value={currentPath} />
+          <Field label="Nova observação" name="assessment-note">
+            <textarea
+              className={`${inputClassName} min-h-24`}
+              name="body"
+              required
+              maxLength={3000}
+              placeholder="Descreva a observação desta aplicação..."
+            />
+          </Field>
+          <SubmitButton>Registrar observação</SubmitButton>
+        </form>
+        <div className="mt-5 space-y-3">
+          {notes.length === 0 ? (
+            <p className="rounded-xl bg-[#faf6f2] p-4 text-sm text-[#806f6b]">
+              Nenhuma observação registrada.
+            </p>
+          ) : (
+            notes.map((note) => (
+              <article
+                key={note.id}
+                className="rounded-xl border border-[#751118]/10 bg-[#fcf9f6] p-4"
+              >
+                <div className="flex flex-wrap justify-between gap-2 text-xs">
+                  <strong className="text-[#481014]">{note.authorName}</strong>
+                  <time className="text-[#8b7773]">
+                    {new Intl.DateTimeFormat("pt-BR", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }).format(new Date(note.created_at))}
+                  </time>
+                </div>
+                <p className="mt-2 text-sm leading-6 whitespace-pre-wrap text-[#655451]">
+                  {note.body}
+                </p>
+              </article>
+            ))
           )}
         </div>
       </section>

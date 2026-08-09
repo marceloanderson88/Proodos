@@ -57,11 +57,12 @@ export function NewDiagnosticCampaign({
           Configuração guiada
         </p>
         <h1 className="mt-2 text-4xl font-black tracking-[-0.045em] text-[#3f090d]">
-          Nova campanha de autodiagnóstico
+          Nova campanha de diagnóstico
         </h1>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-[#806f6b]">
-          Defina o modelo, o período, as startups e o avaliador. As aplicações
-          são criadas juntas, de forma transacional.
+          Escolha quem preencherá o diagnóstico, depois defina modelo, período,
+          startups e responsável. As aplicações são criadas juntas, de forma
+          transacional.
         </p>
       </header>
 
@@ -96,6 +97,38 @@ export function NewDiagnosticCampaign({
 
       <form action={action} className="space-y-6">
         <section className="dashboard-card rounded-[1.6rem] p-5 sm:p-7">
+          <fieldset className="mb-7 grid gap-3 border-b border-[#751118]/8 pb-7 lg:grid-cols-2">
+            <legend className="mb-3 text-sm font-black text-[#481014]">
+              Quem preencherá o diagnóstico?
+            </legend>
+            <label className="cursor-pointer rounded-2xl border border-[#751118]/12 bg-[#fcf9f6] p-5 has-[:checked]:border-[#8b151c] has-[:checked]:bg-[#fff2ec]">
+              <input
+                className="mr-3 accent-[#7e1118]"
+                type="radio"
+                name="executionMode"
+                value="self_assessment"
+                defaultChecked
+              />
+              <strong className="text-[#481014]">Autodiagnóstico</strong>
+              <span className="mt-2 block text-xs leading-5 text-[#806f6b]">
+                A própria startup preenche. Um avaliador da incubadora pode
+                revisar e validar o resultado.
+              </span>
+            </label>
+            <label className="cursor-pointer rounded-2xl border border-[#751118]/12 bg-[#fcf9f6] p-5 has-[:checked]:border-[#8b151c] has-[:checked]:bg-[#fff2ec]">
+              <input
+                className="mr-3 accent-[#7e1118]"
+                type="radio"
+                name="executionMode"
+                value="facilitated"
+              />
+              <strong className="text-[#481014]">Aplicação assistida</strong>
+              <span className="mt-2 block text-xs leading-5 text-[#806f6b]">
+                Mentor, avaliador, agente ou gestor conduz o preenchimento.
+                Selecione obrigatoriamente o responsável abaixo.
+              </span>
+            </label>
+          </fieldset>
           <div className="grid gap-5 lg:grid-cols-2">
             <Field label="Modelo publicado" name="campaign-template">
               <select className={inputClassName} name="templateId" required>
@@ -152,12 +185,9 @@ export function NewDiagnosticCampaign({
                 required
               />
             </Field>
-            <Field
-              label="Avaliador padrão (opcional)"
-              name="campaign-evaluator"
-            >
+            <Field label="Responsável / avaliador" name="campaign-evaluator">
               <select className={inputClassName} name="evaluatorId">
-                <option value="">Atribuir depois</option>
+                <option value="">Selecione quando necessário</option>
                 {evaluators.map((evaluator) => (
                   <option key={evaluator.id} value={evaluator.id}>
                     {evaluator.full_name} · {evaluator.email}

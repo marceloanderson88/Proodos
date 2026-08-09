@@ -46,6 +46,7 @@ export default async function DiagnosticStartupResultPage({
     scoresResult,
     triggerResults,
     triggerRulesResult,
+    notesResult,
   ] = await Promise.all([
     supabase
       .from("diagnostic_templates")
@@ -76,13 +77,19 @@ export default async function DiagnosticStartupResultPage({
       .from("diagnostic_trigger_rules")
       .select("id,name,recommended_action,severity")
       .match({ ...scope, template_id: assessment.template_id }),
+    supabase
+      .from("diagnostic_assessment_notes")
+      .select("id,author_id,body,created_at")
+      .match({ ...scope, assessment_id: assessment.id })
+      .order("created_at", { ascending: false }),
   ]);
   if (
     !templateResult.data ||
     dimensionsResult.error ||
     scoresResult.error ||
     triggerResults.error ||
-    triggerRulesResult.error
+    triggerRulesResult.error ||
+    notesResult.error
   ) {
     throw new Error("Falha ao carregar o resultado do diagnóstico.");
   }
@@ -119,6 +126,7 @@ export default async function DiagnosticStartupResultPage({
             : Number(assessment.evidence_coverage),
         submittedAt: assessment.submitted_at,
         validatedAt: assessment.validated_at,
+        executionMode: assessment.execution_mode,
       }}
       template={{
         name: templateResult.data.name,
@@ -155,6 +163,7 @@ export default async function DiagnosticStartupResultPage({
           status: result.status,
         };
       })}
+      notes={notesResult.data ?? []}
     />
   );
 }

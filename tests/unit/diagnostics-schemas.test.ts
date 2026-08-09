@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   addDiagnosticExternalEvidenceSchema,
+  addDiagnosticAssessmentNoteSchema,
   assignDiagnosticRespondentSchema,
   autosaveDiagnosticResponseSchema,
   createDiagnosticCampaignSchema,
@@ -86,6 +87,7 @@ describe("schemas de diagnósticos", () => {
       programId: "",
       cohortId: "",
       evaluatorId: "",
+      executionMode: "self_assessment",
       startsAt: "2026-08-10T09:00",
       endsAt: "2026-08-31T18:00",
       startupIds: ["22222222-2222-4222-8222-222222222222"],
@@ -102,6 +104,7 @@ describe("schemas de diagnósticos", () => {
       programId: "",
       cohortId: "",
       evaluatorId: "",
+      executionMode: "self_assessment",
       startsAt: "2026-09-10T09:00",
       endsAt: "2026-08-31T18:00",
       startupIds: [],
@@ -109,6 +112,30 @@ describe("schemas de diagnósticos", () => {
       communicationMessage: "",
     });
     expect(result.success).toBe(false);
+  });
+
+  it("exige responsável no diagnóstico assistido e aceita observação", () => {
+    const campaign = createDiagnosticCampaignSchema.safeParse({
+      name: "Avaliação assistida · 2026/2",
+      templateId: "11111111-1111-4111-8111-111111111111",
+      programId: "",
+      cohortId: "",
+      evaluatorId: "",
+      executionMode: "facilitated",
+      startsAt: "2026-08-10T09:00",
+      endsAt: "2026-08-31T18:00",
+      startupIds: ["22222222-2222-4222-8222-222222222222"],
+      communicationSubject: "",
+      communicationMessage: "",
+    });
+    expect(campaign.success).toBe(false);
+    expect(
+      addDiagnosticAssessmentNoteSchema.safeParse({
+        assessmentId: "22222222-2222-4222-8222-222222222222",
+        body: "A equipe apresentou evidências adicionais durante a entrevista.",
+        returnTo: "/o/proodos/i/sertao-maker/diagnosticos/avaliacoes/1",
+      }).success,
+    ).toBe(true);
   });
 
   it("valida edição de dimensão e vínculo de responsável", () => {

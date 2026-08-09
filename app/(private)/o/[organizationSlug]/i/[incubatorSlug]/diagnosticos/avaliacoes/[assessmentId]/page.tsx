@@ -50,6 +50,7 @@ export default async function DiagnosticAssessmentPage({
     indicatorValuesResult,
     respondentRolePermissionsResult,
     invitationMappingsResult,
+    notesResult,
   ] = await Promise.all([
     supabase
       .from("diagnostic_templates")
@@ -122,6 +123,11 @@ export default async function DiagnosticAssessmentPage({
       .select("invitation_id,respondent_role")
       .match({ ...scope, assessment_id: assessment.id })
       .is("accepted_at", null),
+    supabase
+      .from("diagnostic_assessment_notes")
+      .select("id,author_id,body,created_at")
+      .match({ ...scope, assessment_id: assessment.id })
+      .order("created_at", { ascending: false }),
   ]);
   const results = [
     templateResult,
@@ -139,6 +145,7 @@ export default async function DiagnosticAssessmentPage({
     indicatorValuesResult,
     respondentRolePermissionsResult,
     invitationMappingsResult,
+    notesResult,
   ];
   if (results.some((result) => result.error))
     throw new Error("Falha ao carregar a aplicação do diagnóstico.");
@@ -229,6 +236,15 @@ export default async function DiagnosticAssessmentPage({
             )?.respondent_role ?? "collaborator",
         }),
       )}
+      notes={(notesResult.data ?? []).map((note) => ({
+        ...note,
+        authorName:
+          profilesResult.data?.find((person) => person.id === note.author_id)
+            ?.display_name ??
+          profilesResult.data?.find((person) => person.id === note.author_id)
+            ?.email ??
+          "Pessoa da incubadora",
+      }))}
       success={firstSearchValue(feedback.success)}
       error={firstSearchValue(feedback.error)}
     />

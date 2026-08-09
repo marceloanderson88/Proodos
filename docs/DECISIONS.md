@@ -1,5 +1,15 @@
 # Registro de decisões arquiteturais
 
+## DEC-024 — O modo pertence à aplicação, não ao modelo de diagnóstico
+
+**Status:** Aceita
+
+**Decisão:** um modelo publicado permanece neutro. Cada campanha define `self_assessment` ou `facilitated`, copiado transacionalmente para suas aplicações.
+
+**Motivo:** a mesma metodologia pode ser usada pela própria startup ou conduzida pela incubadora sem duplicação, divergência de versões ou perda da comparabilidade temporal.
+
+**Consequências:** autodiagnósticos exigem vínculo ativo com a startup; aplicações assistidas exigem responsável com `diagnostic.respond`; observações pertencem à aplicação; séries históricas agrupam versões por `family_id`.
+
 ## Convenções
 
 - **Aceita:** exigida explicitamente pelo SDD ou pelo solicitante.

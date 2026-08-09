@@ -1,5 +1,16 @@
 # Diagnósticos — estado atual
 
+## Modos de aplicação e histórico temporal (2026-08-09)
+
+- Todo modelo publicado é neutro e pode ser reutilizado em campanhas de `autodiagnóstico` ou `aplicação assistida`.
+- No autodiagnóstico, uma pessoa ativa da startup preenche; a equipe da incubadora pode validar.
+- Na aplicação assistida, um mentor, avaliador, agente ou gestor com `diagnostic.respond` conduz o preenchimento e a conclusão produz o resultado oficial.
+- Campanhas e aplicações persistem `execution_mode`; uma aplicação nunca pode divergir do modo de sua campanha.
+- Observações são registros imutáveis com autor e data em `diagnostic_assessment_notes`.
+- O histórico compara somente versões da mesma família de modelo e oferece seleção quando há famílias diferentes.
+- A biblioteca possui fluxo visível de criação de modelo em rascunho.
+- Casos fictícios são instalados somente por ação explícita, são idempotentes e usam o prefixo `[EXEMPLO]`.
+
 ## Escopo da análise
 
 Este inventário confronta o SDD, a especificação completa do módulo, o arquivo `ISA_Diagnostico_Maturidade_v2.1.xlsx`, as oito telas de referência e a implementação existente. Os números visíveis nas imagens são ilustrativos e não são requisitos de seed.
