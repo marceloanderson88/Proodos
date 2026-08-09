@@ -245,7 +245,7 @@ select throws_ok(
     '4', current_setting('test.diag_auth_response')
   ),
   '42501',
-  'A autoavaliação exige a permissão diagnostic.respond',
+  'Você não pode responder este diagnóstico',
   'avaliador não consegue reescrever a autoavaliação'
 );
 
