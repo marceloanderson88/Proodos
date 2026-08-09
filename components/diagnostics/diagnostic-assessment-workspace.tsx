@@ -32,6 +32,7 @@ import {
 } from "@/components/m6/form-controls";
 import {
   DiagnosticAutosaveProvider,
+  DiagnosticIndicatorForm,
   DiagnosticResponseAutosaveForm,
 } from "@/components/diagnostics/diagnostic-autosave";
 import type { Database, Json } from "@/lib/supabase/database.types";
@@ -51,6 +52,10 @@ type TriggerRule =
 type Respondent = Database["public"]["Tables"]["diagnostic_respondents"]["Row"];
 type Evidence =
   Database["public"]["Tables"]["diagnostic_response_evidence"]["Row"];
+type IndicatorDefinition =
+  Database["public"]["Tables"]["diagnostic_indicator_definitions"]["Row"];
+type IndicatorValue =
+  Database["public"]["Tables"]["diagnostic_indicator_values"]["Row"];
 
 function scalar(value: Json | null) {
   return typeof value === "string" || typeof value === "number"
@@ -74,6 +79,8 @@ export function DiagnosticAssessmentWorkspace({
   respondents,
   people,
   evidence,
+  indicatorDefinitions,
+  indicatorValues,
   success,
   error,
 }: {
@@ -96,6 +103,8 @@ export function DiagnosticAssessmentWorkspace({
     email: string | null;
   }[];
   evidence: Evidence[];
+  indicatorDefinitions: IndicatorDefinition[];
+  indicatorValues: IndicatorValue[];
   success?: string;
   error?: string;
 }) {
@@ -298,6 +307,119 @@ export function DiagnosticAssessmentWorkspace({
             incubatorSlug={incubatorSlug}
             initialLockVersion={Number(assessment.lock_version)}
           >
+            {indicatorDefinitions.length > 0 && (
+              <section className="dashboard-card rounded-[1.6rem] p-5 sm:p-6">
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                  <div>
+                    <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#a12930] uppercase">
+                      Dados objetivos
+                    </p>
+                    <h2 className="mt-1 text-2xl font-black text-[#481014]">
+                      Indicadores da startup
+                    </h2>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-[#806f6b]">
+                      Registre valores mensuráveis e a origem da evidência. A
+                      edição usa a mesma proteção contra alterações simultâneas
+                      das respostas.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-[#f4ebe5] px-3 py-1 text-xs font-black text-[#7b161c]">
+                    {
+                      indicatorValues.filter(
+                        (item) =>
+                          item.numeric_value !== null || item.is_not_applicable,
+                      ).length
+                    }
+                    /
+                    {
+                      indicatorDefinitions.filter((item) => !item.is_derived)
+                        .length
+                    }{" "}
+                    preenchidos
+                  </span>
+                </div>
+                <div className="mt-5 space-y-6">
+                  {[
+                    ...new Set(
+                      indicatorDefinitions.map((item) => item.category),
+                    ),
+                  ].map((category) => (
+                    <div key={category}>
+                      <h3 className="mb-3 text-sm font-black text-[#5a2022]">
+                        {category}
+                      </h3>
+                      <div className="grid gap-3 2xl:grid-cols-2">
+                        {indicatorDefinitions
+                          .filter((item) => item.category === category)
+                          .map((definition) => {
+                            const indicatorValue = indicatorValues.find(
+                              (item) =>
+                                item.indicator_definition_id === definition.id,
+                            );
+                            if (definition.is_derived) {
+                              return (
+                                <article
+                                  key={definition.id}
+                                  className="rounded-2xl border border-dashed border-[#751118]/15 bg-[#fbf7f4] p-4"
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <h4 className="font-black text-[#481014]">
+                                        {definition.name}
+                                      </h4>
+                                      <p className="mt-1 text-xs text-[#806f6b]">
+                                        Unidade: {definition.unit}
+                                      </p>
+                                    </div>
+                                    <span className="rounded-full bg-white px-2.5 py-1 text-[0.62rem] font-black text-[#806f6b]">
+                                      Calculado
+                                    </span>
+                                  </div>
+                                  <p className="mt-4 text-sm font-bold text-[#6b5652]">
+                                    {indicatorValue?.numeric_value == null
+                                      ? "Aguardando os indicadores de origem."
+                                      : `${Number(indicatorValue.numeric_value).toLocaleString("pt-BR")} ${definition.unit}`}
+                                  </p>
+                                </article>
+                              );
+                            }
+                            return (
+                              <DiagnosticIndicatorForm
+                                key={definition.id}
+                                assessmentId={assessment.id}
+                                definition={{
+                                  id: definition.id,
+                                  name: definition.name,
+                                  unit: definition.unit,
+                                  valueType: definition.value_type,
+                                  evidenceHint: definition.evidence_hint,
+                                }}
+                                indicatorValue={
+                                  indicatorValue
+                                    ? {
+                                        numericValue:
+                                          indicatorValue.numeric_value,
+                                        targetValue:
+                                          indicatorValue.target_value,
+                                        isNotApplicable:
+                                          indicatorValue.is_not_applicable,
+                                        notApplicableJustification:
+                                          indicatorValue.not_applicable_justification,
+                                        evidenceNotes:
+                                          indicatorValue.evidence_notes,
+                                      }
+                                    : null
+                                }
+                                canRespond={canRespond}
+                              />
+                            );
+                          })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
             {dimensions.map((dimension) => {
               const dimensionCriteria = criteria.filter(
                 (criterion) => criterion.dimension_id === dimension.id,

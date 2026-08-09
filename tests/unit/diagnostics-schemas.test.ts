@@ -10,6 +10,7 @@ import {
   diagnosticAssessmentTransitionSchema,
   duplicateDiagnosticTemplateSchema,
   saveDiagnosticResponseSchema,
+  saveDiagnosticIndicatorValueSchema,
   updateDiagnosticDimensionSchema,
 } from "@/lib/diagnostics/schemas";
 
@@ -172,6 +173,32 @@ describe("schemas de diagnósticos", () => {
       autosaveDiagnosticResponseSchema.safeParse({
         ...payload,
         lockVersion: "-1",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("valida indicadores manuais e exige justificativa para N/A", () => {
+    const base = {
+      assessmentId: "11111111-1111-4111-8111-111111111111",
+      indicatorDefinitionId: "22222222-2222-4222-8222-222222222222",
+      lockVersion: "3",
+      targetValue: "10000",
+      evidenceNotes: "Relatório financeiro de julho.",
+    };
+    expect(
+      saveDiagnosticIndicatorValueSchema.safeParse({
+        ...base,
+        numericValue: "8500,50",
+        isNotApplicable: false,
+        notApplicableJustification: "",
+      }).success,
+    ).toBe(true);
+    expect(
+      saveDiagnosticIndicatorValueSchema.safeParse({
+        ...base,
+        numericValue: "",
+        isNotApplicable: true,
+        notApplicableJustification: "",
       }).success,
     ).toBe(false);
   });

@@ -180,6 +180,34 @@ export const deleteDiagnosticEvidenceSchema = z.object({
   returnTo: z.string().trim().min(1).max(500),
 });
 
+export const saveDiagnosticIndicatorValueSchema = z
+  .object({
+    assessmentId: z.uuid(),
+    indicatorDefinitionId: z.uuid(),
+    lockVersion: z.coerce.number().int().nonnegative(),
+    numericValue: z.string().trim().max(80),
+    targetValue: z.string().trim().max(80),
+    evidenceNotes: z.string().trim().max(2000),
+    isNotApplicable: z.boolean(),
+    notApplicableJustification: z.string().trim().max(1200),
+  })
+  .superRefine((data, context) => {
+    if (!data.isNotApplicable && !data.numericValue) {
+      context.addIssue({
+        code: "custom",
+        path: ["numericValue"],
+        message: "Informe o valor do indicador.",
+      });
+    }
+    if (data.isNotApplicable && !data.notApplicableJustification) {
+      context.addIssue({
+        code: "custom",
+        path: ["notApplicableJustification"],
+        message: "Justifique por que o indicador não se aplica.",
+      });
+    }
+  });
+
 export const validateDiagnosticResponseSchema = z.object({
   assessmentId: z.uuid(),
   responseId: z.uuid(),

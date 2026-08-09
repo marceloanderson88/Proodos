@@ -46,6 +46,8 @@ export default async function DiagnosticAssessmentPage({
     rulesResult,
     respondentsResult,
     membershipsResult,
+    indicatorDefinitionsResult,
+    indicatorValuesResult,
   ] = await Promise.all([
     supabase
       .from("diagnostic_templates")
@@ -99,6 +101,15 @@ export default async function DiagnosticAssessmentPage({
       .select("user_id")
       .eq("organization_id", organization.id)
       .eq("status", "active"),
+    supabase
+      .from("diagnostic_indicator_definitions")
+      .select("*")
+      .match({ ...scope, template_id: assessment.template_id })
+      .order("position"),
+    supabase
+      .from("diagnostic_indicator_values")
+      .select("*")
+      .match({ ...scope, assessment_id: assessment.id }),
   ]);
   const results = [
     templateResult,
@@ -112,6 +123,8 @@ export default async function DiagnosticAssessmentPage({
     rulesResult,
     respondentsResult,
     membershipsResult,
+    indicatorDefinitionsResult,
+    indicatorValuesResult,
   ];
   if (results.some((result) => result.error))
     throw new Error("Falha ao carregar a aplicação do diagnóstico.");
@@ -159,6 +172,8 @@ export default async function DiagnosticAssessmentPage({
       respondents={respondentsResult.data ?? []}
       people={profilesResult.data ?? []}
       evidence={evidenceResult.data ?? []}
+      indicatorDefinitions={indicatorDefinitionsResult.data ?? []}
+      indicatorValues={indicatorValuesResult.data ?? []}
       success={firstSearchValue(feedback.success)}
       error={firstSearchValue(feedback.error)}
     />

@@ -31,10 +31,14 @@ Cada nova incubadora recebe uma cópia publicada e imutável do modelo padrão. 
 12. Submissão, reabertura e validação final com histórico e snapshot imutável das validações.
 13. Edição, exclusão e reordenação atômica de dimensões e critérios em rascunhos.
 14. Gestão de responsável principal, colaboradores, leitores e avaliador oficial por aplicação.
-15. Evidências externas HTTPS vinculadas à resposta, com autoria, estado e remoção lógica.
-16. Autosave serializado com debounce, estado offline, `lock_version` e conflito explícito.
-17. Dashboard individual com scores, dimensões e gatilhos, além de histórico ilimitado entre ciclos.
-18. Exportação CSV da campanha, autorizada pelas mesmas políticas RLS das telas.
+15. Edição de indicadores manuais com valor, meta, N/A justificado, referência
+    de evidência e proteção contra sobrescrita concorrente.
+16. Cálculo automático e seguro de runway e ticket médio sempre que seus
+    indicadores de origem mudam.
+17. Evidências externas HTTPS vinculadas à resposta, com autoria, estado e remoção lógica.
+18. Autosave serializado com debounce, estado offline, `lock_version` e conflito explícito.
+19. Dashboard individual com scores, dimensões e gatilhos, além de histórico ilimitado entre ciclos.
+20. Exportação CSV da campanha, autorizada pelas mesmas políticas RLS das telas.
 
 ## Segurança e isolamento
 
@@ -90,6 +94,8 @@ A relação `diagnostic_response_evidence` armazena metadados, estado, autoria e
 - Teste transacional remoto do workflow completo, com 36 respostas, envio, validação final, 36 revisões imutáveis e eventos de histórico.
 - Testes unitários Zod para período e participantes da campanha.
 - Testes unitários Zod para edição, responsáveis e URL HTTPS de evidência.
+- Teste pgTAP e ensaio transacional remoto dos indicadores manuais, incluindo
+  incremento de `lock_version`, conflito e bloqueio de indicador derivado.
 - Verificação transacional remota, com rollback, de edição/reordenação e atribuição de respondente/avaliador.
 - `lint`, `typecheck` e suíte Vitest são obrigatórios antes da conclusão.
 
@@ -101,7 +107,8 @@ O advisor de segurança mantém avisos para RPCs `SECURITY DEFINER` intencionais
 
 - convite por e-mail para pessoas ainda sem membership aceita;
 - upload resumível de evidências no Google Drive;
-- indicadores editáveis e fórmulas derivadas na interface;
+- inclusão de novas fórmulas configuráveis além das duas fórmulas padrão já
+  implementadas;
 - comunicação real das campanhas;
 - importação XLSX assistida e autosave do editor;
 - integração com Planos de Ação e conteúdos, cujo domínio ainda não existe;

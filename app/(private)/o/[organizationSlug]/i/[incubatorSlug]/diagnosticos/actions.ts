@@ -21,6 +21,7 @@ import {
   reorderDiagnosticCriteriaSchema,
   reorderDiagnosticDimensionsSchema,
   revokeDiagnosticRespondentSchema,
+  saveDiagnosticIndicatorValueSchema,
   saveDiagnosticResponseSchema,
   updateDiagnosticCriterionSchema,
   updateDiagnosticDimensionSchema,
@@ -892,6 +893,115 @@ export type DiagnosticAutosaveResult =
       kind: "conflict" | "validation" | "forbidden" | "error";
       message: string;
     };
+
+export type DiagnosticIndicatorSaveResult =
+  | {
+      ok: true;
+      indicatorValueId: string;
+      lockVersion: number;
+      savedAt: string;
+    }
+  | {
+      ok: false;
+      kind: "conflict" | "validation" | "forbidden" | "error";
+      message: string;
+    };
+
+export async function saveDiagnosticIndicatorValueAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+): Promise<DiagnosticIndicatorSaveResult> {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = saveDiagnosticIndicatorValueSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    indicatorDefinitionId: value(formData, "indicatorDefinitionId"),
+    lockVersion: value(formData, "lockVersion"),
+    numericValue: value(formData, "numericValue"),
+    targetValue: value(formData, "targetValue"),
+    evidenceNotes: value(formData, "evidenceNotes"),
+    isNotApplicable: formData.get("isNotApplicable") === "on",
+    notApplicableJustification: value(formData, "notApplicableJustification"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      kind: "validation",
+      message: parsed.error.issues[0]?.message ?? "Indicador inválido.",
+    };
+  }
+  const parseNumber = (entry: string) => {
+    if (!entry) return null;
+    const normalized = entry.includes(",")
+      ? entry.replaceAll(".", "").replace(",", ".")
+      : entry;
+    return Number(normalized);
+  };
+  const numericValue = parsed.data.isNotApplicable
+    ? null
+    : parseNumber(parsed.data.numericValue);
+  const targetValue = parseNumber(parsed.data.targetValue);
+  if (
+    (numericValue !== null && !Number.isFinite(numericValue)) ||
+    (targetValue !== null && !Number.isFinite(targetValue))
+  ) {
+    return {
+      ok: false,
+      kind: "validation",
+      message: "Informe valores numéricos válidos.",
+    };
+  }
+  const { data, error } = await context.supabase.rpc(
+    "save_diagnostic_indicator_value",
+    {
+      target_assessment_id: parsed.data.assessmentId,
+      target_indicator_definition_id: parsed.data.indicatorDefinitionId,
+      expected_lock_version: parsed.data.lockVersion,
+      target_numeric_value: numericValue,
+      target_target_value: targetValue,
+      target_is_not_applicable: parsed.data.isNotApplicable,
+      target_not_applicable_justification:
+        parsed.data.notApplicableJustification || null,
+      target_evidence_notes: parsed.data.evidenceNotes,
+    },
+  );
+  if (error) {
+    if (error.code === "40001") {
+      return {
+        ok: false,
+        kind: "conflict",
+        message:
+          "Outra sessão alterou este diagnóstico. Recarregue antes de continuar.",
+      };
+    }
+    return {
+      ok: false,
+      kind: error.code === "42501" ? "forbidden" : "error",
+      message:
+        error.code === "42501"
+          ? "Você não possui permissão para salvar este indicador."
+          : "Não foi possível salvar o indicador.",
+    };
+  }
+  const saved = data?.[0];
+  if (!saved) {
+    return {
+      ok: false,
+      kind: "error",
+      message: "O banco não confirmou o salvamento do indicador.",
+    };
+  }
+  revalidatePath(path(organizationSlug, incubatorSlug));
+  return {
+    ok: true,
+    indicatorValueId: saved.indicator_value_id,
+    lockVersion: Number(saved.lock_version),
+    savedAt: saved.saved_at,
+  };
+}
 
 export async function autosaveDiagnosticResponseAction(
   organizationSlug: string,

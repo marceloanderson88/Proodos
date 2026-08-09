@@ -43,7 +43,9 @@ Permanecem como lacunas:
 - autosave do editor de templates (o autosave de respostas está concluído);
 - upload binário resumível para o Shared Drive institucional;
 - convite contextual de respondente ainda sem membership;
-- edição e fórmulas derivadas de indicadores na interface;
+- inclusão de novas fórmulas derivadas configuráveis; as fórmulas padrão de
+  runway e ticket médio, além da edição dos indicadores manuais, metas, N/A e
+  evidências, já estão implementadas;
 - envio real de comunicações e lembretes por provedor transacional;
 - criação de ação e recomendação de conteúdo, dependentes do domínio de Planos
   de Ação ainda não existente no banco.
@@ -116,8 +118,9 @@ seguinte. Já foram entregues catálogo de famílias, versões imutáveis, rubri
 normalizadas, classificações, campanhas, respondentes, validações históricas,
 indicadores, gatilhos, scores materializados, biblioteca navegável, editor
 estrutural com edição/exclusão/reordenação, duplicação de versões, gestão de
-respondentes e avaliador por aplicação, evidências externas HTTPS e máquina de
-estados de envio e validação. A lista original permanece acima como registro do
+respondentes e avaliador por aplicação, evidências externas HTTPS, indicadores
+manuais com concorrência otimista e máquina de estados de envio e validação. A
+lista original permanece acima como registro do
 diagnóstico do código anterior, não como descrição do estado atual.
 
 ## Estado da validação

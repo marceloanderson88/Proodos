@@ -3290,6 +3290,23 @@ export type Database = {
         Args: { target_assessment_id: string; target_user_id: string };
         Returns: undefined;
       };
+      save_diagnostic_indicator_value: {
+        Args: {
+          expected_lock_version: number;
+          target_assessment_id: string;
+          target_evidence_notes?: string;
+          target_indicator_definition_id: string;
+          target_is_not_applicable?: boolean;
+          target_not_applicable_justification?: string | null;
+          target_numeric_value: number | null;
+          target_target_value?: number | null;
+        };
+        Returns: {
+          indicator_value_id: string;
+          lock_version: number;
+          saved_at: string;
+        }[];
+      };
       submit_diagnostic_assessment: {
         Args: { target_assessment_id: string };
         Returns: undefined;
