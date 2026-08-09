@@ -26,6 +26,12 @@ está em modo `test` apontando para `localhost` ou `127.0.0.1`. Ela nunca é
 incorporada ao bundle. Ambientes reais continuam exigindo
 `SUPABASE_SECRET_KEY` exclusivamente no servidor.
 
+A página pública de autocadastro lê apenas um contexto sanitizado pela função
+`get_startup_registration_context`. A RPC expõe nomes e turmas elegíveis, não
+IDs internos do tenant, papéis, membros ou configurações. Assim, a renderização
+pública não depende de chave administrativa; operações de Auth e aprovação
+continuam isoladas no servidor.
+
 Checklist antes da promoção:
 
 1. migrations locais e remotas possuem a mesma versão;

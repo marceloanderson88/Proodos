@@ -54,13 +54,18 @@ test("erros de formulário são associados aos campos", async ({ page }) => {
 });
 
 test("autocadastro de startup é acessível e responsivo", async ({ page }) => {
-  test.skip(
-    !process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD,
-    "O cenário depende do banco sintético provisionado no pipeline.",
-  );
-
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/cadastro/startup/seed-org-a/incubadora-sintetica-sertao");
+  const usesSyntheticDatabase = Boolean(
+    process.env.E2E_TEST_EMAIL && process.env.E2E_TEST_PASSWORD,
+  );
+  const organizationSlug = usesSyntheticDatabase ? "seed-org-a" : "proodos";
+  const incubatorSlug = usesSyntheticDatabase
+    ? "incubadora-sintetica-sertao"
+    : "sertao-maker";
+  const response = await page.goto(
+    `/cadastro/startup/${organizationSlug}/${incubatorSlug}`,
+  );
+  expect(response?.status()).toBe(200);
 
   await expect(
     page.getByRole("heading", { name: "Solicitar entrada" }),

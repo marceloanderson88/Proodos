@@ -3396,6 +3396,10 @@ export type Database = {
           organization_slug: string;
         }[];
       };
+      get_startup_registration_context: {
+        Args: { incubator_slug: string; organization_slug: string };
+        Returns: Json;
+      };
       review_startup_application: {
         Args: {
           requested_decision: string;

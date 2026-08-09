@@ -1,10 +1,13 @@
+import { createClient } from "@supabase/supabase-js";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { BrandMark } from "@/components/brand-mark";
 import { StartupSelfRegistrationForm } from "@/components/startups/startup-self-registration-form";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getSupabasePublicEnv } from "@/lib/env";
+import { startupPublicRegistrationContextSchema } from "@/lib/startups/public-registration";
+import type { Database } from "@/lib/supabase/database.types";
 
 export const dynamic = "force-dynamic";
 
@@ -14,44 +17,22 @@ export default async function StartupRegistrationPage({
   params: Promise<{ organizationSlug: string; incubatorSlug: string }>;
 }) {
   const { organizationSlug, incubatorSlug } = await params;
-  const admin = createSupabaseAdminClient();
-  const { data: organization } = await admin
-    .from("organizations")
-    .select("id, name")
-    .eq("slug", organizationSlug)
-    .eq("status", "active")
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (!organization) notFound();
-  const { data: incubator } = await admin
-    .from("incubators")
-    .select("id, name, short_description")
-    .eq("organization_id", organization.id)
-    .eq("slug", incubatorSlug)
-    .eq("status", "active")
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (!incubator) notFound();
-
-  const { data: programs } = await admin
-    .from("programs")
-    .select("id, name")
-    .eq("organization_id", organization.id)
-    .eq("incubator_id", incubator.id)
-    .eq("status", "active")
-    .is("deleted_at", null);
-  const programNames = new Map(
-    (programs ?? []).map((item) => [item.id, item.name]),
+  const env = getSupabasePublicEnv();
+  const supabase = createClient<Database>(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    { auth: { persistSession: false } },
   );
-  const { data: cohorts } = programNames.size
-    ? await admin
-        .from("cohorts")
-        .select("id, program_id, name")
-        .eq("organization_id", organization.id)
-        .in("program_id", [...programNames.keys()])
-        .in("status", ["planned", "enrollment_open", "active"])
-        .is("deleted_at", null)
-    : { data: [] };
+  const { data, error } = await supabase.rpc(
+    "get_startup_registration_context",
+    {
+      incubator_slug: incubatorSlug,
+      organization_slug: organizationSlug,
+    },
+  );
+  const parsedContext = startupPublicRegistrationContextSchema.safeParse(data);
+  if (error || !parsedContext.success) notFound();
+  const context = parsedContext.data;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f6dfd2_0,transparent_32%),#fffaf5] px-5 py-8 sm:py-12">
@@ -64,10 +45,10 @@ export default async function StartupRegistrationPage({
               aprovação
             </p>
             <h1 className="mt-6 text-4xl font-black tracking-[-0.04em] sm:text-5xl">
-              Sua startup na {incubator.name}
+              Sua startup na {context.incubator.name}
             </h1>
             <p className="mt-5 text-sm leading-7 text-white/75">
-              {incubator.short_description ??
+              {context.incubator.shortDescription ??
                 "Crie sua conta, apresente o empreendimento e acompanhe a análise da incubadora."}
             </p>
             <ol className="mt-10 space-y-5 text-sm text-white/78">
@@ -109,10 +90,7 @@ export default async function StartupRegistrationPage({
             <StartupSelfRegistrationForm
               organizationSlug={organizationSlug}
               incubatorSlug={incubatorSlug}
-              cohorts={(cohorts ?? []).map((item) => ({
-                id: item.id,
-                label: `${programNames.get(item.program_id) ?? "Programa"} · ${item.name}`,
-              }))}
+              cohorts={context.cohorts}
             />
           </div>
         </section>
