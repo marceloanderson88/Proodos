@@ -106,6 +106,10 @@ with inserted as (
 )
 select set_config('test.diag_v21_startup', id::text, true) from inserted;
 
+-- Este fixture valida exclusivamente o motor de cálculo. As fronteiras RLS são
+-- cobertas pelos testes dedicados e não devem impedir a montagem do cenário.
+reset role;
+
 with inserted as (
   insert into public.diagnostic_assessments (
     organization_id, incubator_id, startup_id, template_id,
@@ -138,8 +142,6 @@ select
   now()
 from public.diagnostic_criteria c
 where c.template_id = current_setting('test.diag_v21_template')::uuid;
-
-reset role;
 
 select is(
   (select self_score from public.diagnostic_assessments where id = current_setting('test.diag_v21_assessment')::uuid),

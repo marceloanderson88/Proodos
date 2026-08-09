@@ -85,15 +85,16 @@ with inserted as (
   ) returning id
 ) select set_config('test.diag_auth_startup', id::text, true) from inserted;
 
-with inserted as (
-  insert into public.diagnostic_templates (organization_id, incubator_id, name, created_by)
-  values (
-    current_setting('test.diag_auth_org')::uuid,
+select set_config(
+  'test.diag_auth_template',
+  public.create_diagnostic_template_draft(
     current_setting('test.diag_auth_incubator')::uuid,
     'Modelo Segurança Diagnóstica',
-    '74100000-0000-4000-8000-000000000001'
-  ) returning id
-) select set_config('test.diag_auth_template', id::text, true) from inserted;
+    'Fixture de autorização por campo',
+    ''
+  )::text,
+  true
+);
 
 with inserted as (
   insert into public.diagnostic_dimensions (
@@ -136,6 +137,19 @@ with inserted as (
   ) returning id
 ) select set_config('test.diag_auth_assessment', id::text, true) from inserted;
 
+insert into public.diagnostic_respondents (
+  organization_id, incubator_id, assessment_id, user_id,
+  respondent_role, can_submit, invited_by, accepted_at
+) values (
+  current_setting('test.diag_auth_org')::uuid,
+  current_setting('test.diag_auth_incubator')::uuid,
+  current_setting('test.diag_auth_assessment')::uuid,
+  '74100000-0000-4000-8000-000000000002',
+  'primary', true,
+  '74100000-0000-4000-8000-000000000001',
+  now()
+);
+
 with inserted as (
   insert into public.diagnostic_responses (
     organization_id, incubator_id, assessment_id, criterion_id, self_value
@@ -173,6 +187,10 @@ select throws_ok(
   '42501',
   'A validação exige a permissão diagnostic.validate',
   'respondente não consegue gravar validação oficial'
+);
+
+select public.submit_diagnostic_assessment(
+  current_setting('test.diag_auth_assessment')::uuid
 );
 
 select set_config('request.jwt.claim.sub', '74100000-0000-4000-8000-000000000003', true);
