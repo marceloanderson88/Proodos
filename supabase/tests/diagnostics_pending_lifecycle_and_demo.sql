@@ -78,6 +78,8 @@ select set_config(
   true
 );
 
+reset role;
+
 with inserted as (
   insert into public.diagnostic_dimensions (
     organization_id, incubator_id, template_id, code, name, weight, position
@@ -103,6 +105,10 @@ insert into public.diagnostic_criteria (
 update public.diagnostic_templates
 set status = 'published', published_at = now()
 where id = current_setting('test.diag_lifecycle_template')::uuid;
+
+set local role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claim.sub', '74300000-0000-4000-8000-000000000001', true);
 
 select set_config(
   'test.diag_lifecycle_campaign',
