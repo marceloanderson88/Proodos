@@ -19,6 +19,7 @@ import {
   diagnosticAssessmentTransitionSchema,
   duplicateDiagnosticTemplateSchema,
   inviteDiagnosticRespondentSchema,
+  manageDiagnosticRespondentInvitationSchema,
   reorderDiagnosticCriteriaSchema,
   reorderDiagnosticDimensionsSchema,
   revokeDiagnosticRespondentSchema,
@@ -799,6 +800,126 @@ export async function inviteDiagnosticRespondentAction(
     returnTo,
     "success",
     `Convite enviado para ${parsed.data.email}. O acesso será liberado somente após o aceite.`,
+  );
+}
+
+export async function manageDiagnosticRespondentInvitationAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const returnTo = value(formData, "returnTo");
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = manageDiagnosticRespondentInvitationSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    invitationId: value(formData, "invitationId"),
+    action: value(formData, "action"),
+    returnTo,
+  });
+  if (!parsed.success)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Convite inválido.",
+    );
+  const mapping = await context.supabase
+    .from("diagnostic_respondent_invitations")
+    .select("invitation_id,respondent_role")
+    .eq("organization_id", context.organization.id)
+    .eq("incubator_id", context.incubator.id)
+    .eq("assessment_id", parsed.data.assessmentId)
+    .eq("invitation_id", parsed.data.invitationId)
+    .is("accepted_at", null)
+    .maybeSingle();
+  const invitation = await context.supabase
+    .from("invitations")
+    .select("id,invited_name,email,role_id,status")
+    .eq("organization_id", context.organization.id)
+    .eq("incubator_id", context.incubator.id)
+    .eq("id", parsed.data.invitationId)
+    .maybeSingle();
+  if (
+    mapping.error ||
+    !mapping.data ||
+    invitation.error ||
+    !invitation.data ||
+    invitation.data.status !== "pending"
+  )
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Este convite não está mais pendente.",
+    );
+
+  const revoked = await context.supabase
+    .from("invitations")
+    .update({ status: "revoked", revoked_at: new Date().toISOString() })
+    .eq("id", invitation.data.id)
+    .eq("status", "pending");
+  if (revoked.error)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Não foi possível revogar o convite.",
+    );
+
+  if (parsed.data.action === "resend") {
+    try {
+      const replacement = await sendIncubatorInvitation(context, {
+        invitedName:
+          invitation.data.invited_name ??
+          invitation.data.email.split("@")[0] ??
+          "Pessoa convidada",
+        email: invitation.data.email,
+        roleId: invitation.data.role_id,
+        expiresInDays: 7,
+      });
+      const replacementMapping = await context.supabase
+        .from("diagnostic_respondent_invitations")
+        .insert({
+          organization_id: context.organization.id,
+          incubator_id: context.incubator.id,
+          assessment_id: parsed.data.assessmentId,
+          invitation_id: replacement.invitationId,
+          respondent_role: mapping.data.respondent_role,
+          can_submit: mapping.data.respondent_role === "primary",
+          created_by: context.user.id,
+        });
+      if (replacementMapping.error) {
+        await context.supabase
+          .from("invitations")
+          .update({ status: "revoked", revoked_at: new Date().toISOString() })
+          .eq("id", replacement.invitationId);
+        throw replacementMapping.error;
+      }
+    } catch {
+      finishAt(
+        organizationSlug,
+        incubatorSlug,
+        returnTo,
+        "error",
+        "O convite anterior foi revogado, mas o reenvio falhou.",
+      );
+    }
+  }
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    parsed.data.action === "resend"
+      ? "Novo convite enviado."
+      : "Convite revogado.",
   );
 }
 

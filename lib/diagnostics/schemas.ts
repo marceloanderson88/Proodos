@@ -113,6 +113,13 @@ export const inviteDiagnosticRespondentSchema = z.object({
   returnTo: z.string().trim().min(1).max(500),
 });
 
+export const manageDiagnosticRespondentInvitationSchema = z.object({
+  assessmentId: z.uuid(),
+  invitationId: z.uuid(),
+  action: z.enum(["resend", "revoke"]),
+  returnTo: z.string().trim().min(1).max(500),
+});
+
 export const createDiagnosticCampaignSchema = z
   .object({
     name: z.string().trim().min(2).max(180),

@@ -21,6 +21,7 @@ import {
   deleteDiagnosticEvidenceAction,
   finalizeDiagnosticAssessmentAction,
   inviteDiagnosticRespondentAction,
+  manageDiagnosticRespondentInvitationAction,
   reopenDiagnosticAssessmentAction,
   submitDiagnosticAssessmentAction,
   revokeDiagnosticRespondentAction,
@@ -158,6 +159,12 @@ export function DiagnosticAssessmentWorkspace({
     organizationSlug,
     incubatorSlug,
   );
+  const manageRespondentInvitation =
+    manageDiagnosticRespondentInvitationAction.bind(
+      null,
+      organizationSlug,
+      incubatorSlug,
+    );
   const assignEvaluator = assignDiagnosticEvaluatorAction.bind(
     null,
     organizationSlug,
@@ -875,6 +882,56 @@ export function DiagnosticAssessmentWorkspace({
                             "pt-BR",
                           )}
                         </p>
+                        <div className="mt-2 flex gap-2">
+                          <form action={manageRespondentInvitation}>
+                            <input
+                              type="hidden"
+                              name="assessmentId"
+                              value={assessment.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="invitationId"
+                              value={invitation.id}
+                            />
+                            <input type="hidden" name="action" value="resend" />
+                            <input
+                              type="hidden"
+                              name="returnTo"
+                              value={currentPath}
+                            />
+                            <button
+                              type="submit"
+                              className="text-[0.65rem] font-black text-[#7b161c] underline underline-offset-2"
+                            >
+                              Reenviar
+                            </button>
+                          </form>
+                          <form action={manageRespondentInvitation}>
+                            <input
+                              type="hidden"
+                              name="assessmentId"
+                              value={assessment.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="invitationId"
+                              value={invitation.id}
+                            />
+                            <input type="hidden" name="action" value="revoke" />
+                            <input
+                              type="hidden"
+                              name="returnTo"
+                              value={currentPath}
+                            />
+                            <button
+                              type="submit"
+                              className="text-[0.65rem] font-black text-[#9d3438] underline underline-offset-2"
+                            >
+                              Revogar
+                            </button>
+                          </form>
+                        </div>
                       </div>
                     ))}
                   </div>
