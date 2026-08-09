@@ -170,6 +170,11 @@ export const addDiagnosticExternalEvidenceSchema = z.object({
   returnTo: z.string().trim().min(1).max(500),
 });
 
+export const autosaveDiagnosticResponseSchema =
+  saveDiagnosticResponseSchema.safeExtend({
+    lockVersion: z.coerce.number().int().nonnegative(),
+  });
+
 export const deleteDiagnosticEvidenceSchema = z.object({
   evidenceId: z.uuid(),
   returnTo: z.string().trim().min(1).max(500),

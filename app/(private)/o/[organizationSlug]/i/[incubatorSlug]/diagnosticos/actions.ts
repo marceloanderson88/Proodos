@@ -12,6 +12,7 @@ import {
   createDiagnosticTemplateSchema,
   assignDiagnosticEvaluatorSchema,
   assignDiagnosticRespondentSchema,
+  autosaveDiagnosticResponseSchema,
   deleteDiagnosticCriterionSchema,
   deleteDiagnosticDimensionSchema,
   deleteDiagnosticEvidenceSchema,
@@ -877,6 +878,115 @@ export async function saveDiagnosticResponseAction(
     "success",
     "Resposta salva.",
   );
+}
+
+export type DiagnosticAutosaveResult =
+  | {
+      ok: true;
+      responseId: string;
+      lockVersion: number;
+      savedAt: string;
+    }
+  | {
+      ok: false;
+      kind: "conflict" | "validation" | "forbidden" | "error";
+      message: string;
+    };
+
+export async function autosaveDiagnosticResponseAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+): Promise<DiagnosticAutosaveResult> {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = autosaveDiagnosticResponseSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    criterionId: value(formData, "criterionId"),
+    lockVersion: value(formData, "lockVersion"),
+    responseType: value(formData, "responseType"),
+    value: value(formData, "value"),
+    comment: value(formData, "comment"),
+    evidenceNotes: value(formData, "evidenceNotes"),
+    isNotApplicable: formData.get("isNotApplicable") === "on",
+    notApplicableJustification: value(formData, "notApplicableJustification"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      kind: "validation",
+      message: parsed.error.issues[0]?.message ?? "Resposta inválida.",
+    };
+  }
+  const numeric = ["numeric", "currency", "percentage"].includes(
+    parsed.data.responseType,
+  );
+  const responseValue: Json | null = parsed.data.isNotApplicable
+    ? null
+    : numeric
+      ? Number(parsed.data.value.replace(",", "."))
+      : parsed.data.value;
+  if (
+    numeric &&
+    typeof responseValue === "number" &&
+    !Number.isFinite(responseValue)
+  ) {
+    return {
+      ok: false,
+      kind: "validation",
+      message: "Informe um valor numérico válido.",
+    };
+  }
+
+  const { data, error } = await context.supabase.rpc(
+    "autosave_diagnostic_response",
+    {
+      target_assessment_id: parsed.data.assessmentId,
+      target_criterion_id: parsed.data.criterionId,
+      expected_lock_version: parsed.data.lockVersion,
+      target_self_value: responseValue,
+      target_is_not_applicable: parsed.data.isNotApplicable,
+      target_not_applicable_justification:
+        parsed.data.notApplicableJustification || null,
+      target_self_comment: parsed.data.comment,
+      target_evidence_notes: parsed.data.evidenceNotes,
+    },
+  );
+  if (error) {
+    if (error.code === "40001") {
+      return {
+        ok: false,
+        kind: "conflict",
+        message:
+          "Outra sessão alterou este diagnóstico. Recarregue antes de continuar.",
+      };
+    }
+    return {
+      ok: false,
+      kind: error.code === "42501" ? "forbidden" : "error",
+      message:
+        error.code === "42501"
+          ? "Você não possui permissão para salvar esta resposta."
+          : "Não foi possível salvar automaticamente.",
+    };
+  }
+  const saved = data?.[0];
+  if (!saved) {
+    return {
+      ok: false,
+      kind: "error",
+      message: "O banco não confirmou o salvamento.",
+    };
+  }
+  revalidatePath(path(organizationSlug, incubatorSlug));
+  return {
+    ok: true,
+    responseId: saved.response_id,
+    lockVersion: Number(saved.lock_version),
+    savedAt: saved.saved_at,
+  };
 }
 
 export async function addDiagnosticExternalEvidenceAction(

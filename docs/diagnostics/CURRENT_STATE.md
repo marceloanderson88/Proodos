@@ -29,23 +29,24 @@ O Marco 7 criou uma fundação válida, porém reduzida:
 - cálculo parcial de score;
 - componentes visuais e shell da incubadora já reutilizáveis.
 
-## Lacunas funcionais
+## Estado funcional após os incrementos
 
-Não existem ainda:
+Já existem biblioteca e versionamento, editor estrutural, campanhas, seleção em
+lote, respondentes e avaliadores, resposta e validação separadas, autosave com
+`lock_version`, detecção explícita de conflito, evidências HTTPS, scores,
+classificações, gatilhos, dashboard de campanha, resultado individual, histórico
+ilimitado e exportação CSV autorizada.
 
-- biblioteca navegável de modelos, filtros, duplicação e histórico;
-- catálogo de família separado de versões;
-- rubricas normalizadas e faixas de classificação;
-- importação e relatório de validação do XLSX;
-- campanhas, seleção em lote, responsáveis e comunicação;
-- respondentes identificados e colaboração controlada;
-- autosave, bloqueio otimista e recuperação de conflito;
-- evidências ligadas ao catálogo `files`/Google Drive;
-- validação como fluxo separado;
-- indicadores, gatilhos críticos e resultados materializados;
-- dashboards de campanha, startup e evolução ilimitada;
-- criação de ação e recomendação de conteúdo a partir do diagnóstico;
-- exportações e notificações.
+Permanecem como lacunas:
+
+- importação XLSX assistida e relatório de validação;
+- autosave do editor de templates (o autosave de respostas está concluído);
+- upload binário resumível para o Shared Drive institucional;
+- convite contextual de respondente ainda sem membership;
+- edição e fórmulas derivadas de indicadores na interface;
+- envio real de comunicações e lembretes por provedor transacional;
+- criação de ação e recomendação de conteúdo, dependentes do domínio de Planos
+  de Ação ainda não existente no banco.
 
 ## Lacunas de modelo
 

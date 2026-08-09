@@ -3,6 +3,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock3,
+  Download,
   RefreshCw,
   Send,
   ShieldCheck,
@@ -98,20 +99,29 @@ export function DiagnosticCampaignDetail({
       >
         <ArrowLeft className="size-4" /> Voltar aos diagnósticos
       </Link>
-      <header>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-4xl font-black tracking-[-0.04em] text-[#3f090d]">
-            {campaign.name}
-          </h1>
-          <span className="rounded-full bg-[#eaf6ec] px-3 py-1 text-xs font-black text-[#2f7540]">
-            {campaign.status.replaceAll("_", " ")}
-          </span>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-4xl font-black tracking-[-0.04em] text-[#3f090d]">
+              {campaign.name}
+            </h1>
+            <span className="rounded-full bg-[#eaf6ec] px-3 py-1 text-xs font-black text-[#2f7540]">
+              {campaign.status.replaceAll("_", " ")}
+            </span>
+          </div>
+          <p className="mt-3 text-sm text-[#806f6b]">
+            {dateTime(campaign.starts_at)} — {dateTime(campaign.ends_at)} ·{" "}
+            {template?.name ?? "Modelo"} v
+            {template?.version_label ?? template?.version ?? "—"}
+          </p>
         </div>
-        <p className="mt-3 text-sm text-[#806f6b]">
-          {dateTime(campaign.starts_at)} — {dateTime(campaign.ends_at)} ·{" "}
-          {template?.name ?? "Modelo"} v
-          {template?.version_label ?? template?.version ?? "—"}
-        </p>
+        <a
+          href={`${base}/campanhas/${campaign.id}/export`}
+          download
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#8b161d]/15 bg-white px-4 text-sm font-black text-[#7b161c] shadow-sm"
+        >
+          <Download className="size-4" /> Exportar CSV
+        </a>
       </header>
       <FeedbackBanner success={success} error={error} />
 
@@ -193,12 +203,20 @@ export function DiagnosticCampaignDetail({
                     </td>
                     <td className="px-6 py-4 text-right">
                       {assessment && (
-                        <Link
-                          href={`${base}/avaliacoes/${assessment.id}`}
-                          className="inline-flex items-center gap-2 font-black text-[#8b161d]"
-                        >
-                          Abrir <ArrowRight className="size-4" />
-                        </Link>
+                        <div className="flex justify-end gap-4">
+                          <Link
+                            href={`${base}/avaliacoes/${assessment.id}`}
+                            className="font-black text-[#8b161d]"
+                          >
+                            Avaliação
+                          </Link>
+                          <Link
+                            href={`${base}/startups/${participant.startup_id}/avaliacoes/${assessment.id}`}
+                            className="inline-flex items-center gap-1 font-black text-[#8b161d]"
+                          >
+                            Resultado <ArrowRight className="size-4" />
+                          </Link>
+                        </div>
                       )}
                     </td>
                   </tr>

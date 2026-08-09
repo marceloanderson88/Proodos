@@ -20,7 +20,6 @@ import {
   deleteDiagnosticEvidenceAction,
   finalizeDiagnosticAssessmentAction,
   reopenDiagnosticAssessmentAction,
-  saveDiagnosticResponseAction,
   submitDiagnosticAssessmentAction,
   revokeDiagnosticRespondentAction,
   validateDiagnosticResponseAction,
@@ -31,6 +30,10 @@ import {
   inputClassName,
   SubmitButton,
 } from "@/components/m6/form-controls";
+import {
+  DiagnosticAutosaveProvider,
+  DiagnosticResponseAutosaveForm,
+} from "@/components/diagnostics/diagnostic-autosave";
 import type { Database, Json } from "@/lib/supabase/database.types";
 
 type Assessment = Database["public"]["Tables"]["diagnostic_assessments"]["Row"];
@@ -98,11 +101,6 @@ export function DiagnosticAssessmentWorkspace({
 }) {
   const base = `/o/${organizationSlug}/i/${incubatorSlug}/diagnosticos`;
   const currentPath = `${base}/avaliacoes/${assessment.id}`;
-  const saveResponse = saveDiagnosticResponseAction.bind(
-    null,
-    organizationSlug,
-    incubatorSlug,
-  );
   const validateResponse = validateDiagnosticResponseAction.bind(
     null,
     organizationSlug,
@@ -236,6 +234,12 @@ export function DiagnosticAssessmentWorkspace({
           </h2>
         </div>
         <div className="flex flex-wrap gap-3">
+          <Link
+            href={`${base}/startups/${startup.id}/avaliacoes/${assessment.id}`}
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#8b161d]/15 bg-white px-4 text-sm font-black text-[#7b161c] shadow-sm"
+          >
+            <BarChart3 className="size-4" /> Ver resultado
+          </Link>
           {canRespond && (
             <form action={submitAssessment}>
               <input type="hidden" name="assessmentId" value={assessment.id} />
@@ -289,81 +293,216 @@ export function DiagnosticAssessmentWorkspace({
 
       <div className="grid gap-6 xl:grid-cols-[1fr_19rem]">
         <main className="space-y-5">
-          {dimensions.map((dimension) => {
-            const dimensionCriteria = criteria.filter(
-              (criterion) => criterion.dimension_id === dimension.id,
-            );
-            const dimensionScore = scores.find(
-              (score) => score.dimension_id === dimension.id,
-            );
-            return (
-              <details
-                key={dimension.id}
-                open
-                className="dashboard-card overflow-hidden rounded-[1.6rem]"
-              >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 bg-[#fcf7f3] px-5 py-5 sm:px-6">
-                  <div>
-                    <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#a12930] uppercase">
-                      {dimension.code}
-                    </p>
-                    <h2 className="mt-1 text-xl font-black text-[#481014]">
-                      {dimension.name}
-                    </h2>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#7a171d]">
-                      Auto{" "}
-                      {dimensionScore?.self_score == null
-                        ? "—"
-                        : Number(dimensionScore.self_score).toFixed(0)}
-                    </span>
-                    <span className="rounded-full bg-[#e8f5e9] px-3 py-1 text-xs font-black text-[#28713c]">
-                      Oficial{" "}
-                      {dimensionScore?.validated_score == null
-                        ? "—"
-                        : Number(dimensionScore.validated_score).toFixed(0)}
-                    </span>
-                  </div>
-                </summary>
-                <div className="divide-y divide-[#751118]/8">
-                  {dimensionCriteria.map((criterion) => {
-                    const response = responses.find(
-                      (item) => item.criterion_id === criterion.id,
-                    );
-                    const rubric = levels.filter(
-                      (level) => level.criterion_id === criterion.id,
-                    );
-                    const responseEvidence = response
-                      ? evidence.filter(
-                          (item) => item.response_id === response.id,
-                        )
-                      : [];
-                    return (
-                      <article key={criterion.id} className="px-5 py-6 sm:px-6">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-xs font-black text-[#a12930]">
-                              {criterion.code}
-                            </p>
-                            <h3 className="mt-1 max-w-3xl text-lg font-black text-[#431014]">
-                              {criterion.prompt}
-                            </h3>
-                            {criterion.help_text && (
-                              <p className="mt-2 max-w-3xl text-sm leading-6 text-[#806f6b]">
-                                {criterion.help_text}
+          <DiagnosticAutosaveProvider
+            organizationSlug={organizationSlug}
+            incubatorSlug={incubatorSlug}
+            initialLockVersion={Number(assessment.lock_version)}
+          >
+            {dimensions.map((dimension) => {
+              const dimensionCriteria = criteria.filter(
+                (criterion) => criterion.dimension_id === dimension.id,
+              );
+              const dimensionScore = scores.find(
+                (score) => score.dimension_id === dimension.id,
+              );
+              return (
+                <details
+                  key={dimension.id}
+                  open
+                  className="dashboard-card overflow-hidden rounded-[1.6rem]"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 bg-[#fcf7f3] px-5 py-5 sm:px-6">
+                    <div>
+                      <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#a12930] uppercase">
+                        {dimension.code}
+                      </p>
+                      <h2 className="mt-1 text-xl font-black text-[#481014]">
+                        {dimension.name}
+                      </h2>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#7a171d]">
+                        Auto{" "}
+                        {dimensionScore?.self_score == null
+                          ? "—"
+                          : Number(dimensionScore.self_score).toFixed(0)}
+                      </span>
+                      <span className="rounded-full bg-[#e8f5e9] px-3 py-1 text-xs font-black text-[#28713c]">
+                        Oficial{" "}
+                        {dimensionScore?.validated_score == null
+                          ? "—"
+                          : Number(dimensionScore.validated_score).toFixed(0)}
+                      </span>
+                    </div>
+                  </summary>
+                  <div className="divide-y divide-[#751118]/8">
+                    {dimensionCriteria.map((criterion) => {
+                      const response = responses.find(
+                        (item) => item.criterion_id === criterion.id,
+                      );
+                      const rubric = levels.filter(
+                        (level) => level.criterion_id === criterion.id,
+                      );
+                      const responseEvidence = response
+                        ? evidence.filter(
+                            (item) => item.response_id === response.id,
+                          )
+                        : [];
+                      return (
+                        <article
+                          key={criterion.id}
+                          className="px-5 py-6 sm:px-6"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="text-xs font-black text-[#a12930]">
+                                {criterion.code}
                               </p>
+                              <h3 className="mt-1 max-w-3xl text-lg font-black text-[#431014]">
+                                {criterion.prompt}
+                              </h3>
+                              {criterion.help_text && (
+                                <p className="mt-2 max-w-3xl text-sm leading-6 text-[#806f6b]">
+                                  {criterion.help_text}
+                                </p>
+                              )}
+                            </div>
+                            {response?.validated_at && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-[#e8f5e9] px-3 py-1 text-xs font-black text-[#28713c]">
+                                <BadgeCheck className="size-3.5" /> Validado
+                              </span>
                             )}
                           </div>
-                          {response?.validated_at && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-[#e8f5e9] px-3 py-1 text-xs font-black text-[#28713c]">
-                              <BadgeCheck className="size-3.5" /> Validado
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-5 grid gap-5 2xl:grid-cols-[1.2fr_0.8fr]">
-                          <div className="rounded-2xl border border-[#751118]/8 bg-[#fcf9f6] p-4">
-                            <form action={saveResponse} className="space-y-4">
+                          <div className="mt-5 grid gap-5 2xl:grid-cols-[1.2fr_0.8fr]">
+                            <div className="rounded-2xl border border-[#751118]/8 bg-[#fcf9f6] p-4">
+                              <DiagnosticResponseAutosaveForm
+                                assessmentId={assessment.id}
+                                criterion={{
+                                  id: criterion.id,
+                                  responseType: criterion.response_type,
+                                  allowsNotApplicable:
+                                    criterion.allows_not_applicable,
+                                  requiresNaJustification:
+                                    criterion.requires_not_applicable_justification,
+                                }}
+                                levels={rubric.map((level) => ({
+                                  id: level.id,
+                                  score: Number(level.score),
+                                  label: level.label,
+                                  description: level.description,
+                                }))}
+                                response={
+                                  response
+                                    ? {
+                                        selfValue: response.self_value,
+                                        isNotApplicable:
+                                          response.is_not_applicable,
+                                        notApplicableJustification:
+                                          response.not_applicable_justification,
+                                        selfComment: response.self_comment,
+                                        evidenceNotes: response.evidence_notes,
+                                      }
+                                    : null
+                                }
+                                canRespond={canRespond}
+                              />
+                              <div className="mt-5 border-t border-[#751118]/8 pt-4">
+                                <div className="flex items-center gap-2">
+                                  <ExternalLink className="size-4 text-[#8b161d]" />
+                                  <h4 className="text-sm font-black text-[#481014]">
+                                    Evidências vinculadas
+                                  </h4>
+                                </div>
+                                {responseEvidence.length > 0 && (
+                                  <ul className="mt-3 space-y-2">
+                                    {responseEvidence.map((item) => (
+                                      <li
+                                        key={item.id}
+                                        className="flex items-center justify-between gap-3 rounded-xl bg-white p-3 text-xs"
+                                      >
+                                        <a
+                                          href={item.external_url ?? "#"}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="min-w-0 truncate font-bold text-[#7b161c] underline decoration-[#7b161c]/30 underline-offset-4"
+                                        >
+                                          {item.label}
+                                        </a>
+                                        {canRespond && (
+                                          <form action={deleteEvidence}>
+                                            <input
+                                              type="hidden"
+                                              name="evidenceId"
+                                              value={item.id}
+                                            />
+                                            <input
+                                              type="hidden"
+                                              name="returnTo"
+                                              value={currentPath}
+                                            />
+                                            <button
+                                              type="submit"
+                                              aria-label={`Remover evidência ${item.label}`}
+                                              className="grid size-8 place-items-center rounded-lg text-[#a3242b] hover:bg-[#f8e1e1]"
+                                            >
+                                              <X className="size-3.5" />
+                                            </button>
+                                          </form>
+                                        )}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                                {response && canRespond ? (
+                                  <form
+                                    action={addExternalEvidence}
+                                    className="mt-3 grid gap-3"
+                                  >
+                                    <input
+                                      type="hidden"
+                                      name="responseId"
+                                      value={response.id}
+                                    />
+                                    <input
+                                      type="hidden"
+                                      name="returnTo"
+                                      value={currentPath}
+                                    />
+                                    <input
+                                      name="label"
+                                      required
+                                      maxLength={200}
+                                      placeholder="Nome da evidência"
+                                      className={inputClassName}
+                                    />
+                                    <input
+                                      name="externalUrl"
+                                      type="url"
+                                      required
+                                      pattern="https://.*"
+                                      placeholder="https://..."
+                                      className={inputClassName}
+                                    />
+                                    <SubmitButton>
+                                      Vincular URL segura
+                                    </SubmitButton>
+                                  </form>
+                                ) : !response ? (
+                                  <p className="mt-3 text-xs leading-5 text-[#806f6b]">
+                                    Salve a resposta antes de anexar evidências.
+                                  </p>
+                                ) : null}
+                                <p className="mt-3 text-[0.68rem] leading-5 text-[#8a7470]">
+                                  Upload direto ao Drive será habilitado somente
+                                  após a conta institucional e a política de
+                                  arquivos serem confirmadas.
+                                </p>
+                              </div>
+                            </div>
+                            <form
+                              action={validateResponse}
+                              className="space-y-4 rounded-2xl border border-[#7aad87]/20 bg-[#f4faf5] p-4"
+                            >
                               <input
                                 type="hidden"
                                 name="returnTo"
@@ -376,283 +515,73 @@ export function DiagnosticAssessmentWorkspace({
                               />
                               <input
                                 type="hidden"
-                                name="criterionId"
-                                value={criterion.id}
+                                name="responseId"
+                                value={response?.id ?? ""}
                               />
                               <input
                                 type="hidden"
-                                name="responseType"
-                                value={criterion.response_type}
+                                name="criterionId"
+                                value={criterion.id}
                               />
-                              <fieldset>
-                                <legend className="text-sm font-black text-[#4b1719]">
-                                  Autoavaliação
-                                </legend>
-                                {rubric.length > 0 ? (
-                                  <div className="mt-3 grid gap-2">
-                                    {rubric.map((level) => (
-                                      <label
-                                        key={level.id}
-                                        className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#751118]/8 bg-white p-3 has-[:checked]:border-[#8b161d] has-[:checked]:bg-[#fff4ef]"
-                                      >
-                                        <input
-                                          className="mt-1 accent-[#811219]"
-                                          type="radio"
-                                          name="value"
-                                          value={Number(level.score)}
-                                          defaultChecked={
-                                            scalar(
-                                              response?.self_value ?? null,
-                                            ) === String(Number(level.score))
-                                          }
-                                          required={
-                                            !response?.is_not_applicable
-                                          }
-                                        />
-                                        <span>
-                                          <strong className="text-sm text-[#481014]">
-                                            {Number(level.score)} ·{" "}
-                                            {level.label}
-                                          </strong>
-                                          <span className="mt-0.5 block text-xs leading-5 text-[#7a6965]">
-                                            {level.description}
-                                          </span>
-                                        </span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <input
-                                    className={`${inputClassName} mt-3`}
-                                    name="value"
-                                    defaultValue={scalar(
-                                      response?.self_value ?? null,
-                                    )}
-                                    required
-                                  />
-                                )}
-                              </fieldset>
-                              {criterion.allows_not_applicable && (
-                                <div className="space-y-2">
-                                  <label className="flex items-center gap-2 text-sm font-bold text-[#594745]">
-                                    <input
-                                      type="checkbox"
-                                      name="isNotApplicable"
-                                      defaultChecked={
-                                        response?.is_not_applicable
-                                      }
-                                    />{" "}
-                                    Não se aplica
-                                  </label>
-                                  <input
-                                    className={inputClassName}
-                                    name="notApplicableJustification"
-                                    defaultValue={
-                                      response?.not_applicable_justification ??
-                                      ""
-                                    }
-                                    placeholder="Justificativa para N/A"
-                                  />
-                                </div>
-                              )}
-                              <Field
-                                label="Justificativa / comentário"
-                                name={`comment-${criterion.id}`}
-                              >
-                                <textarea
-                                  className={`${inputClassName} min-h-20`}
-                                  name="comment"
-                                  defaultValue={response?.self_comment ?? ""}
-                                />
-                              </Field>
-                              <Field
-                                label="Referência da evidência"
-                                name={`evidence-${criterion.id}`}
-                              >
-                                <input
-                                  className={inputClassName}
-                                  name="evidenceNotes"
-                                  defaultValue={response?.evidence_notes ?? ""}
-                                  placeholder="Descreva o documento ou registro comprobatório"
-                                />
-                              </Field>
-                              <SubmitButton disabled={!canRespond}>
-                                {canRespond
-                                  ? "Salvar resposta"
-                                  : "Resposta bloqueada"}
-                              </SubmitButton>
-                            </form>
-                            <div className="mt-5 border-t border-[#751118]/8 pt-4">
                               <div className="flex items-center gap-2">
-                                <ExternalLink className="size-4 text-[#8b161d]" />
-                                <h4 className="text-sm font-black text-[#481014]">
-                                  Evidências vinculadas
+                                <ShieldCheck className="size-5 text-[#327443]" />
+                                <h4 className="font-black text-[#315f3b]">
+                                  Validação oficial
                                 </h4>
                               </div>
-                              {responseEvidence.length > 0 && (
-                                <ul className="mt-3 space-y-2">
-                                  {responseEvidence.map((item) => (
-                                    <li
-                                      key={item.id}
-                                      className="flex items-center justify-between gap-3 rounded-xl bg-white p-3 text-xs"
-                                    >
-                                      <a
-                                        href={item.external_url ?? "#"}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="min-w-0 truncate font-bold text-[#7b161c] underline decoration-[#7b161c]/30 underline-offset-4"
-                                      >
-                                        {item.label}
-                                      </a>
-                                      {canRespond && (
-                                        <form action={deleteEvidence}>
-                                          <input
-                                            type="hidden"
-                                            name="evidenceId"
-                                            value={item.id}
-                                          />
-                                          <input
-                                            type="hidden"
-                                            name="returnTo"
-                                            value={currentPath}
-                                          />
-                                          <button
-                                            type="submit"
-                                            aria-label={`Remover evidência ${item.label}`}
-                                            className="grid size-8 place-items-center rounded-lg text-[#a3242b] hover:bg-[#f8e1e1]"
-                                          >
-                                            <X className="size-3.5" />
-                                          </button>
-                                        </form>
-                                      )}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                              {response && canRespond ? (
-                                <form
-                                  action={addExternalEvidence}
-                                  className="mt-3 grid gap-3"
-                                >
-                                  <input
-                                    type="hidden"
-                                    name="responseId"
-                                    value={response.id}
-                                  />
-                                  <input
-                                    type="hidden"
-                                    name="returnTo"
-                                    value={currentPath}
-                                  />
-                                  <input
-                                    name="label"
-                                    required
-                                    maxLength={200}
-                                    placeholder="Nome da evidência"
-                                    className={inputClassName}
-                                  />
-                                  <input
-                                    name="externalUrl"
-                                    type="url"
-                                    required
-                                    pattern="https://.*"
-                                    placeholder="https://..."
-                                    className={inputClassName}
-                                  />
-                                  <SubmitButton>
-                                    Vincular URL segura
-                                  </SubmitButton>
-                                </form>
-                              ) : !response ? (
-                                <p className="mt-3 text-xs leading-5 text-[#806f6b]">
-                                  Salve a resposta antes de anexar evidências.
-                                </p>
-                              ) : null}
-                              <p className="mt-3 text-[0.68rem] leading-5 text-[#8a7470]">
-                                Upload direto ao Drive será habilitado somente
-                                após a conta institucional e a política de
-                                arquivos serem confirmadas.
-                              </p>
-                            </div>
-                          </div>
-                          <form
-                            action={validateResponse}
-                            className="space-y-4 rounded-2xl border border-[#7aad87]/20 bg-[#f4faf5] p-4"
-                          >
-                            <input
-                              type="hidden"
-                              name="returnTo"
-                              value={currentPath}
-                            />
-                            <input
-                              type="hidden"
-                              name="assessmentId"
-                              value={assessment.id}
-                            />
-                            <input
-                              type="hidden"
-                              name="responseId"
-                              value={response?.id ?? ""}
-                            />
-                            <input
-                              type="hidden"
-                              name="criterionId"
-                              value={criterion.id}
-                            />
-                            <div className="flex items-center gap-2">
-                              <ShieldCheck className="size-5 text-[#327443]" />
-                              <h4 className="font-black text-[#315f3b]">
-                                Validação oficial
-                              </h4>
-                            </div>
-                            <Field
-                              label="Nota validada"
-                              name={`validated-${criterion.id}`}
-                            >
-                              <select
-                                className={inputClassName}
-                                name="score"
-                                defaultValue={scalar(
-                                  response?.validated_value ?? null,
-                                )}
-                                disabled={!response || !canValidate}
-                                required
+                              <Field
+                                label="Nota validada"
+                                name={`validated-${criterion.id}`}
                               >
-                                <option value="">Selecione</option>
-                                {rubric.map((level) => (
-                                  <option
-                                    key={level.id}
-                                    value={Number(level.score)}
-                                  >
-                                    {Number(level.score)} · {level.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </Field>
-                            <Field
-                              label="Parecer do avaliador"
-                              name={`review-${criterion.id}`}
-                            >
-                              <textarea
-                                className={`${inputClassName} min-h-28`}
-                                name="evaluatorComment"
-                                defaultValue={response?.evaluator_comment ?? ""}
+                                <select
+                                  className={inputClassName}
+                                  name="score"
+                                  defaultValue={scalar(
+                                    response?.validated_value ?? null,
+                                  )}
+                                  disabled={!response || !canValidate}
+                                  required
+                                >
+                                  <option value="">Selecione</option>
+                                  {rubric.map((level) => (
+                                    <option
+                                      key={level.id}
+                                      value={Number(level.score)}
+                                    >
+                                      {Number(level.score)} · {level.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </Field>
+                              <Field
+                                label="Parecer do avaliador"
+                                name={`review-${criterion.id}`}
+                              >
+                                <textarea
+                                  className={`${inputClassName} min-h-28`}
+                                  name="evaluatorComment"
+                                  defaultValue={
+                                    response?.evaluator_comment ?? ""
+                                  }
+                                  disabled={!response || !canValidate}
+                                  required
+                                />
+                              </Field>
+                              <SubmitButton
                                 disabled={!response || !canValidate}
-                                required
-                              />
-                            </Field>
-                            <SubmitButton disabled={!response || !canValidate}>
-                              Validar sem alterar a resposta
-                            </SubmitButton>
-                          </form>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              </details>
-            );
-          })}
+                              >
+                                Validar sem alterar a resposta
+                              </SubmitButton>
+                            </form>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </details>
+              );
+            })}
+          </DiagnosticAutosaveProvider>
         </main>
 
         <aside className="space-y-5 xl:sticky xl:top-24 xl:self-start">

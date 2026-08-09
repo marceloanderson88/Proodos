@@ -3177,6 +3177,23 @@ export type Database = {
         };
         Returns: string;
       };
+      autosave_diagnostic_response: {
+        Args: {
+          expected_lock_version: number;
+          target_assessment_id: string;
+          target_criterion_id: string;
+          target_evidence_notes?: string;
+          target_is_not_applicable: boolean;
+          target_not_applicable_justification?: string | null;
+          target_self_comment?: string;
+          target_self_value: Json | null;
+        };
+        Returns: {
+          lock_version: number;
+          response_id: string;
+          saved_at: string;
+        }[];
+      };
       create_diagnostic_campaign: {
         Args: {
           campaign_ends_at: string;

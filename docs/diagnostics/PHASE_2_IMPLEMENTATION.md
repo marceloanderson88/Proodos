@@ -32,6 +32,9 @@ Cada nova incubadora recebe uma cópia publicada e imutável do modelo padrão. 
 13. Edição, exclusão e reordenação atômica de dimensões e critérios em rascunhos.
 14. Gestão de responsável principal, colaboradores, leitores e avaliador oficial por aplicação.
 15. Evidências externas HTTPS vinculadas à resposta, com autoria, estado e remoção lógica.
+16. Autosave serializado com debounce, estado offline, `lock_version` e conflito explícito.
+17. Dashboard individual com scores, dimensões e gatilhos, além de histórico ilimitado entre ciclos.
+18. Exportação CSV da campanha, autorizada pelas mesmas políticas RLS das telas.
 
 ## Segurança e isolamento
 
@@ -64,6 +67,8 @@ Cada nova incubadora recebe uma cópia publicada e imutável do modelo padrão. 
 - `20260808090000_diagnostic_draft_editing.sql`
 - `20260808093000_diagnostic_participant_management.sql`
 - `20260808100000_seed_diagnostic_role_permissions.sql`
+- `20260809100000_diagnostic_response_autosave.sql`
+- `20260809101000_fix_diagnostic_autosave_criterion_scope.sql`
 
 As migrations corretivas 755–758 permanecem versionadas porque as versões anteriores já haviam sido aplicadas no projeto remoto; removê-las criaria divergência entre o histórico local e o Supabase.
 
@@ -95,9 +100,9 @@ O advisor de segurança mantém avisos para RPCs `SECURITY DEFINER` intencionais
 ## Pendências após este incremento
 
 - convite por e-mail para pessoas ainda sem membership aceita;
-- autosave com controle otimista por `lock_version`;
 - upload resumível de evidências no Google Drive;
 - indicadores editáveis e fórmulas derivadas na interface;
-- comparação histórica entre ciclos e dashboards/gráficos;
-- exportação e comunicação real das campanhas;
+- comunicação real das campanhas;
+- importação XLSX assistida e autosave do editor;
+- integração com Planos de Ação e conteúdos, cujo domínio ainda não existe;
 - testes E2E autenticados dos novos fluxos.

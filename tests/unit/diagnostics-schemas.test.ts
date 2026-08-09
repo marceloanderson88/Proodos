@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   addDiagnosticExternalEvidenceSchema,
   assignDiagnosticRespondentSchema,
+  autosaveDiagnosticResponseSchema,
   createDiagnosticCampaignSchema,
   createDiagnosticCriterionSchema,
   createDiagnosticDimensionSchema,
@@ -146,6 +147,31 @@ describe("schemas de diagnósticos", () => {
       addDiagnosticExternalEvidenceSchema.safeParse({
         ...base,
         externalUrl: "http://exemplo.inseguro/arquivo",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("exige versão de concorrência válida no autosave", () => {
+    const payload = {
+      assessmentId: "11111111-1111-4111-8111-111111111111",
+      criterionId: "22222222-2222-4222-8222-222222222222",
+      responseType: "numeric",
+      value: "3",
+      comment: "Evidência revisada.",
+      evidenceNotes: "Ata da reunião.",
+      isNotApplicable: false,
+      notApplicableJustification: "",
+    };
+    expect(
+      autosaveDiagnosticResponseSchema.safeParse({
+        ...payload,
+        lockVersion: "7",
+      }).success,
+    ).toBe(true);
+    expect(
+      autosaveDiagnosticResponseSchema.safeParse({
+        ...payload,
+        lockVersion: "-1",
       }).success,
     ).toBe(false);
   });

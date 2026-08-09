@@ -67,9 +67,9 @@ Aceite:
 
 ## Fase 3 — biblioteca, editor e importação
 
-Estado: **em andamento**. Criação de rascunho, editor estrutural inicial,
-rubricas, validação de publicação e duplicação integral de versão estão
-concluídos. Permanecem edição/reordenação, autosave e importação XLSX.
+Estado: **em andamento**. Criação de rascunho, edição, exclusão, reordenação,
+rubricas, validação de publicação e duplicação integral estão concluídas.
+Permanecem autosave do editor e importação XLSX.
 
 Rotas:
 
@@ -100,8 +100,9 @@ Aceite:
 ## Fase 4 — campanhas e resposta
 
 Estado: **em andamento**. Campanha, participantes, acompanhamento, resposta,
-submissão, reabertura e validação final estão implementados. Permanecem convite
-de respondentes, comunicação real, autosave concorrente e evidência binária.
+submissão, reabertura, validação final e autosave concorrente estão
+implementados. Permanecem convite contextual de não membro, comunicação real e
+evidência binária.
 
 Rotas:
 
@@ -128,6 +129,11 @@ Aceite:
 - dois usuários não sobrescrevem respostas silenciosamente.
 
 ## Fase 5 — validação, dashboards e plano
+
+Estado: **em andamento**. Workspace de validação, dashboard da campanha,
+resultado individual, histórico ilimitado, comparação por dimensão, gatilhos e
+exportação CSV autorizada estão implementados. A criação de ações e o vínculo a
+conteúdo/trilha dependem da fundação do módulo Planos de Ação.
 
 Entregas:
 
