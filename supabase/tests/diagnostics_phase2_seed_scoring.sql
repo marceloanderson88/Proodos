@@ -113,7 +113,7 @@ reset role;
 with inserted as (
   insert into public.diagnostic_assessments (
     organization_id, incubator_id, startup_id, template_id,
-    cycle_label, status, started_by, evaluator_id
+    cycle_label, status, execution_mode, started_by, evaluator_id
   ) values (
     current_setting('test.diag_v21_org')::uuid,
     current_setting('test.diag_v21_incubator')::uuid,
@@ -121,11 +121,16 @@ with inserted as (
     current_setting('test.diag_v21_template')::uuid,
     'T0 · teste oficial',
     'in_progress',
+    'facilitated',
     '74200000-0000-4000-8000-000000000001',
     '74200000-0000-4000-8000-000000000001'
   ) returning id
 )
 select set_config('test.diag_v21_assessment', id::text, true) from inserted;
+
+set local role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claim.sub', '74200000-0000-4000-8000-000000000001', true);
 
 insert into public.diagnostic_responses (
   organization_id, incubator_id, assessment_id, criterion_id,

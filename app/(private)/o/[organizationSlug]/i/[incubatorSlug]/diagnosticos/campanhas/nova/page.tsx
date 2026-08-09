@@ -83,9 +83,13 @@ export default async function NewDiagnosticCampaignPage({
   const evaluatorRoleIds = new Set(
     (rolesResult.data ?? [])
       .filter((role) =>
-        ["evaluator", "incubator_manager", "program_coordinator"].includes(
-          role.code,
-        ),
+        [
+          "evaluator",
+          "incubator_manager",
+          "program_coordinator",
+          "agent",
+          "mentor",
+        ].includes(role.code),
       )
       .map((role) => role.id),
   );

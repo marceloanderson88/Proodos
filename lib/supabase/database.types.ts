@@ -141,6 +141,7 @@ export type Database = {
           due_at: string | null;
           evaluator_id: string | null;
           evidence_coverage: number | null;
+          execution_mode: Database["public"]["Enums"]["diagnostic_execution_mode"];
           id: string;
           incubator_id: string;
           lock_version: number;
@@ -165,6 +166,7 @@ export type Database = {
           due_at?: string | null;
           evaluator_id?: string | null;
           evidence_coverage?: number | null;
+          execution_mode?: Database["public"]["Enums"]["diagnostic_execution_mode"];
           id?: string;
           incubator_id: string;
           lock_version?: number;
@@ -189,6 +191,7 @@ export type Database = {
           due_at?: string | null;
           evaluator_id?: string | null;
           evidence_coverage?: number | null;
+          execution_mode?: Database["public"]["Enums"]["diagnostic_execution_mode"];
           id?: string;
           incubator_id?: string;
           lock_version?: number;
@@ -252,6 +255,58 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
+          },
+        ];
+      };
+      diagnostic_assessment_notes: {
+        Row: {
+          assessment_id: string;
+          author_id: string;
+          body: string;
+          created_at: string;
+          id: string;
+          incubator_id: string;
+          organization_id: string;
+        };
+        Insert: {
+          assessment_id: string;
+          author_id: string;
+          body: string;
+          created_at?: string;
+          id?: string;
+          incubator_id: string;
+          organization_id: string;
+        };
+        Update: {
+          assessment_id?: string;
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+          id?: string;
+          incubator_id?: string;
+          organization_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_assessment_notes_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_assessment_notes_organization_id_assessment_id_fkey";
+            columns: ["organization_id", "assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_assessments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_assessment_notes_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
           },
         ];
       };
@@ -342,6 +397,7 @@ export type Database = {
           created_by: string;
           default_evaluator_id: string | null;
           ends_at: string;
+          execution_mode: Database["public"]["Enums"]["diagnostic_execution_mode"];
           id: string;
           incubator_id: string;
           name: string;
@@ -362,6 +418,7 @@ export type Database = {
           created_by: string;
           default_evaluator_id?: string | null;
           ends_at: string;
+          execution_mode?: Database["public"]["Enums"]["diagnostic_execution_mode"];
           id?: string;
           incubator_id: string;
           name: string;
@@ -382,6 +439,7 @@ export type Database = {
           created_by?: string;
           default_evaluator_id?: string | null;
           ends_at?: string;
+          execution_mode?: Database["public"]["Enums"]["diagnostic_execution_mode"];
           id?: string;
           incubator_id?: string;
           name?: string;
@@ -3292,6 +3350,24 @@ export type Database = {
         };
         Returns: string;
       };
+      create_diagnostic_campaign_with_mode: {
+        Args: {
+          campaign_ends_at: string;
+          campaign_execution_mode?: Database["public"]["Enums"]["diagnostic_execution_mode"];
+          campaign_name: string;
+          campaign_starts_at: string;
+          campaign_timezone?: string;
+          communication_message?: string;
+          communication_subject?: string;
+          target_cohort_id?: string;
+          target_evaluator_id?: string;
+          target_incubator_id: string;
+          target_program_id?: string;
+          target_startup_ids: string[];
+          target_template_id: string;
+        };
+        Returns: string;
+      };
       create_diagnostic_template_draft: {
         Args: {
           target_incubator_id: string;
@@ -3332,6 +3408,14 @@ export type Database = {
       finalize_diagnostic_assessment: {
         Args: { target_assessment_id: string };
         Returns: undefined;
+      };
+      complete_facilitated_diagnostic_assessment: {
+        Args: { target_assessment_id: string };
+        Returns: undefined;
+      };
+      install_diagnostic_demo_cases: {
+        Args: { target_incubator_id: string };
+        Returns: number;
       };
       manage_incubator_lifecycle: {
         Args: { requested_action: string; target_incubator_id: string };
@@ -3443,6 +3527,7 @@ export type Database = {
       diagnostic_evidence_kind: "file" | "external_link";
       diagnostic_evidence_status:
         "pending" | "available" | "rejected" | "deleted" | "restore_pending";
+      diagnostic_execution_mode: "self_assessment" | "facilitated";
       diagnostic_indicator_value_type:
         "integer" | "numeric" | "currency" | "percentage";
       diagnostic_participant_status:
@@ -3713,6 +3798,7 @@ export const Constants = {
         "deleted",
         "restore_pending",
       ],
+      diagnostic_execution_mode: ["self_assessment", "facilitated"],
       diagnostic_indicator_value_type: [
         "integer",
         "numeric",

@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ClipboardList,
   History,
+  MessageSquareText,
   ShieldCheck,
   TrendingUp,
 } from "lucide-react";
@@ -49,6 +50,7 @@ export function DiagnosticStartupDashboard({
   campaignName,
   dimensions,
   triggers,
+  notes,
 }: {
   base: string;
   startup: { id: string; name: string; stage: string };
@@ -63,11 +65,13 @@ export function DiagnosticStartupDashboard({
     evidenceCoverage: number | null;
     submittedAt: string | null;
     validatedAt: string | null;
+    executionMode: "self_assessment" | "facilitated";
   };
   template: { name: string; versionLabel: string };
   campaignName: string | null;
   dimensions: DimensionPoint[];
   triggers: Trigger[];
+  notes: { id: string; author_id: string; body: string; created_at: string }[];
 }) {
   const activeTriggers = triggers.filter((item) => item.status === "triggered");
   const validated = assessment.validatedScore != null;
@@ -102,6 +106,11 @@ export function DiagnosticStartupDashboard({
             <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-black">
               {validated ? "Validado" : "Resultado parcial"}
             </span>
+            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-black">
+              {assessment.executionMode === "self_assessment"
+                ? "Autodiagnóstico"
+                : "Aplicação assistida"}
+            </span>
           </div>
           <dl className="relative mt-6 grid gap-4 text-sm text-white/75 sm:grid-cols-3">
             <div>
@@ -135,7 +144,14 @@ export function DiagnosticStartupDashboard({
         className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6"
       >
         {[
-          [BarChart3, "Declarado", score(assessment.selfScore), "pontos"],
+          [
+            BarChart3,
+            assessment.executionMode === "self_assessment"
+              ? "Declarado"
+              : "Resultado técnico",
+            score(assessment.selfScore),
+            "pontos",
+          ],
           [ShieldCheck, "Validado", score(assessment.validatedScore), "pontos"],
           [TrendingUp, "Gap médio", score(assessment.averageGap), "pontos"],
           [
@@ -174,6 +190,39 @@ export function DiagnosticStartupDashboard({
             </article>
           );
         })}
+      </section>
+
+      <section className="dashboard-card rounded-[1.6rem] p-5 sm:p-6">
+        <div className="flex items-center gap-3">
+          <MessageSquareText className="size-5 text-[#7b161c]" />
+          <h2 className="text-xl font-black text-[#481014]">
+            Observações desta aplicação
+          </h2>
+        </div>
+        <div className="mt-4 space-y-3">
+          {notes.length === 0 ? (
+            <p className="text-sm text-[#806f6b]">
+              Nenhuma observação registrada.
+            </p>
+          ) : (
+            notes.map((note) => (
+              <article
+                key={note.id}
+                className="rounded-xl border border-[#751118]/10 bg-[#fcf9f6] p-4"
+              >
+                <time className="text-xs font-bold text-[#8b7773]">
+                  {new Intl.DateTimeFormat("pt-BR", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(new Date(note.created_at))}
+                </time>
+                <p className="mt-2 text-sm leading-6 whitespace-pre-wrap text-[#655451]">
+                  {note.body}
+                </p>
+              </article>
+            ))
+          )}
+        </div>
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
@@ -300,6 +349,8 @@ export function DiagnosticHistory({
   startup,
   cycles,
   dimensionNames,
+  families,
+  activeFamily,
 }: {
   base: string;
   startup: { id: string; name: string };
@@ -309,6 +360,7 @@ export function DiagnosticHistory({
     date: string;
     version: string;
     status: string;
+    executionMode: "self_assessment" | "facilitated";
     selfScore: number | null;
     validatedScore: number | null;
     classification: string | null;
@@ -317,6 +369,8 @@ export function DiagnosticHistory({
     dimensions: Record<string, number | null>;
   }[];
   dimensionNames: { id: string; code: string | null; name: string }[];
+  families: { id: string; name: string }[];
+  activeFamily: string | null;
 }) {
   return (
     <div className="page-enter space-y-6">
@@ -338,6 +392,24 @@ export function DiagnosticHistory({
         </p>
       </header>
 
+      {families.length > 1 && (
+        <nav aria-label="Modelo comparado" className="flex flex-wrap gap-2">
+          {families.map((family) => (
+            <Link
+              key={family.id}
+              href={`${base}/startups/${startup.id}/historico?family=${family.id}`}
+              className={
+                family.id === activeFamily
+                  ? "rounded-full bg-[#7b1118] px-4 py-2 text-xs font-black text-white"
+                  : "rounded-full border border-[#751118]/15 bg-white px-4 py-2 text-xs font-black text-[#7b161c]"
+              }
+            >
+              {family.name}
+            </Link>
+          ))}
+        </nav>
+      )}
+
       <section className="dashboard-card overflow-hidden rounded-[1.6rem]">
         <div className="border-b border-[#751118]/8 px-5 py-5 sm:px-6">
           <h2 className="text-xl font-black text-[#481014]">
@@ -351,6 +423,7 @@ export function DiagnosticHistory({
                 <th className="px-6 py-4">Ciclo</th>
                 <th className="px-4 py-4">Data</th>
                 <th className="px-4 py-4">Versão</th>
+                <th className="px-4 py-4">Modo</th>
                 <th className="px-4 py-4">Declarado</th>
                 <th className="px-4 py-4">Validado</th>
                 <th className="px-4 py-4">Classificação</th>
@@ -371,6 +444,11 @@ export function DiagnosticHistory({
                     )}
                   </td>
                   <td className="px-4 py-4">{cycle.version}</td>
+                  <td className="px-4 py-4">
+                    {cycle.executionMode === "self_assessment"
+                      ? "Autodiagnóstico"
+                      : "Assistido"}
+                  </td>
                   <td className="px-4 py-4 font-black text-[#7a171d]">
                     {score(cycle.selfScore)}
                   </td>

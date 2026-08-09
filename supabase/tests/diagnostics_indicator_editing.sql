@@ -42,14 +42,15 @@ reset role;
 with inserted as (
   insert into public.diagnostic_assessments (
     organization_id, incubator_id, startup_id, template_id,
-    cycle_label, status, started_by
+    cycle_label, status, started_by, evaluator_id, execution_mode
   ) values (
     current_setting('test.indicator_org')::uuid,
     current_setting('test.indicator_incubator')::uuid,
     current_setting('test.indicator_startup')::uuid,
     current_setting('test.indicator_template')::uuid,
     'Teste de indicadores', 'draft',
-    '90000000-0000-4000-8000-000000000001'
+    '90000000-0000-4000-8000-000000000001',
+    '90000000-0000-4000-8000-000000000001', 'facilitated'
   ) returning id
 ) select set_config('test.indicator_assessment', id::text, true) from inserted;
 

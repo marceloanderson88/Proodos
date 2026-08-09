@@ -156,6 +156,25 @@ insert into public.diagnostic_respondents (
   now()
 );
 
+-- Neste teste a mesma identidade possui um papel interno e também representa
+-- a startup. O vínculo explícito é o que autoriza o preenchimento no modo de
+-- autodiagnóstico; somente o papel interno não seria suficiente.
+insert into public.startup_members (
+  organization_id, startup_id, user_id, full_name, email, role,
+  is_representative, status, created_by
+) values (
+  current_setting('test.diag_auth_org')::uuid,
+  current_setting('test.diag_auth_startup')::uuid,
+  '74100000-0000-4000-8000-000000000002',
+  'Representante sintético', 'diagnostics-agent@example.invalid',
+  'representative', true, 'active',
+  '74100000-0000-4000-8000-000000000001'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claim.sub', '74100000-0000-4000-8000-000000000002', true);
+
 with inserted as (
   insert into public.diagnostic_responses (
     organization_id, incubator_id, assessment_id, criterion_id, self_value
@@ -226,7 +245,7 @@ select throws_ok(
     '4', current_setting('test.diag_auth_response')
   ),
   '42501',
-  'A autoavaliação exige a permissão diagnostic.respond',
+  'Você não pode responder este diagnóstico',
   'avaliador não consegue reescrever a autoavaliação'
 );
 

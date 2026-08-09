@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  addDiagnosticAssessmentNoteSchema,
   addDiagnosticExternalEvidenceSchema,
   createDiagnosticAssessmentSchema,
   createDiagnosticCampaignSchema,
@@ -19,6 +20,7 @@ import {
   diagnosticAssessmentTransitionSchema,
   duplicateDiagnosticTemplateSchema,
   inviteDiagnosticRespondentSchema,
+  installDiagnosticDemoCasesSchema,
   manageDiagnosticRespondentInvitationSchema,
   reorderDiagnosticCriteriaSchema,
   reorderDiagnosticDimensionsSchema,
@@ -578,6 +580,7 @@ export async function createDiagnosticCampaignAction(
     programId: value(formData, "programId"),
     cohortId: value(formData, "cohortId"),
     evaluatorId: value(formData, "evaluatorId"),
+    executionMode: value(formData, "executionMode"),
     startsAt: value(formData, "startsAt"),
     endsAt: value(formData, "endsAt"),
     startupIds: formData
@@ -595,7 +598,7 @@ export async function createDiagnosticCampaignAction(
     );
 
   const { data, error } = await context.supabase.rpc(
-    "create_diagnostic_campaign",
+    "create_diagnostic_campaign_with_mode",
     {
       target_incubator_id: context.incubator.id,
       target_template_id: parsed.data.templateId,
@@ -609,6 +612,7 @@ export async function createDiagnosticCampaignAction(
       campaign_timezone: "America/Sao_Paulo",
       communication_subject: parsed.data.communicationSubject,
       communication_message: parsed.data.communicationMessage,
+      campaign_execution_mode: parsed.data.executionMode,
     },
   );
   if (error || !data)
@@ -669,6 +673,98 @@ export async function createDiagnosticAssessmentAction(
     incubatorSlug,
     "success",
     "Diagnóstico iniciado para a startup.",
+  );
+}
+
+export async function addDiagnosticAssessmentNoteAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const returnTo = value(formData, "returnTo");
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = addDiagnosticAssessmentNoteSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    body: value(formData, "body"),
+    returnTo,
+  });
+  if (!parsed.success)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      parsed.error.issues[0]?.message ?? "Revise a observação.",
+    );
+
+  const { error } = await context.supabase
+    .from("diagnostic_assessment_notes")
+    .insert({
+      organization_id: context.organization.id,
+      incubator_id: context.incubator.id,
+      assessment_id: parsed.data.assessmentId,
+      author_id: context.user.id,
+      body: parsed.data.body,
+    });
+  if (error)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Não foi possível registrar a observação.",
+    );
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Observação registrada no histórico da aplicação.",
+  );
+}
+
+export async function installDiagnosticDemoCasesAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = installDiagnosticDemoCasesSchema.safeParse({
+    confirmation: value(formData, "confirmation"),
+  });
+  if (!parsed.success)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "error",
+      "Confirmação inválida para instalar os exemplos.",
+    );
+  const { data, error } = await context.supabase.rpc(
+    "install_diagnostic_demo_cases",
+    { target_incubator_id: context.incubator.id },
+  );
+  if (error)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "error",
+      error.message || "Não foi possível instalar os exemplos.",
+    );
+  revalidatePath(path(organizationSlug, incubatorSlug));
+  finish(
+    organizationSlug,
+    incubatorSlug,
+    "success",
+    Number(data) > 0
+      ? `${data} aplicações fictícias instaladas.`
+      : "Os exemplos fictícios já estavam instalados.",
   );
 }
 
@@ -1509,10 +1605,7 @@ async function transitionDiagnosticAssessment(
   organizationSlug: string,
   incubatorSlug: string,
   formData: FormData,
-  rpcName:
-    | "submit_diagnostic_assessment"
-    | "reopen_diagnostic_assessment"
-    | "finalize_diagnostic_assessment",
+  rpcName: "reopen_diagnostic_assessment" | "finalize_diagnostic_assessment",
   successMessage: string,
 ) {
   const context = await getIncubatorServerContext(
@@ -1551,12 +1644,55 @@ export async function submitDiagnosticAssessmentAction(
   incubatorSlug: string,
   formData: FormData,
 ) {
-  return transitionDiagnosticAssessment(
+  const context = await getIncubatorServerContext(
     organizationSlug,
     incubatorSlug,
-    formData,
-    "submit_diagnostic_assessment",
-    "Autoavaliação enviada para validação.",
+  );
+  const parsed = diagnosticAssessmentTransitionSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    returnTo: value(formData, "returnTo"),
+  });
+  if (!parsed.success)
+    finish(organizationSlug, incubatorSlug, "error", "Avaliação inválida.");
+  const assessment = await context.supabase
+    .from("diagnostic_assessments")
+    .select("execution_mode")
+    .eq("organization_id", context.organization.id)
+    .eq("incubator_id", context.incubator.id)
+    .eq("id", parsed.data.assessmentId)
+    .maybeSingle();
+  if (assessment.error || !assessment.data)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      parsed.data.returnTo,
+      "error",
+      "Avaliação não encontrada.",
+    );
+  const facilitated = assessment.data.execution_mode === "facilitated";
+  const { error } = await context.supabase.rpc(
+    facilitated
+      ? "complete_facilitated_diagnostic_assessment"
+      : "submit_diagnostic_assessment",
+    { target_assessment_id: parsed.data.assessmentId },
+  );
+  if (error)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      parsed.data.returnTo,
+      "error",
+      error.message || "Não foi possível concluir a avaliação.",
+    );
+  revalidatePath(parsed.data.returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    parsed.data.returnTo,
+    "success",
+    facilitated
+      ? "Diagnóstico conduzido concluído e registrado como resultado oficial."
+      : "Autodiagnóstico enviado para validação.",
   );
 }
 

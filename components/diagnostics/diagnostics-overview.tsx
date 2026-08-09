@@ -10,7 +10,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { installDiagnosticDemoCasesAction } from "@/app/(private)/o/[organizationSlug]/i/[incubatorSlug]/diagnosticos/actions";
 import { FeedbackBanner } from "@/components/m6/feedback-banner";
+import { SubmitButton } from "@/components/m6/form-controls";
 
 type Template = {
   id: string;
@@ -48,6 +50,7 @@ type Assessment = {
   validated_score: number | null;
   classification_code: string | null;
   updated_at: string;
+  execution_mode: "self_assessment" | "facilitated";
 };
 
 const campaignStatus = {
@@ -87,7 +90,7 @@ export function DiagnosticsOverview({
   campaigns: Campaign[];
   participants: { campaign_id: string; status: string }[];
   assessments: Assessment[];
-  startups: { id: string; name: string }[];
+  startups: { id: string; name: string; custom_fields: unknown }[];
   success?: string;
   error?: string;
 }) {
@@ -101,6 +104,20 @@ export function DiagnosticsOverview({
   const pendingReviews = assessments.filter((assessment) =>
     ["submitted", "under_review"].includes(assessment.status),
   ).length;
+  const demoCount = startups.filter((startup) => {
+    const fields = startup.custom_fields;
+    return Boolean(
+      fields &&
+      typeof fields === "object" &&
+      "is_demo" in fields &&
+      fields.is_demo === true,
+    );
+  }).length;
+  const installDemos = installDiagnosticDemoCasesAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
 
   return (
     <div className="page-enter space-y-6">
@@ -120,17 +137,50 @@ export function DiagnosticsOverview({
               seu histórico.
             </p>
           </div>
-          <Link
-            href={`${base}/campanhas/nova`}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-[#6f0d14] shadow-lg transition hover:-translate-y-0.5"
-          >
-            <Plus className="size-4" /> Nova campanha
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={`${base}/modelos/novo`}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-black text-white transition hover:bg-white/15"
+            >
+              <Plus className="size-4" /> Novo modelo
+            </Link>
+            <Link
+              href={`${base}/campanhas/nova`}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-[#6f0d14] shadow-lg transition hover:-translate-y-0.5"
+            >
+              <Plus className="size-4" /> Nova campanha
+            </Link>
+          </div>
         </div>
         <div className="absolute -right-24 -bottom-40 size-[30rem] rounded-full bg-[#bd1644]/25 blur-3xl" />
       </header>
 
       <FeedbackBanner success={success} error={error} />
+
+      <section className="flex flex-col justify-between gap-4 rounded-[1.4rem] border border-[#d6a761]/35 bg-[#fff8ea] p-5 sm:flex-row sm:items-center">
+        <div>
+          <p className="text-[0.65rem] font-black tracking-[0.12em] text-[#8a5216] uppercase">
+            Ambiente de demonstração opcional
+          </p>
+          <h2 className="mt-1 font-black text-[#481014]">
+            Casos fictícios para conhecer o fluxo completo
+          </h2>
+          <p className="mt-1 text-sm text-[#806f6b]">
+            Instala 3 startups marcadas como [EXEMPLO], com aplicações temporais
+            nos dois modos. Nenhum dado real é alterado.
+          </p>
+        </div>
+        {demoCount > 0 ? (
+          <span className="shrink-0 rounded-full bg-[#e8f5e9] px-4 py-2 text-xs font-black text-[#28713c]">
+            {demoCount} exemplos instalados
+          </span>
+        ) : (
+          <form action={installDemos}>
+            <input type="hidden" name="confirmation" value="INSTALL_DEMOS" />
+            <SubmitButton>Instalar exemplos fictícios</SubmitButton>
+          </form>
+        )}
+      </section>
 
       <section
         aria-label="Resumo de diagnósticos"
@@ -359,7 +409,10 @@ export function DiagnosticsOverview({
                       </h3>
                       <p className="mt-1 text-xs text-[#806f6b]">
                         {assessment.cycle_label} ·{" "}
-                        {assessment.status.replaceAll("_", " ")}
+                        {assessment.execution_mode === "self_assessment"
+                          ? "Autodiagnóstico"
+                          : "Aplicação assistida"}{" "}
+                        · {assessment.status.replaceAll("_", " ")}
                       </p>
                     </div>
                     <div className="text-right">
