@@ -19,7 +19,9 @@ test.describe("smoke autenticado", () => {
 
     await expect(page).toHaveURL(/\/o$/);
     await expect(
-      page.getByRole("heading", { name: /Uma visão do Proodos/ }),
+      page.getByRole("heading", {
+        name: /Governe a rede\. Cada incubadora conduz sua própria operação\./,
+      }),
     ).toBeVisible();
 
     const incubatorPath = "/o/seed-org-a/i/incubadora-sintetica-sertao";
