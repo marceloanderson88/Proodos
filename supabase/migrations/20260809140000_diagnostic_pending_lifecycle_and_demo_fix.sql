@@ -417,13 +417,13 @@ begin
 
   if target_cohort_id is null then
     insert into public.cohorts (
-      organization_id, program_id, name, starts_on, ends_on,
+      organization_id, program_id, name, launches_on, starts_on, ends_on,
       enrollment_starts_on, enrollment_ends_on, status, capacity,
       settings, created_by
     ) values (
       target_organization_id, target_program_id,
       '[EXEMPLO] Turma Demonstrativa',
-      current_date - 540, current_date + 180,
+      current_date - 570, current_date - 540, current_date + 180,
       current_date - 570, current_date - 541, 'active', 20,
       jsonb_build_object(
         'is_demo', true,
