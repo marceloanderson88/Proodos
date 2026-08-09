@@ -25,8 +25,11 @@ where organization_id = current_setting('test.invite_org')::uuid
 order by version desc limit 1;
 select set_config('test.invite_role', rp.role_id::text, true)
 from public.role_permissions rp
+join public.roles r
+  on r.organization_id = rp.organization_id and r.id = rp.role_id
 where rp.organization_id = current_setting('test.invite_org')::uuid
   and rp.permission_code = 'diagnostic.respond'
+  and r.scope_type = 'incubator' and r.archived_at is null
 order by rp.role_id limit 1;
 
 reset role;

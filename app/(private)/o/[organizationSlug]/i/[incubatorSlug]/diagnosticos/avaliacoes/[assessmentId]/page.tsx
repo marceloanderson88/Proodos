@@ -169,6 +169,8 @@ export default async function DiagnosticAssessmentPage({
           .from("roles")
           .select("id,name")
           .eq("organization_id", organization.id)
+          .eq("scope_type", "incubator")
+          .is("archived_at", null)
           .in("id", respondentRoleIds)
           .order("name")
       : Promise.resolve({ data: [], error: null }),

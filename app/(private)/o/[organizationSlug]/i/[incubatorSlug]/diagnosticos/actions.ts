@@ -698,22 +698,31 @@ export async function inviteDiagnosticRespondentAction(
       parsed.error.issues[0]?.message ?? "Revise os dados do convite.",
     );
 
-  const [assessmentResult, rolePermissionResult] = await Promise.all([
-    context.supabase
-      .from("diagnostic_assessments")
-      .select("id,status")
-      .eq("organization_id", context.organization.id)
-      .eq("incubator_id", context.incubator.id)
-      .eq("id", parsed.data.assessmentId)
-      .maybeSingle(),
-    context.supabase
-      .from("role_permissions")
-      .select("role_id")
-      .eq("organization_id", context.organization.id)
-      .eq("role_id", parsed.data.roleId)
-      .eq("permission_code", "diagnostic.respond")
-      .maybeSingle(),
-  ]);
+  const [assessmentResult, rolePermissionResult, roleScopeResult] =
+    await Promise.all([
+      context.supabase
+        .from("diagnostic_assessments")
+        .select("id,status")
+        .eq("organization_id", context.organization.id)
+        .eq("incubator_id", context.incubator.id)
+        .eq("id", parsed.data.assessmentId)
+        .maybeSingle(),
+      context.supabase
+        .from("role_permissions")
+        .select("role_id")
+        .eq("organization_id", context.organization.id)
+        .eq("role_id", parsed.data.roleId)
+        .eq("permission_code", "diagnostic.respond")
+        .maybeSingle(),
+      context.supabase
+        .from("roles")
+        .select("id")
+        .eq("organization_id", context.organization.id)
+        .eq("id", parsed.data.roleId)
+        .eq("scope_type", "incubator")
+        .is("archived_at", null)
+        .maybeSingle(),
+    ]);
   if (
     assessmentResult.error ||
     !assessmentResult.data ||
@@ -726,13 +735,18 @@ export async function inviteDiagnosticRespondentAction(
       "error",
       "Esta avaliação não aceita novos respondentes.",
     );
-  if (rolePermissionResult.error || !rolePermissionResult.data)
+  if (
+    rolePermissionResult.error ||
+    !rolePermissionResult.data ||
+    roleScopeResult.error ||
+    !roleScopeResult.data
+  )
     finishAt(
       organizationSlug,
       incubatorSlug,
       returnTo,
       "error",
-      "Selecione um papel organizacional que permita responder diagnósticos.",
+      "Selecione um papel da incubadora que permita responder diagnósticos.",
     );
 
   let invitationId: string;
