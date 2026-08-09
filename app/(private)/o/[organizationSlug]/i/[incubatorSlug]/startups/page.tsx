@@ -25,6 +25,8 @@ export default async function IncubatorStartupsPage({
     programsResult,
     cohortsResult,
     enrollmentsResult,
+    applicationsResult,
+    onboardingInvitationsResult,
   ] = await Promise.all([
     supabase
       .from("startups")
@@ -58,6 +60,22 @@ export default async function IncubatorStartupsPage({
       .select("id, startup_id, cohort_id, status, entry_date")
       .eq("organization_id", organization.id)
       .order("entry_date", { ascending: false }),
+    supabase
+      .from("startup_applications")
+      .select(
+        "id, applicant_name, applicant_email, startup_name, sector, stage, created_at",
+      )
+      .eq("organization_id", organization.id)
+      .eq("incubator_id", incubator.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("startup_onboarding_invitations")
+      .select("invitation_id, startup_name")
+      .eq("organization_id", organization.id)
+      .eq("incubator_id", incubator.id)
+      .order("created_at", { ascending: false })
+      .limit(10),
   ]);
   if (
     [
@@ -66,6 +84,8 @@ export default async function IncubatorStartupsPage({
       programsResult.error,
       cohortsResult.error,
       enrollmentsResult.error,
+      applicationsResult.error,
+      onboardingInvitationsResult.error,
     ].find(Boolean)
   )
     throw new Error("Falha ao consultar startups da incubadora.");
@@ -79,6 +99,23 @@ export default async function IncubatorStartupsPage({
     programNames.has(item.program_id),
   );
   const cohortIds = new Set(cohorts.map((item) => item.id));
+  const invitationNameById = new Map(
+    (onboardingInvitationsResult.data ?? []).map((item) => [
+      item.invitation_id,
+      item.startup_name,
+    ]),
+  );
+  const { data: invitationRows, error: invitationRowsError } =
+    invitationNameById.size
+      ? await supabase
+          .from("invitations")
+          .select("id, email, invited_name, status, expires_at")
+          .eq("organization_id", organization.id)
+          .in("id", [...invitationNameById.keys()])
+          .order("created_at", { ascending: false })
+      : { data: [], error: null };
+  if (invitationRowsError)
+    throw new Error("Falha ao consultar convites de startups.");
 
   return (
     <StartupsWorkspace
@@ -97,6 +134,11 @@ export default async function IncubatorStartupsPage({
         (item) =>
           startupIds.has(item.startup_id) && cohortIds.has(item.cohort_id),
       )}
+      applications={applicationsResult.data ?? []}
+      invitations={(invitationRows ?? []).map((item) => ({
+        ...item,
+        startupName: invitationNameById.get(item.id) ?? "Startup",
+      }))}
       success={firstSearchValue(feedback.success)}
       error={firstSearchValue(feedback.error)}
     />

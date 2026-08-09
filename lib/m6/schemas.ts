@@ -191,6 +191,44 @@ export const createStartupSchema = z.object({
     .transform((value) => value || null),
 });
 
+export const updateStartupSchema = createStartupSchema.safeExtend({
+  startupId: z.uuid(),
+  status: z.enum(["active", "inactive", "graduated", "withdrawn", "archived"]),
+});
+
+export const startupSelfRegistrationSchema = createStartupSchema.safeExtend({
+  applicantName: z.string().trim().min(2).max(160),
+  email: z.email().transform((value) => value.trim().toLowerCase()),
+  password: z.string().min(8).max(72),
+  cohortId: z
+    .string()
+    .trim()
+    .refine((value) => value === "" || z.uuid().safeParse(value).success)
+    .transform((value) => value || null),
+});
+
+export const inviteStartupSchema = z.object({
+  startupId: z
+    .string()
+    .trim()
+    .refine((value) => value === "" || z.uuid().safeParse(value).success)
+    .transform((value) => value || null),
+  startupName: z.string().trim().min(2).max(160),
+  representativeName: z.string().trim().min(2).max(160),
+  email: z.email().transform((value) => value.trim().toLowerCase()),
+  cohortId: z
+    .string()
+    .trim()
+    .refine((value) => value === "" || z.uuid().safeParse(value).success)
+    .transform((value) => value || null),
+});
+
+export const reviewStartupApplicationSchema = z.object({
+  applicationId: z.uuid(),
+  decision: z.enum(["approve", "reject"]),
+  notes: optionalText(1000),
+});
+
 export const addStartupMemberSchema = z.object({
   startupId: z.uuid(),
   fullName: z.string().trim().min(2).max(160),
@@ -226,3 +264,9 @@ export const enrollStartupSchema = z.object({
 
 export type CreateProgramInput = z.infer<typeof createProgramSchema>;
 export type CreateStartupInput = z.infer<typeof createStartupSchema>;
+export type StartupSelfRegistrationInput = z.infer<
+  typeof startupSelfRegistrationSchema
+>;
+export type StartupSelfRegistrationFormValues = z.input<
+  typeof startupSelfRegistrationSchema
+>;

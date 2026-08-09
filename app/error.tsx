@@ -3,6 +3,8 @@
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { useEffect } from "react";
 
+import { ErrorReference } from "@/components/error-reference";
+
 export default function ErrorPage({
   error,
   reset,
@@ -33,6 +35,7 @@ export default function ErrorPage({
           O erro foi contido nesta rota. Nenhum detalhe técnico sensível é
           exibido.
         </p>
+        <ErrorReference reference={error.digest} />
         <button
           onClick={reset}
           className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#751118] px-5 py-3.5 font-extrabold text-white"

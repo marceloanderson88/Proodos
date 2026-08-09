@@ -43,6 +43,33 @@ test.describe("smoke autenticado", () => {
     ).toBeVisible();
     await expect(page.getByText("Portfólio real e protegido")).toBeVisible();
 
+    await page.getByRole("link", { name: "Abrir perfil" }).first().click();
+    await expect(
+      page.getByRole("heading", { name: "Agro Sintética", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Identidade do empreendimento" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Equipe da startup" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Diagnósticos da startup" }),
+    ).toBeVisible();
+
+    await page.getByRole("link", { name: "Editar startup" }).click();
+    await expect(
+      page.getByText("Editar cadastro", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByLabel("Nome da startup")).toHaveValue(
+      "Agro Sintética",
+    );
+
+    await page.goto(`${incubatorPath}/diagnosticos`);
+    await expect(
+      page.getByRole("heading", { name: "Diagnósticos", exact: true }),
+    ).toBeVisible();
+
     await page.goto("/o/seed-org-b/i/incubadora-sintetica-sertao/dashboard");
     await expect(page).toHaveURL(/\/o$/);
 

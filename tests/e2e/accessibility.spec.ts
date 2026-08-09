@@ -52,3 +52,30 @@ test("erros de formulário são associados aos campos", async ({ page }) => {
   await expect(page.locator("#email-error")).toBeVisible();
   await expect(page.locator("#password-error")).toBeVisible();
 });
+
+test("autocadastro de startup é acessível e responsivo", async ({ page }) => {
+  test.skip(
+    !process.env.E2E_TEST_EMAIL || !process.env.E2E_TEST_PASSWORD,
+    "O cenário depende do banco sintético provisionado no pipeline.",
+  );
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/cadastro/startup/seed-org-a/incubadora-sintetica-sertao");
+
+  await expect(
+    page.getByRole("heading", { name: "Solicitar entrada" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Nome completo")).toBeVisible();
+  await expect(page.getByLabel("E-mail")).toBeVisible();
+  await expect(page.getByLabel("Senha")).toBeVisible();
+  await expect(page.getByLabel("Nome da startup")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Criar conta e solicitar entrada" }),
+  ).toBeVisible();
+
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
+});

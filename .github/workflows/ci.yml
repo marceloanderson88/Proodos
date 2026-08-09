@@ -22,6 +22,7 @@ jobs:
       GOOGLE_DRIVE_UPLOAD_ENABLED: "false"
       NEXT_PUBLIC_APP_ENV: test
       NEXT_PUBLIC_APP_NAME: Plataforma Sertão Maker
+      PLAYWRIGHT_BASE_URL: http://localhost:3000
       E2E_TEST_EMAIL: admin-a@example.invalid
       E2E_TEST_PASSWORD: Proodos-E2E-2026!
 
@@ -55,8 +56,10 @@ jobs:
           eval "$(pnpm exec supabase status -o env)"
           test -n "$API_URL"
           test -n "$ANON_KEY"
+          test -n "$SERVICE_ROLE_KEY"
           echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "SUPABASE_LOCAL_ADMIN_KEY=$SERVICE_ROLE_KEY" >> "$GITHUB_ENV"
 
       - name: Recriar banco do zero
         run: pnpm exec supabase db reset --local

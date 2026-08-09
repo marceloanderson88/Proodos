@@ -5,13 +5,18 @@ import {
   Plus,
   Rocket,
   Sparkles,
+  UserCheck,
   UserPlus,
   UsersRound,
 } from "lucide-react";
+import Link from "next/link";
 
 import {
+  inviteStartupAction,
+  reviewStartupApplicationAction,
+} from "@/app/(private)/o/[organizationSlug]/i/[incubatorSlug]/startups/actions";
+import {
   addStartupMemberAction,
-  createStartupAction,
   enrollStartupAction,
 } from "@/app/(private)/o/[organizationSlug]/m6-actions";
 import { FeedbackBanner } from "@/components/m6/feedback-banner";
@@ -52,6 +57,23 @@ type Enrollment = {
   status: string;
   entry_date: string;
 };
+type StartupApplication = {
+  id: string;
+  applicant_name: string;
+  applicant_email: string;
+  startup_name: string;
+  sector: string | null;
+  stage: string;
+  created_at: string;
+};
+type StartupInvitation = {
+  id: string;
+  email: string;
+  invited_name: string | null;
+  status: string;
+  expires_at: string;
+  startupName: string;
+};
 
 const stageLabel: Record<string, string> = {
   idea: "Ideia",
@@ -78,6 +100,8 @@ export function StartupsWorkspace({
   members,
   cohorts,
   enrollments,
+  applications,
+  invitations,
   success,
   error,
 }: {
@@ -87,6 +111,8 @@ export function StartupsWorkspace({
   members: StartupMember[];
   cohorts: CohortOption[];
   enrollments: Enrollment[];
+  applications: StartupApplication[];
+  invitations: StartupInvitation[];
   success?: string;
   error?: string;
 }) {
@@ -144,104 +170,223 @@ export function StartupsWorkspace({
               </div>
             ))}
           </dl>
+          <div className="flex flex-wrap gap-2 lg:justify-end">
+            <Link
+              href={`/o/${organizationSlug}/i/${incubatorSlug}/startups/nova`}
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-[#751118] shadow-lg shadow-black/10"
+            >
+              <Plus className="size-4" /> Cadastrar startup
+            </Link>
+            <Link
+              href={`/cadastro/startup/${organizationSlug}/${incubatorSlug}`}
+              target="_blank"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-black text-white"
+            >
+              Abrir autocadastro
+            </Link>
+          </div>
         </div>
       </header>
 
       <FeedbackBanner success={success} error={error} />
 
-      <section className="grid gap-5 xl:grid-cols-3">
-        <details
-          className="dashboard-card group rounded-[1.6rem] p-5"
-          open={startups.length === 0}
-        >
-          <summary className="flex cursor-pointer list-none items-center justify-between">
+      <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+        <article className="dashboard-card rounded-[1.7rem] p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                Portfólio
+                Entrada pela startup
               </p>
-              <h2 className="mt-1 text-xl font-black text-[#3f090d]">
-                Cadastrar startup
+              <h2 className="mt-1 text-2xl font-black text-[#3f090d]">
+                Solicitações pendentes
               </h2>
+              <p className="mt-2 text-xs leading-5 text-[#806f69]">
+                A aprovação cria a startup, ativa o representante e preserva o
+                vínculo solicitado.
+              </p>
             </div>
-            <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
+            <span className="rounded-full bg-[#fff1dc] px-3 py-1.5 text-xs font-black text-[#8a5411]">
+              {applications.length}
+            </span>
+          </div>
+          <div className="mt-5 space-y-3">
+            {applications.length ? (
+              applications.map((application) => (
+                <article
+                  key={application.id}
+                  className="rounded-2xl border border-[#751118]/10 bg-[#fffaf6] p-4"
+                >
+                  <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+                    <div>
+                      <h3 className="font-black text-[#3f090d]">
+                        {application.startup_name}
+                      </h3>
+                      <p className="mt-1 text-xs text-[#75645f]">
+                        {application.applicant_name} ·{" "}
+                        {application.applicant_email}
+                      </p>
+                      <p className="mt-2 text-[0.65rem] text-[#91817b]">
+                        {application.sector ?? "Setor não informado"} ·{" "}
+                        {stageLabel[application.stage] ?? application.stage}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <form
+                        action={reviewStartupApplicationAction.bind(
+                          null,
+                          organizationSlug,
+                          incubatorSlug,
+                        )}
+                      >
+                        <input
+                          type="hidden"
+                          name="applicationId"
+                          value={application.id}
+                        />
+                        <input type="hidden" name="decision" value="reject" />
+                        <button
+                          className="min-h-10 rounded-xl border border-[#caa9a7] bg-white px-4 text-xs font-black text-[#8b171d]"
+                          type="submit"
+                        >
+                          Recusar
+                        </button>
+                      </form>
+                      <form
+                        action={reviewStartupApplicationAction.bind(
+                          null,
+                          organizationSlug,
+                          incubatorSlug,
+                        )}
+                      >
+                        <input
+                          type="hidden"
+                          name="applicationId"
+                          value={application.id}
+                        />
+                        <input type="hidden" name="decision" value="approve" />
+                        <button
+                          className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#751118] px-4 text-xs font-black text-white"
+                          type="submit"
+                        >
+                          <UserCheck className="size-4" /> Aprovar
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="rounded-2xl border border-dashed border-[#751118]/15 p-5 text-sm text-[#806f69]">
+                Nenhuma solicitação aguardando análise.
+              </p>
+            )}
+          </div>
+        </article>
+
+        <details
+          className="dashboard-card group rounded-[1.7rem] p-5 sm:p-6"
+          open
+        >
+          <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
+            <div>
+              <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
+                Entrada pela incubadora
+              </p>
+              <h2 className="mt-1 text-2xl font-black text-[#3f090d]">
+                Convidar startup
+              </h2>
+              <p className="mt-2 text-xs leading-5 text-[#806f69]">
+                Envie acesso ao representante e vincule uma turma opcionalmente.
+              </p>
+            </div>
+            <UserPlus className="size-5 text-[#921a20]" />
           </summary>
           <form
-            action={createStartupAction.bind(
+            action={inviteStartupAction.bind(
               null,
               organizationSlug,
               incubatorSlug,
             )}
             className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
           >
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-              <Field
-                label="Nome"
-                name="name"
-                hint="O código técnico será criado automaticamente."
+            <Field label="Startup já cadastrada (opcional)" name="startupId">
+              <select
+                className={inputClassName}
+                name="startupId"
+                defaultValue=""
               >
+                <option value="">
+                  Criar a startup quando o convite for aceito
+                </option>
+                {startups.map((startup) => (
+                  <option key={startup.id} value={startup.id}>
+                    {startup.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Nome da startup" name="startupName">
+              <input className={inputClassName} name="startupName" required />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Representante" name="representativeName">
                 <input
                   className={inputClassName}
-                  name="name"
+                  name="representativeName"
                   required
-                  placeholder="Nome da startup"
                 />
               </Field>
-              <Field label="Razão social" name="legalName">
-                <input className={inputClassName} name="legalName" />
-              </Field>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-              <Field label="Estágio" name="stage">
-                <select
-                  className={inputClassName}
-                  name="stage"
-                  defaultValue="idea"
-                >
-                  <option value="idea">Ideia</option>
-                  <option value="validation">Validação</option>
-                  <option value="operation">Operação</option>
-                  <option value="traction">Tração</option>
-                  <option value="scale">Escala</option>
-                </select>
-              </Field>
-              <Field label="Setor" name="sector">
+              <Field label="E-mail" name="email">
                 <input
                   className={inputClassName}
-                  name="sector"
-                  placeholder="Agtech, educação..."
+                  name="email"
+                  type="email"
+                  required
                 />
               </Field>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-              <Field label="Cidade" name="city">
-                <input className={inputClassName} name="city" />
-              </Field>
-              <Field label="Estado" name="state">
-                <input className={inputClassName} name="state" />
-              </Field>
-            </div>
-            <Field label="CNPJ ou registro" name="taxId">
-              <input className={inputClassName} name="taxId" />
-            </Field>
-            <Field label="Site" name="websiteUrl">
-              <input
+            <Field label="Turma (opcional)" name="cohortId">
+              <select
                 className={inputClassName}
-                type="url"
-                name="websiteUrl"
-                placeholder="https://"
-              />
+                name="cohortId"
+                defaultValue=""
+              >
+                <option value="">Somente entrada na incubadora</option>
+                {cohorts.map((cohort) => (
+                  <option key={cohort.id} value={cohort.id}>
+                    {cohort.programName} · {cohort.name}
+                  </option>
+                ))}
+              </select>
             </Field>
-            <Field label="Modelo de negócio" name="businessModel">
-              <textarea
-                className={inputClassName}
-                name="businessModel"
-                rows={3}
-              />
-            </Field>
-            <SubmitButton>Cadastrar startup</SubmitButton>
+            <SubmitButton>Enviar convite</SubmitButton>
           </form>
+          {invitations.length ? (
+            <div className="mt-5 border-t border-[#751118]/8 pt-4">
+              <p className="text-xs font-black text-[#5c0c12]">
+                Convites recentes
+              </p>
+              <ul className="mt-3 space-y-2">
+                {invitations.slice(0, 4).map((invitation) => (
+                  <li
+                    key={invitation.id}
+                    className="flex items-center justify-between gap-3 text-xs"
+                  >
+                    <span className="truncate text-[#6d5c58]">
+                      {invitation.startupName} · {invitation.email}
+                    </span>
+                    <span className="shrink-0 rounded-full bg-[#fbefe7] px-2 py-1 font-black text-[#751118]">
+                      {invitation.status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </details>
+      </section>
 
+      <section className="grid gap-5 xl:grid-cols-2">
         <details
           className="dashboard-card group rounded-[1.6rem] p-5"
           open={members.length === 0 && startups.length > 0}
@@ -460,6 +605,12 @@ export function StartupsWorkspace({
                           {startup.state ? `, ${startup.state}` : ""}
                         </span>
                       )}
+                      <Link
+                        href={`/o/${organizationSlug}/i/${incubatorSlug}/startups/${startup.id}`}
+                        className="ml-auto font-black text-[#751118] hover:underline"
+                      >
+                        Abrir perfil →
+                      </Link>
                     </div>
                   </div>
                   <div className="grid gap-px bg-[#751118]/8 sm:grid-cols-2">

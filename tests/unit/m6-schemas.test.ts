@@ -6,7 +6,10 @@ import {
   createProgramSchema,
   createProgramTypeSchema,
   createStartupSchema,
+  inviteStartupSchema,
   programLifecycleSchema,
+  startupSelfRegistrationSchema,
+  updateStartupSchema,
   resolveProgramType,
 } from "@/lib/m6/schemas";
 
@@ -140,5 +143,59 @@ describe("contratos do Marco 6", () => {
     });
 
     expect(result.email).toBe("pessoa@example.com");
+  });
+
+  it("normaliza o autocadastro e não exige turma", () => {
+    const result = startupSelfRegistrationSchema.parse({
+      applicantName: " Maria Empreendedora ",
+      email: "MARIA@EXAMPLE.COM",
+      password: "senha-segura",
+      name: "Nova Startup",
+      legalName: "",
+      taxId: "",
+      sector: "Educação",
+      businessModel: "",
+      stage: "idea",
+      city: "Salgueiro",
+      state: "PE",
+      websiteUrl: "",
+      cohortId: "",
+    });
+
+    expect(result.email).toBe("maria@example.com");
+    expect(result.cohortId).toBeNull();
+    expect(result.legalName).toBeNull();
+  });
+
+  it("aceita convite para startup nova ou existente", () => {
+    const result = inviteStartupSchema.parse({
+      startupId: "",
+      startupName: "Startup Convidada",
+      representativeName: "João Silva",
+      email: "joao@example.com",
+      cohortId: "",
+    });
+
+    expect(result.startupId).toBeNull();
+    expect(result.cohortId).toBeNull();
+  });
+
+  it("permite editar situação e mantém identificador imutável", () => {
+    const result = updateStartupSchema.parse({
+      startupId: "10000000-0000-4000-8000-000000000001",
+      name: "Startup Atualizada",
+      legalName: "",
+      taxId: "",
+      sector: "Tecnologia",
+      businessModel: "B2B",
+      stage: "traction",
+      status: "active",
+      city: "Recife",
+      state: "PE",
+      websiteUrl: "",
+    });
+
+    expect(result.startupId).toBe("10000000-0000-4000-8000-000000000001");
+    expect(result.status).toBe("active");
   });
 });

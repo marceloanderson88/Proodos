@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3100";
+const webServerPort = new URL(baseURL).port || "3000";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -7,13 +10,13 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "line" : "html",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+    baseURL,
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: process.env.CI ? "pnpm start" : "pnpm dev",
-    url: "http://localhost:3000/api/health",
+    command: `pnpm exec next ${process.env.CI ? "start" : "dev"} --port ${webServerPort}`,
+    url: `${baseURL}/api/health`,
     reuseExistingServer: !process.env.CI,
   },
 });

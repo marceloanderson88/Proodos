@@ -52,3 +52,16 @@ Itens fictícios de busca e notificações foram removidos. Estados vazios e cha
 - Tokens de convite são armazenados somente como hash.
 - `SUPABASE_SECRET_KEY` existe apenas no ambiente do servidor/Vercel.
 - Arquivos grandes continuam destinados ao Google Drive; logos pequenas usam Storage privado.
+
+## Perfil e entrada de startups
+
+O fluxo implementado nas etapas 1 a 3 está detalhado em
+[`STARTUP_PROFILE_AND_ONBOARDING.md`](./STARTUP_PROFILE_AND_ONBOARDING.md). A
+entrada pode ocorrer por cadastro administrativo, autocadastro sujeito a
+aprovação ou convite contextual da incubadora. Em todos os casos, startup,
+representante, membership, papel e matrícula opcional preservam o mesmo tenant.
+
+As etapas 4 e 5 conectam esse perfil ao ciclo completo de diagnóstico e à
+leitura visual de resultados. A aplicação individual exibe radar e comparação
+por dimensão; o histórico apresenta evolução temporal sem misturar famílias de
+modelos. As tabelas auditáveis continuam sendo a fonte textual dos gráficos.

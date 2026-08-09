@@ -162,6 +162,22 @@ Aceite:
 - runbook, rollback e observabilidade;
 - deploy preview, smoke autenticado e promoção.
 
+Estado: **implementada no código**. A promoção continua sendo uma ação externa e
+explícita. O pipeline cobre reset do banco, RLS, build, acessibilidade e smoke;
+os advisors foram executados após a migration de índices operacionais.
+
+## Fase 7 — prontidão operacional
+
+- referências seguras nos estados de erro;
+- loading states compatíveis com o layout final;
+- smoke do portfólio, perfil, edição, autocadastro e diagnóstico;
+- checklist de release e rollback sem reversão destrutiva do banco;
+- alinhamento de versões locais e remotas das migrations;
+- promoção manual após CI e smoke de preview.
+
+Estado: **implementada no código** e detalhada em
+[`RELEASE_READINESS_STAGES_6_7.md`](../RELEASE_READINESS_STAGES_6_7.md).
+
 ## Dependências
 
 - decisão da nomenclatura 0–4;

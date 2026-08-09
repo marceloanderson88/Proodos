@@ -1,6 +1,9 @@
 "use client";
 
+import { ErrorReference } from "@/components/error-reference";
+
 export default function GlobalError({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
@@ -21,6 +24,7 @@ export default function GlobalError({
               Tente novamente. Se o problema persistir, informe o horário e a
               página acessada ao suporte.
             </p>
+            <ErrorReference reference={error.digest} />
             <button
               onClick={reset}
               className="mt-8 rounded-xl bg-white px-5 py-3.5 font-extrabold text-[#751118]"

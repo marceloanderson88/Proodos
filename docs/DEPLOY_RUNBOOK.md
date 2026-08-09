@@ -76,7 +76,10 @@ O Marco 5 alinhou as versões M1–M5 locais ao histórico remoto. A migration `
 3. Publicar via integração GitHub/Vercel.
 4. Verificar `/api/health` (processo web) e `/api/ready` (Data API/Postgres).
 5. Executar login, resolução de `/o`, dashboard e logout com conta de teste autorizada.
-6. Conferir logs pelo `x-request-id`, sem registrar cookies, tokens, payloads sensíveis ou URLs de upload.
+6. Abrir uma startup, conferir edição, equipe, programas e diagnósticos.
+7. Abrir o autocadastro público em viewport móvel sem enviar dados reais.
+8. Conferir radar, barras e histórico temporal de uma aplicação concluída.
+9. Conferir logs pelo `x-request-id` ou referência de erro, sem registrar cookies, tokens, payloads sensíveis ou URLs de upload.
 
 ## 7. Rollback e incidente
 

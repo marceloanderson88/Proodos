@@ -13,6 +13,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import {
+  DiagnosticDimensionBarChart,
+  DiagnosticEvolutionChart,
+  DiagnosticRadarChart,
+} from "@/components/diagnostics/diagnostic-charts";
+
 type DimensionPoint = {
   id: string;
   code: string | null;
@@ -225,64 +231,26 @@ export function DiagnosticStartupDashboard({
         </div>
       </section>
 
+      <div className="grid gap-6 xl:grid-cols-2">
+        <DiagnosticRadarChart dimensions={dimensions} />
+        <DiagnosticDimensionBarChart dimensions={dimensions} />
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
         <section className="dashboard-card rounded-[1.6rem] p-5 sm:p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-[0.64rem] font-black tracking-[0.14em] text-[#9a2930] uppercase">
-                Maturidade por dimensão
-              </p>
-              <h2 className="mt-1 text-2xl font-black text-[#481014]">
-                Declarado × validado
-              </h2>
-            </div>
-            <span className="text-xs font-bold text-[#806f6b]">
-              Escala 0–100
-            </span>
-          </div>
-          <div className="mt-6 space-y-5">
-            {dimensions.map((dimension) => (
-              <div key={dimension.id}>
-                <div className="mb-2 flex items-end justify-between gap-4 text-sm">
-                  <span className="font-black text-[#4b1719]">
-                    {dimension.code} · {dimension.name}
-                  </span>
-                  <span className="shrink-0 text-xs font-bold text-[#806f6b]">
-                    {score(dimension.selfScore)} /{" "}
-                    {score(dimension.validatedScore)}
-                  </span>
-                </div>
-                <div
-                  className="space-y-1.5"
-                  aria-label={`${dimension.name}: declarado ${score(dimension.selfScore)}, validado ${score(dimension.validatedScore)}`}
-                >
-                  <div className="h-2 overflow-hidden rounded-full bg-[#f0e5df]">
-                    <div
-                      className="h-full rounded-full bg-[#8b161d]"
-                      style={{
-                        width: `${Math.max(0, dimension.selfScore ?? 0)}%`,
-                      }}
-                    />
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-[#e6eee8]">
-                    <div
-                      className="h-full rounded-full bg-[#5b9468]"
-                      style={{
-                        width: `${Math.max(0, dimension.validatedScore ?? 0)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          {dimensions.length === 0 && (
-            <p className="mt-6 rounded-xl bg-[#faf5f1] p-5 text-sm text-[#806f6b]">
-              Os scores por dimensão aparecerão após as primeiras respostas.
-            </p>
-          )}
+          <p className="text-[0.64rem] font-black tracking-[0.14em] text-[#9a2930] uppercase">
+            Leitura técnica
+          </p>
+          <h2 className="mt-1 text-2xl font-black text-[#481014]">
+            Como interpretar este ciclo
+          </h2>
+          <p className="mt-4 text-sm leading-7 text-[#6d5b57]">
+            O radar evidencia equilíbrio ou concentração entre dimensões. As
+            barras mostram a diferença entre a percepção declarada e o valor
+            validado pela incubadora. Use os gatilhos como prioridade de
+            acompanhamento, não como substituto da análise do avaliador.
+          </p>
         </section>
-
         <aside className="dashboard-card rounded-[1.6rem] p-5 sm:p-6">
           <p className="text-[0.64rem] font-black tracking-[0.14em] text-[#9a2930] uppercase">
             Prioridades
@@ -409,6 +377,8 @@ export function DiagnosticHistory({
           ))}
         </nav>
       )}
+
+      <DiagnosticEvolutionChart cycles={cycles} />
 
       <section className="dashboard-card overflow-hidden rounded-[1.6rem]">
         <div className="border-b border-[#751118]/8 px-5 py-5 sm:px-6">

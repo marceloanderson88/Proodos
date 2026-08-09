@@ -2888,6 +2888,84 @@ export type Database = {
           },
         ];
       };
+      startup_applications: {
+        Row: {
+          applicant_email: string;
+          applicant_name: string;
+          applicant_user_id: string;
+          business_model: string | null;
+          city: string | null;
+          cohort_id: string | null;
+          created_at: string;
+          decision_notes: string | null;
+          id: string;
+          incubator_id: string;
+          legal_name: string | null;
+          organization_id: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          sector: string | null;
+          stage: Database["public"]["Enums"]["startup_stage"];
+          startup_id: string | null;
+          startup_name: string;
+          state: string | null;
+          status: Database["public"]["Enums"]["startup_application_status"];
+          tax_id: string | null;
+          updated_at: string;
+          website_url: string | null;
+        };
+        Insert: {
+          applicant_email: string;
+          applicant_name: string;
+          applicant_user_id: string;
+          business_model?: string | null;
+          city?: string | null;
+          cohort_id?: string | null;
+          created_at?: string;
+          decision_notes?: string | null;
+          id?: string;
+          incubator_id: string;
+          legal_name?: string | null;
+          organization_id: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          sector?: string | null;
+          stage?: Database["public"]["Enums"]["startup_stage"];
+          startup_id?: string | null;
+          startup_name: string;
+          state?: string | null;
+          status?: Database["public"]["Enums"]["startup_application_status"];
+          tax_id?: string | null;
+          updated_at?: string;
+          website_url?: string | null;
+        };
+        Update: {
+          applicant_email?: string;
+          applicant_name?: string;
+          applicant_user_id?: string;
+          business_model?: string | null;
+          city?: string | null;
+          cohort_id?: string | null;
+          created_at?: string;
+          decision_notes?: string | null;
+          id?: string;
+          incubator_id?: string;
+          legal_name?: string | null;
+          organization_id?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          sector?: string | null;
+          stage?: Database["public"]["Enums"]["startup_stage"];
+          startup_id?: string | null;
+          startup_name?: string;
+          state?: string | null;
+          status?: Database["public"]["Enums"]["startup_application_status"];
+          tax_id?: string | null;
+          updated_at?: string;
+          website_url?: string | null;
+        };
+        Relationships: [];
+      };
       startup_enrollments: {
         Row: {
           cohort_id: string;
@@ -3091,6 +3169,45 @@ export type Database = {
           },
         ];
       };
+      startup_onboarding_invitations: {
+        Row: {
+          accepted_startup_id: string | null;
+          cohort_id: string | null;
+          created_at: string;
+          created_by: string;
+          incubator_id: string;
+          invitation_id: string;
+          organization_id: string;
+          startup_id: string | null;
+          startup_name: string;
+          updated_at: string;
+        };
+        Insert: {
+          accepted_startup_id?: string | null;
+          cohort_id?: string | null;
+          created_at?: string;
+          created_by: string;
+          incubator_id: string;
+          invitation_id: string;
+          organization_id: string;
+          startup_id?: string | null;
+          startup_name: string;
+          updated_at?: string;
+        };
+        Update: {
+          accepted_startup_id?: string | null;
+          cohort_id?: string | null;
+          created_at?: string;
+          created_by?: string;
+          incubator_id?: string;
+          invitation_id?: string;
+          organization_id?: string;
+          startup_id?: string | null;
+          startup_name?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       startups: {
         Row: {
           business_model: string | null;
@@ -3278,6 +3395,14 @@ export type Database = {
           organization_id: string;
           organization_slug: string;
         }[];
+      };
+      review_startup_application: {
+        Args: {
+          requested_decision: string;
+          review_notes?: string | null;
+          target_application_id: string;
+        };
+        Returns: string;
       };
       add_diagnostic_criterion_with_rubric: {
         Args: {
@@ -3631,6 +3756,8 @@ export type Database = {
       program_status:
         "draft" | "planned" | "active" | "completed" | "cancelled" | "archived";
       role_scope_type: "organization" | "unit" | "incubator";
+      startup_application_status:
+        "pending" | "approved" | "rejected" | "withdrawn";
       startup_member_role:
         | "founder"
         | "cofounder"
@@ -3941,6 +4068,12 @@ export const Constants = {
         "graduated",
         "withdrawn",
         "archived",
+      ],
+      startup_application_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "withdrawn",
       ],
       upload_session_status: [
         "pending",
