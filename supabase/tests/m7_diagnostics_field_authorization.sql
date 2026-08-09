@@ -171,6 +171,10 @@ insert into public.startup_members (
   '74100000-0000-4000-8000-000000000001'
 );
 
+set local role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claim.sub', '74100000-0000-4000-8000-000000000002', true);
+
 with inserted as (
   insert into public.diagnostic_responses (
     organization_id, incubator_id, assessment_id, criterion_id, self_value
