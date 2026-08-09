@@ -574,9 +574,9 @@ begin
     end loop;
   end loop;
 
-  delete from private.diagnostic_demo_install_context
-  where transaction_id = txid_current()
-    and actor_id = (select auth.uid());
+  delete from private.diagnostic_demo_install_context as demo_context
+  where demo_context.transaction_id = txid_current()
+    and demo_context.actor_id = (select auth.uid());
 
   return installed_count;
 end;
