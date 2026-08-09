@@ -1148,6 +1148,87 @@ export type Database = {
           },
         ];
       };
+      diagnostic_respondent_invitations: {
+        Row: {
+          accepted_at: string | null;
+          assessment_id: string;
+          can_submit: boolean;
+          created_at: string;
+          created_by: string;
+          id: string;
+          incubator_id: string;
+          invitation_id: string;
+          organization_id: string;
+          respondent_role: Database["public"]["Enums"]["diagnostic_respondent_role"];
+          respondent_user_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          assessment_id: string;
+          can_submit?: boolean;
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          incubator_id: string;
+          invitation_id: string;
+          organization_id: string;
+          respondent_role?: Database["public"]["Enums"]["diagnostic_respondent_role"];
+          respondent_user_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          assessment_id?: string;
+          can_submit?: boolean;
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          incubator_id?: string;
+          invitation_id?: string;
+          organization_id?: string;
+          respondent_role?: Database["public"]["Enums"]["diagnostic_respondent_role"];
+          respondent_user_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_respondent_invitations_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_respondent_invitations_invitation_id_fkey";
+            columns: ["invitation_id"];
+            isOneToOne: true;
+            referencedRelation: "invitations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_respondent_invitations_organization_id_assessment_id_fkey";
+            columns: ["organization_id", "assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_assessments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_respondent_invitations_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_respondent_invitations_respondent_user_id_fkey";
+            columns: ["respondent_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       diagnostic_response_evidence: {
         Row: {
           created_at: string;

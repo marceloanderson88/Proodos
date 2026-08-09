@@ -42,7 +42,8 @@ Permanecem como lacunas:
 - importação XLSX assistida e relatório de validação;
 - autosave do editor de templates (o autosave de respostas está concluído);
 - upload binário resumível para o Shared Drive institucional;
-- convite contextual de respondente ainda sem membership;
+- reenvio e revogação do convite contextual dentro da própria avaliação; o
+  primeiro envio e o vínculo seguro após aceite já estão implementados;
 - inclusão de novas fórmulas derivadas configuráveis; as fórmulas padrão de
   runway e ticket médio, além da edição dos indicadores manuais, metas, N/A e
   evidências, já estão implementadas;
@@ -120,6 +121,8 @@ indicadores, gatilhos, scores materializados, biblioteca navegável, editor
 estrutural com edição/exclusão/reordenação, duplicação de versões, gestão de
 respondentes e avaliador por aplicação, evidências externas HTTPS, indicadores
 manuais com concorrência otimista e máquina de estados de envio e validação. A
+avaliação também permite convidar por e-mail uma pessoa ainda não cadastrada; o
+acesso só é concedido após o aceite com o mesmo e-mail confirmado. A
 lista original permanece acima como registro do
 diagnóstico do código anterior, não como descrição do estado atual.
 

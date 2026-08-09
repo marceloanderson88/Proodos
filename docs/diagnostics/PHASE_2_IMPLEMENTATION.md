@@ -35,10 +35,12 @@ Cada nova incubadora recebe uma cópia publicada e imutável do modelo padrão. 
     de evidência e proteção contra sobrescrita concorrente.
 16. Cálculo automático e seguro de runway e ticket médio sempre que seus
     indicadores de origem mudam.
-17. Evidências externas HTTPS vinculadas à resposta, com autoria, estado e remoção lógica.
-18. Autosave serializado com debounce, estado offline, `lock_version` e conflito explícito.
-19. Dashboard individual com scores, dimensões e gatilhos, além de histórico ilimitado entre ciclos.
-20. Exportação CSV da campanha, autorizada pelas mesmas políticas RLS das telas.
+17. Convite contextual por e-mail para novo respondente, com papel
+    organizacional apto, acesso postergado até o aceite e auditoria do vínculo.
+18. Evidências externas HTTPS vinculadas à resposta, com autoria, estado e remoção lógica.
+19. Autosave serializado com debounce, estado offline, `lock_version` e conflito explícito.
+20. Dashboard individual com scores, dimensões e gatilhos, além de histórico ilimitado entre ciclos.
+21. Exportação CSV da campanha, autorizada pelas mesmas políticas RLS das telas.
 
 ## Segurança e isolamento
 
@@ -105,7 +107,7 @@ O advisor de segurança mantém avisos para RPCs `SECURITY DEFINER` intencionais
 
 ## Pendências após este incremento
 
-- convite por e-mail para pessoas ainda sem membership aceita;
+- reenvio e revogação contextual dos convites pendentes;
 - upload resumível de evidências no Google Drive;
 - inclusão de novas fórmulas configuráveis além das duas fórmulas padrão já
   implementadas;

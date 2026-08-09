@@ -1,11 +1,12 @@
 "use server";
 
-import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getIncubatorServerContext } from "@/lib/incubators/server-context";
+import { sendIncubatorInvitation } from "@/lib/invitations/server";
 import {
   invitationLifecycleSchema,
   inviteIncubatorPersonSchema,
@@ -15,7 +16,6 @@ import {
   manageIncubatorPersonRoleSchema,
   removeIncubatorPersonRoleSchema,
 } from "@/lib/m6/schemas";
-import { createSupabaseAdminClient, getAppBaseUrl } from "@/lib/supabase/admin";
 import type { Json } from "@/lib/supabase/database.types";
 
 function value(formData: FormData, key: string) {
@@ -211,67 +211,6 @@ export async function updateIncubatorOperationsAction(
   );
 }
 
-async function sendInvitation(
-  context: Awaited<ReturnType<typeof getIncubatorServerContext>>,
-  input: {
-    invitedName: string;
-    email: string;
-    roleId: string;
-    expiresInDays: number;
-  },
-) {
-  const admin = createSupabaseAdminClient();
-  const baseUrl = getAppBaseUrl();
-  const rawToken = randomBytes(32).toString("base64url");
-  const tokenHash = createHash("sha256").update(rawToken).digest("hex");
-  const expiresAt = new Date(
-    Date.now() + input.expiresInDays * 24 * 60 * 60 * 1000,
-  ).toISOString();
-
-  const inserted = await context.supabase
-    .from("invitations")
-    .insert({
-      organization_id: context.organization.id,
-      incubator_id: context.incubator.id,
-      unit_id: null,
-      invited_name: input.invitedName,
-      email: input.email,
-      role_id: input.roleId,
-      token_hash: tokenHash,
-      expires_at: expiresAt,
-      invited_by: context.user.id,
-    })
-    .select("id")
-    .single();
-  if (inserted.error || !inserted.data)
-    throw inserted.error ?? new Error("INVITATION_INSERT_FAILED");
-
-  const acceptancePath = `/convites/aceitar?token=${encodeURIComponent(rawToken)}`;
-  const callback = new URL("/auth/callback", baseUrl);
-  callback.searchParams.set("next", acceptancePath);
-  const invited = await admin.auth.admin.inviteUserByEmail(input.email, {
-    data: { display_name: input.invitedName },
-    redirectTo: callback.toString(),
-  });
-
-  if (invited.error) {
-    const fallback = await context.supabase.auth.signInWithOtp({
-      email: input.email,
-      options: {
-        shouldCreateUser: false,
-        emailRedirectTo: callback.toString(),
-      },
-    });
-    if (fallback.error) {
-      await context.supabase
-        .from("invitations")
-        .update({ status: "revoked", revoked_at: new Date().toISOString() })
-        .eq("id", inserted.data.id);
-      throw invited.error;
-    }
-  }
-}
-
 export async function inviteIncubatorPersonAction(
   organizationSlug: string,
   incubatorSlug: string,
@@ -298,7 +237,7 @@ export async function inviteIncubatorPersonAction(
     );
 
   try {
-    await sendInvitation(context, parsed.data);
+    await sendIncubatorInvitation(context, parsed.data);
   } catch (error) {
     const message =
       error instanceof Error &&
@@ -379,7 +318,7 @@ export async function manageInvitationAction(
 
   if (parsed.data.action === "resend") {
     try {
-      await sendInvitation(context, {
+      await sendIncubatorInvitation(context, {
         invitedName:
           invitation.data.invited_name ??
           invitation.data.email.split("@")[0] ??

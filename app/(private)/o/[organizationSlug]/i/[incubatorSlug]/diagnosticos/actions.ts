@@ -18,6 +18,7 @@ import {
   deleteDiagnosticEvidenceSchema,
   diagnosticAssessmentTransitionSchema,
   duplicateDiagnosticTemplateSchema,
+  inviteDiagnosticRespondentSchema,
   reorderDiagnosticCriteriaSchema,
   reorderDiagnosticDimensionsSchema,
   revokeDiagnosticRespondentSchema,
@@ -28,6 +29,7 @@ import {
   validateDiagnosticResponseSchema,
 } from "@/lib/diagnostics/schemas";
 import { getIncubatorServerContext } from "@/lib/incubators/server-context";
+import { sendIncubatorInvitation } from "@/lib/invitations/server";
 import type { Json } from "@/lib/supabase/database.types";
 
 function value(formData: FormData, key: string) {
@@ -666,6 +668,123 @@ export async function createDiagnosticAssessmentAction(
     incubatorSlug,
     "success",
     "Diagnóstico iniciado para a startup.",
+  );
+}
+
+export async function inviteDiagnosticRespondentAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const returnTo = value(formData, "returnTo");
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = inviteDiagnosticRespondentSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    invitedName: value(formData, "invitedName"),
+    email: value(formData, "email"),
+    roleId: value(formData, "roleId"),
+    respondentRole: value(formData, "respondentRole"),
+    returnTo,
+  });
+  if (!parsed.success)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      parsed.error.issues[0]?.message ?? "Revise os dados do convite.",
+    );
+
+  const [assessmentResult, rolePermissionResult] = await Promise.all([
+    context.supabase
+      .from("diagnostic_assessments")
+      .select("id,status")
+      .eq("organization_id", context.organization.id)
+      .eq("incubator_id", context.incubator.id)
+      .eq("id", parsed.data.assessmentId)
+      .maybeSingle(),
+    context.supabase
+      .from("role_permissions")
+      .select("role_id")
+      .eq("organization_id", context.organization.id)
+      .eq("role_id", parsed.data.roleId)
+      .eq("permission_code", "diagnostic.respond")
+      .maybeSingle(),
+  ]);
+  if (
+    assessmentResult.error ||
+    !assessmentResult.data ||
+    ["validated", "cancelled"].includes(assessmentResult.data.status)
+  )
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Esta avaliação não aceita novos respondentes.",
+    );
+  if (rolePermissionResult.error || !rolePermissionResult.data)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Selecione um papel organizacional que permita responder diagnósticos.",
+    );
+
+  let invitationId: string;
+  try {
+    const invitation = await sendIncubatorInvitation(context, {
+      invitedName: parsed.data.invitedName,
+      email: parsed.data.email,
+      roleId: parsed.data.roleId,
+      expiresInDays: 7,
+    });
+    invitationId = invitation.invitationId;
+  } catch (error) {
+    const message =
+      error instanceof Error &&
+      error.message === "SUPABASE_SECRET_KEY_NOT_CONFIGURED"
+        ? "Configure SUPABASE_SECRET_KEY na Vercel para enviar convites."
+        : "Não foi possível enviar o convite. Verifique se já existe um convite pendente para esse e-mail.";
+    finishAt(organizationSlug, incubatorSlug, returnTo, "error", message);
+  }
+
+  const mapping = await context.supabase
+    .from("diagnostic_respondent_invitations")
+    .insert({
+      organization_id: context.organization.id,
+      incubator_id: context.incubator.id,
+      assessment_id: parsed.data.assessmentId,
+      invitation_id: invitationId,
+      respondent_role: parsed.data.respondentRole,
+      can_submit: parsed.data.respondentRole === "primary",
+      created_by: context.user.id,
+    });
+  if (mapping.error) {
+    await context.supabase
+      .from("invitations")
+      .update({ status: "revoked", revoked_at: new Date().toISOString() })
+      .eq("id", invitationId)
+      .eq("status", "pending");
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "O e-mail foi enviado, mas o vínculo falhou e o convite foi revogado.",
+    );
+  }
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    `Convite enviado para ${parsed.data.email}. O acesso será liberado somente após o aceite.`,
   );
 }
 

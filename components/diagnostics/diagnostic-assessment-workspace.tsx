@@ -6,6 +6,7 @@ import {
   ClipboardCheck,
   ExternalLink,
   FileText,
+  MailPlus,
   ShieldCheck,
   UserCheck,
   UserRoundPlus,
@@ -19,6 +20,7 @@ import {
   assignDiagnosticRespondentAction,
   deleteDiagnosticEvidenceAction,
   finalizeDiagnosticAssessmentAction,
+  inviteDiagnosticRespondentAction,
   reopenDiagnosticAssessmentAction,
   submitDiagnosticAssessmentAction,
   revokeDiagnosticRespondentAction,
@@ -81,6 +83,8 @@ export function DiagnosticAssessmentWorkspace({
   evidence,
   indicatorDefinitions,
   indicatorValues,
+  respondentInvitationRoles,
+  pendingRespondentInvitations,
   success,
   error,
 }: {
@@ -105,6 +109,15 @@ export function DiagnosticAssessmentWorkspace({
   evidence: Evidence[];
   indicatorDefinitions: IndicatorDefinition[];
   indicatorValues: IndicatorValue[];
+  respondentInvitationRoles: { id: string; name: string }[];
+  pendingRespondentInvitations: {
+    id: string;
+    email: string;
+    invited_name: string | null;
+    status: string;
+    expires_at: string;
+    respondentRole: "primary" | "collaborator" | "viewer";
+  }[];
   success?: string;
   error?: string;
 }) {
@@ -136,6 +149,11 @@ export function DiagnosticAssessmentWorkspace({
     incubatorSlug,
   );
   const revokeRespondent = revokeDiagnosticRespondentAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const inviteRespondent = inviteDiagnosticRespondentAction.bind(
     null,
     organizationSlug,
     incubatorSlug,
@@ -814,6 +832,119 @@ export function DiagnosticAssessmentWorkspace({
                 Vincular respondente
               </SubmitButton>
             </form>
+
+            <details className="mt-4 overflow-hidden rounded-2xl border border-[#8b161d]/12 bg-[#fffaf7]">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-black text-[#6f171b]">
+                <span className="inline-flex items-center gap-2">
+                  <MailPlus className="size-4" /> Convidar nova pessoa
+                </span>
+                <span className="rounded-full bg-[#f3e6df] px-2 py-0.5 text-[0.62rem] uppercase">
+                  por e-mail
+                </span>
+              </summary>
+              <div className="border-t border-[#751118]/8 p-4">
+                <p className="text-xs leading-5 text-[#806f6b]">
+                  O convite cria o vínculo com a incubadora. O acesso a esta
+                  avaliação só é liberado quando a própria pessoa aceitar pelo
+                  e-mail enviado.
+                </p>
+                {pendingRespondentInvitations.length > 0 && (
+                  <div
+                    className="mt-3 space-y-2"
+                    aria-label="Convites pendentes"
+                  >
+                    {pendingRespondentInvitations.map((invitation) => (
+                      <div
+                        key={invitation.id}
+                        className="rounded-xl border border-[#d9b8aa]/35 bg-white px-3 py-2"
+                      >
+                        <p className="truncate text-xs font-black text-[#481014]">
+                          {invitation.invited_name || invitation.email}
+                        </p>
+                        <p className="mt-0.5 truncate text-[0.65rem] text-[#806f6b]">
+                          {invitation.email} ·{" "}
+                          {invitation.respondentRole === "primary"
+                            ? "principal"
+                            : invitation.respondentRole === "viewer"
+                              ? "leitor"
+                              : "colaborador"}
+                        </p>
+                        <p className="mt-1 text-[0.62rem] font-bold text-[#9a6b61]">
+                          Pendente até{" "}
+                          {new Date(invitation.expires_at).toLocaleDateString(
+                            "pt-BR",
+                          )}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <form action={inviteRespondent} className="mt-4 grid gap-3">
+                  <input
+                    type="hidden"
+                    name="assessmentId"
+                    value={assessment.id}
+                  />
+                  <input type="hidden" name="returnTo" value={currentPath} />
+                  <Field label="Nome" name="invitedName">
+                    <input
+                      className={inputClassName}
+                      name="invitedName"
+                      required
+                      minLength={2}
+                      maxLength={160}
+                      autoComplete="name"
+                    />
+                  </Field>
+                  <Field label="E-mail" name="email">
+                    <input
+                      className={inputClassName}
+                      type="email"
+                      name="email"
+                      required
+                      maxLength={320}
+                      autoComplete="email"
+                    />
+                  </Field>
+                  <label className="grid gap-1 text-xs font-black text-[#5e4542]">
+                    Papel na incubadora
+                    <select
+                      name="roleId"
+                      required
+                      className={inputClassName}
+                      defaultValue=""
+                    >
+                      <option value="" disabled>
+                        Selecione
+                      </option>
+                      {respondentInvitationRoles.map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="grid gap-1 text-xs font-black text-[#5e4542]">
+                    Papel nesta resposta
+                    <select
+                      name="respondentRole"
+                      required
+                      className={inputClassName}
+                      defaultValue="collaborator"
+                    >
+                      <option value="primary">Responsável principal</option>
+                      <option value="collaborator">Colaborador</option>
+                      <option value="viewer">Somente leitura</option>
+                    </select>
+                  </label>
+                  <SubmitButton
+                    disabled={respondentInvitationRoles.length === 0}
+                  >
+                    <MailPlus className="size-4" /> Enviar convite
+                  </SubmitButton>
+                </form>
+              </div>
+            </details>
 
             <form
               action={assignEvaluator}

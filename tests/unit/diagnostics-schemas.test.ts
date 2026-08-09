@@ -9,6 +9,7 @@ import {
   createDiagnosticDimensionSchema,
   diagnosticAssessmentTransitionSchema,
   duplicateDiagnosticTemplateSchema,
+  inviteDiagnosticRespondentSchema,
   saveDiagnosticResponseSchema,
   saveDiagnosticIndicatorValueSchema,
   updateDiagnosticDimensionSchema,
@@ -199,6 +200,29 @@ describe("schemas de diagnósticos", () => {
         numericValue: "",
         isNotApplicable: true,
         notApplicableJustification: "",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("valida convite contextual com papel organizacional e da resposta", () => {
+    expect(
+      inviteDiagnosticRespondentSchema.safeParse({
+        assessmentId: "11111111-1111-4111-8111-111111111111",
+        invitedName: "Fundadora da startup",
+        email: "fundadora@example.com",
+        roleId: "22222222-2222-4222-8222-222222222222",
+        respondentRole: "primary",
+        returnTo: "/o/proodos/i/sertao-maker/diagnosticos/avaliacoes/1",
+      }).success,
+    ).toBe(true);
+    expect(
+      inviteDiagnosticRespondentSchema.safeParse({
+        assessmentId: "11111111-1111-4111-8111-111111111111",
+        invitedName: "A",
+        email: "email-invalido",
+        roleId: "22222222-2222-4222-8222-222222222222",
+        respondentRole: "owner",
+        returnTo: "/",
       }).success,
     ).toBe(false);
   });

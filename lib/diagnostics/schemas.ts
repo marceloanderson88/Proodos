@@ -104,6 +104,15 @@ export const assignDiagnosticEvaluatorSchema = z.object({
   returnTo: z.string().trim().min(1).max(500),
 });
 
+export const inviteDiagnosticRespondentSchema = z.object({
+  assessmentId: z.uuid(),
+  invitedName: z.string().trim().min(2).max(160),
+  email: z.email().trim().toLowerCase().max(320),
+  roleId: z.uuid(),
+  respondentRole: z.enum(["primary", "collaborator", "viewer"]),
+  returnTo: z.string().trim().min(1).max(500),
+});
+
 export const createDiagnosticCampaignSchema = z
   .object({
     name: z.string().trim().min(2).max(180),

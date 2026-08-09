@@ -48,6 +48,8 @@ export default async function DiagnosticAssessmentPage({
     membershipsResult,
     indicatorDefinitionsResult,
     indicatorValuesResult,
+    respondentRolePermissionsResult,
+    invitationMappingsResult,
   ] = await Promise.all([
     supabase
       .from("diagnostic_templates")
@@ -110,6 +112,16 @@ export default async function DiagnosticAssessmentPage({
       .from("diagnostic_indicator_values")
       .select("*")
       .match({ ...scope, assessment_id: assessment.id }),
+    supabase
+      .from("role_permissions")
+      .select("role_id")
+      .eq("organization_id", organization.id)
+      .eq("permission_code", "diagnostic.respond"),
+    supabase
+      .from("diagnostic_respondent_invitations")
+      .select("invitation_id,respondent_role")
+      .match({ ...scope, assessment_id: assessment.id })
+      .is("accepted_at", null),
   ]);
   const results = [
     templateResult,
@@ -125,6 +137,8 @@ export default async function DiagnosticAssessmentPage({
     membershipsResult,
     indicatorDefinitionsResult,
     indicatorValuesResult,
+    respondentRolePermissionsResult,
+    invitationMappingsResult,
   ];
   if (results.some((result) => result.error))
     throw new Error("Falha ao carregar a aplicação do diagnóstico.");
@@ -141,6 +155,35 @@ export default async function DiagnosticAssessmentPage({
     throw new Error(
       "Falha ao carregar as pessoas elegíveis para o diagnóstico.",
     );
+  const respondentRoleIds = [
+    ...new Set(
+      (respondentRolePermissionsResult.data ?? []).map((item) => item.role_id),
+    ),
+  ];
+  const pendingInvitationIds = (invitationMappingsResult.data ?? []).map(
+    (item) => item.invitation_id,
+  );
+  const [respondentRolesResult, pendingInvitationsResult] = await Promise.all([
+    respondentRoleIds.length
+      ? supabase
+          .from("roles")
+          .select("id,name")
+          .eq("organization_id", organization.id)
+          .in("id", respondentRoleIds)
+          .order("name")
+      : Promise.resolve({ data: [], error: null }),
+    pendingInvitationIds.length
+      ? supabase
+          .from("invitations")
+          .select("id,email,invited_name,status,expires_at")
+          .eq("organization_id", organization.id)
+          .in("id", pendingInvitationIds)
+          .eq("status", "pending")
+          .order("created_at")
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (respondentRolesResult.error || pendingInvitationsResult.error)
+    throw new Error("Falha ao carregar os convites do diagnóstico.");
   const responseIds = (responsesResult.data ?? []).map((item) => item.id);
   const evidenceResult = responseIds.length
     ? await supabase
@@ -174,6 +217,16 @@ export default async function DiagnosticAssessmentPage({
       evidence={evidenceResult.data ?? []}
       indicatorDefinitions={indicatorDefinitionsResult.data ?? []}
       indicatorValues={indicatorValuesResult.data ?? []}
+      respondentInvitationRoles={respondentRolesResult.data ?? []}
+      pendingRespondentInvitations={(pendingInvitationsResult.data ?? []).map(
+        (invitation) => ({
+          ...invitation,
+          respondentRole:
+            invitationMappingsResult.data?.find(
+              (item) => item.invitation_id === invitation.id,
+            )?.respondent_role ?? "collaborator",
+        }),
+      )}
       success={firstSearchValue(feedback.success)}
       error={firstSearchValue(feedback.error)}
     />
