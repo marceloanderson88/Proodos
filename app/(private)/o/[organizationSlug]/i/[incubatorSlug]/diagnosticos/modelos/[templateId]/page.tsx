@@ -36,6 +36,8 @@ export default async function DiagnosticModelPage({
     classificationsResult,
     indicatorsResult,
     rulesResult,
+    assessmentUsageResult,
+    campaignUsageResult,
   ] = await Promise.all([
     supabase
       .from("diagnostic_templates")
@@ -76,6 +78,14 @@ export default async function DiagnosticModelPage({
       .select("*")
       .match(scope)
       .order("position"),
+    supabase
+      .from("diagnostic_assessments")
+      .select("id", { count: "exact", head: true })
+      .match(scope),
+    supabase
+      .from("diagnostic_campaigns")
+      .select("id", { count: "exact", head: true })
+      .match(scope),
   ]);
   if (!templateResult.data) notFound();
   if (
@@ -86,6 +96,8 @@ export default async function DiagnosticModelPage({
       classificationsResult,
       indicatorsResult,
       rulesResult,
+      assessmentUsageResult,
+      campaignUsageResult,
     ].some((result) => result.error)
   )
     throw new Error("Falha ao carregar a versão do diagnóstico.");
@@ -101,6 +113,10 @@ export default async function DiagnosticModelPage({
       classifications={classificationsResult.data ?? []}
       indicators={indicatorsResult.data ?? []}
       rules={rulesResult.data ?? []}
+      canDelete={
+        (assessmentUsageResult.count ?? 0) === 0 &&
+        (campaignUsageResult.count ?? 0) === 0
+      }
       success={firstSearchValue(feedback.success)}
       error={firstSearchValue(feedback.error)}
     />

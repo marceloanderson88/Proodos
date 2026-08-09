@@ -4,14 +4,22 @@ import {
   CheckCircle2,
   Clock3,
   Download,
+  Pencil,
   RefreshCw,
   Send,
   ShieldCheck,
+  Trash2,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 
+import {
+  deletePendingDiagnosticAssessmentAction,
+  updatePendingDiagnosticAssessmentAction,
+} from "@/app/(private)/o/[organizationSlug]/i/[incubatorSlug]/diagnosticos/actions";
 import { FeedbackBanner } from "@/components/m6/feedback-banner";
+import { inputClassName, SubmitButton } from "@/components/m6/form-controls";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Campaign = Database["public"]["Tables"]["diagnostic_campaigns"]["Row"];
@@ -34,6 +42,12 @@ function dateTime(value: string) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function dateTimeLocal(value: string) {
+  const date = new Date(value);
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
 export function DiagnosticCampaignDetail({
@@ -65,6 +79,16 @@ export function DiagnosticCampaignDetail({
   error?: string;
 }) {
   const base = `/o/${organizationSlug}/i/${incubatorSlug}/diagnosticos`;
+  const updatePending = updatePendingDiagnosticAssessmentAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const deletePending = deletePendingDiagnosticAssessmentAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
   const template = templates.find((item) => item.id === campaign.template_id);
   const count = (status: Participant["status"]) =>
     participants.filter((item) => item.status === status).length;
@@ -151,7 +175,7 @@ export function DiagnosticCampaignDetail({
           </h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[980px] border-collapse text-left text-sm">
             <thead className="bg-[#fcf8f5] text-[0.64rem] tracking-[0.1em] text-[#7c6662] uppercase">
               <tr>
                 <th className="px-6 py-4">Startup</th>
@@ -173,6 +197,9 @@ export function DiagnosticCampaignDetail({
                 const evaluator = profiles.find(
                   (item) => item.id === participant.evaluator_id,
                 );
+                const isPending =
+                  assessment?.status === "draft" &&
+                  ["invited", "not_started"].includes(participant.status);
                 return (
                   <tr
                     key={participant.id}
@@ -203,7 +230,7 @@ export function DiagnosticCampaignDetail({
                     </td>
                     <td className="px-6 py-4 text-right">
                       {assessment && (
-                        <div className="flex justify-end gap-4">
+                        <div className="flex flex-wrap justify-end gap-3">
                           <Link
                             href={`${base}/avaliacoes/${assessment.id}`}
                             className="font-black text-[#8b161d]"
@@ -216,6 +243,103 @@ export function DiagnosticCampaignDetail({
                           >
                             Resultado <ArrowRight className="size-4" />
                           </Link>
+                          {isPending && (
+                            <details className="relative text-left">
+                              <summary className="inline-flex cursor-pointer list-none items-center gap-1 font-black text-[#8b161d]">
+                                <Pencil className="size-3.5" /> Editar
+                              </summary>
+                              <form
+                                action={updatePending}
+                                className="absolute top-8 right-0 z-20 w-[22rem] space-y-3 rounded-2xl border border-[#751118]/12 bg-white p-4 shadow-[0_20px_55px_rgb(63_9_13/20%)]"
+                              >
+                                <input
+                                  type="hidden"
+                                  name="assessmentId"
+                                  value={assessment.id}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="campaignId"
+                                  value={campaign.id}
+                                />
+                                <label className="block text-xs font-black text-[#5b4545]">
+                                  Nome do ciclo
+                                  <input
+                                    className={inputClassName}
+                                    name="cycleLabel"
+                                    defaultValue={assessment.cycle_label}
+                                    minLength={2}
+                                    maxLength={120}
+                                    required
+                                  />
+                                </label>
+                                <label className="block text-xs font-black text-[#5b4545]">
+                                  Prazo
+                                  <input
+                                    className={inputClassName}
+                                    name="dueAt"
+                                    type="datetime-local"
+                                    defaultValue={dateTimeLocal(
+                                      assessment.due_at ?? campaign.ends_at,
+                                    )}
+                                    min={dateTimeLocal(campaign.starts_at)}
+                                    max={dateTimeLocal(campaign.ends_at)}
+                                    required
+                                  />
+                                </label>
+                                <label className="block text-xs font-black text-[#5b4545]">
+                                  {campaign.execution_mode === "facilitated"
+                                    ? "Responsável pela aplicação"
+                                    : "Responsável pela validação (opcional)"}
+                                  <select
+                                    className={inputClassName}
+                                    name="evaluatorId"
+                                    defaultValue={assessment.evaluator_id ?? ""}
+                                    required={
+                                      campaign.execution_mode === "facilitated"
+                                    }
+                                  >
+                                    <option value="">A definir</option>
+                                    {profiles.map((profile) => (
+                                      <option
+                                        key={profile.id}
+                                        value={profile.id}
+                                      >
+                                        {profile.display_name ||
+                                          profile.email ||
+                                          "Pessoa sem nome"}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                                <p className="text-[0.68rem] leading-5 text-[#806f6b]">
+                                  A edição é bloqueada automaticamente assim que
+                                  alguém começa a responder.
+                                </p>
+                                <SubmitButton>Salvar aplicação</SubmitButton>
+                              </form>
+                            </details>
+                          )}
+                          {isPending && (
+                            <form action={deletePending}>
+                              <input
+                                type="hidden"
+                                name="assessmentId"
+                                value={assessment.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="campaignId"
+                                value={campaign.id}
+                              />
+                              <ConfirmSubmitButton
+                                message={`Remover o diagnóstico de ${startup?.name ?? "esta startup"} da campanha? Esta ação só será aceita se ele ainda não tiver sido iniciado.`}
+                                variant="ghost"
+                              >
+                                <Trash2 className="size-3.5" /> Excluir
+                              </ConfirmSubmitButton>
+                            </form>
+                          )}
                         </div>
                       )}
                     </td>

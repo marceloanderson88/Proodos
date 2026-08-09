@@ -9,7 +9,9 @@
 - Observações são registros imutáveis com autor e data em `diagnostic_assessment_notes`.
 - O histórico compara somente versões da mesma família de modelo e oferece seleção quando há famílias diferentes.
 - A biblioteca possui fluxo visível de criação de modelo em rascunho.
-- Casos fictícios são instalados somente por ação explícita, são idempotentes e usam o prefixo `[EXEMPLO]`.
+- Casos fictícios são instalados somente por ação explícita, são idempotentes e usam o prefixo `[EXEMPLO]`. O conjunto inclui um programa, uma turma, três startups vinculadas e seis aplicações temporais nos modos autodiagnóstico e assistido.
+- Aplicações ainda não iniciadas podem ter nome do ciclo, prazo e avaliador editados ou ser removidas da campanha. A primeira resposta ou evento de início bloqueia essas operações no banco.
+- Modelos completamente sem uso podem ser excluídos; qualquer campanha ou aplicação preserva a versão e bloqueia a exclusão.
 
 ## Escopo da análise
 

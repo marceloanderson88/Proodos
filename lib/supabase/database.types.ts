@@ -3397,6 +3397,14 @@ export type Database = {
         Args: { target_dimension_id: string };
         Returns: undefined;
       };
+      delete_pending_diagnostic_assessment: {
+        Args: { target_assessment_id: string };
+        Returns: undefined;
+      };
+      delete_unused_diagnostic_template: {
+        Args: { target_template_id: string };
+        Returns: undefined;
+      };
       duplicate_diagnostic_template_version: {
         Args: {
           new_version_label?: string;
@@ -3498,6 +3506,15 @@ export type Database = {
           dimension_name: string;
           dimension_weight: number;
           target_dimension_id: string;
+        };
+        Returns: undefined;
+      };
+      update_pending_diagnostic_assessment: {
+        Args: {
+          assessment_cycle_label: string;
+          assessment_due_at: string;
+          target_assessment_id: string;
+          target_evaluator_id?: string;
         };
         Returns: undefined;
       };

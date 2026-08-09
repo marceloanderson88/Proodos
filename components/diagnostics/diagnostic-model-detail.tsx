@@ -20,6 +20,7 @@ import {
   addDiagnosticDimensionAction,
   deleteDiagnosticCriterionAction,
   deleteDiagnosticDimensionAction,
+  deleteDiagnosticTemplateAction,
   duplicateDiagnosticTemplateAction,
   publishDiagnosticTemplateAction,
   reorderDiagnosticCriteriaAction,
@@ -68,6 +69,7 @@ export function DiagnosticModelDetail({
   classifications,
   indicators,
   rules,
+  canDelete,
   success,
   error,
 }: {
@@ -80,6 +82,7 @@ export function DiagnosticModelDetail({
   classifications: Classification[];
   indicators: Indicator[];
   rules: Rule[];
+  canDelete: boolean;
   success?: string;
   error?: string;
 }) {
@@ -100,6 +103,11 @@ export function DiagnosticModelDetail({
     incubatorSlug,
   );
   const duplicate = duplicateDiagnosticTemplateAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const deleteTemplate = deleteDiagnosticTemplateAction.bind(
     null,
     organizationSlug,
     incubatorSlug,
@@ -213,6 +221,20 @@ export function DiagnosticModelDetail({
                 <CopyPlus className="size-4" /> Criar nova versão
               </SubmitButton>
             </form>
+          )}
+          {canDelete ? (
+            <form action={deleteTemplate}>
+              <input type="hidden" name="templateId" value={template.id} />
+              <ConfirmSubmitButton
+                message={`Excluir definitivamente o modelo “${template.name}”? Como ele ainda não foi usado, sua estrutura também será removida.`}
+              >
+                <Trash2 className="size-4" /> Excluir modelo
+              </ConfirmSubmitButton>
+            </form>
+          ) : (
+            <span className="inline-flex min-h-11 items-center rounded-xl border border-[#751118]/10 bg-[#f7f2ee] px-4 text-xs font-bold text-[#806f6b]">
+              Modelo utilizado · exclusão bloqueada
+            </span>
           )}
         </div>
       </header>

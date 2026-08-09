@@ -17,6 +17,8 @@ import {
   deleteDiagnosticCriterionSchema,
   deleteDiagnosticDimensionSchema,
   deleteDiagnosticEvidenceSchema,
+  deleteDiagnosticTemplateSchema,
+  deletePendingDiagnosticAssessmentSchema,
   diagnosticAssessmentTransitionSchema,
   duplicateDiagnosticTemplateSchema,
   inviteDiagnosticRespondentSchema,
@@ -29,6 +31,7 @@ import {
   saveDiagnosticResponseSchema,
   updateDiagnosticCriterionSchema,
   updateDiagnosticDimensionSchema,
+  updatePendingDiagnosticAssessmentSchema,
   validateDiagnosticResponseSchema,
 } from "@/lib/diagnostics/schemas";
 import { getIncubatorServerContext } from "@/lib/incubators/server-context";
@@ -565,6 +568,42 @@ export async function publishDiagnosticTemplateAction(
   );
 }
 
+export async function deleteDiagnosticTemplateAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = deleteDiagnosticTemplateSchema.safeParse({
+    templateId: value(formData, "templateId"),
+  });
+  if (!parsed.success)
+    finish(organizationSlug, incubatorSlug, "error", "Modelo inválido.");
+
+  const { error } = await context.supabase.rpc(
+    "delete_unused_diagnostic_template",
+    { target_template_id: parsed.data.templateId },
+  );
+  if (error)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "error",
+      error.message || "Não foi possível excluir o modelo.",
+    );
+
+  revalidatePath(path(organizationSlug, incubatorSlug));
+  finish(
+    organizationSlug,
+    incubatorSlug,
+    "success",
+    "Modelo de diagnóstico excluído.",
+  );
+}
+
 export async function createDiagnosticCampaignAction(
   organizationSlug: string,
   incubatorSlug: string,
@@ -673,6 +712,110 @@ export async function createDiagnosticAssessmentAction(
     incubatorSlug,
     "success",
     "Diagnóstico iniciado para a startup.",
+  );
+}
+
+export async function updatePendingDiagnosticAssessmentAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = updatePendingDiagnosticAssessmentSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    campaignId: value(formData, "campaignId"),
+    cycleLabel: value(formData, "cycleLabel"),
+    dueAt: value(formData, "dueAt"),
+    evaluatorId: value(formData, "evaluatorId"),
+  });
+  const returnTo = parsed.success
+    ? `${path(organizationSlug, incubatorSlug)}/campanhas/${parsed.data.campaignId}`
+    : path(organizationSlug, incubatorSlug);
+  if (!parsed.success)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      parsed.error.issues[0]?.message ?? "Revise os dados da aplicação.",
+    );
+
+  const { error } = await context.supabase.rpc(
+    "update_pending_diagnostic_assessment",
+    {
+      target_assessment_id: parsed.data.assessmentId,
+      assessment_cycle_label: parsed.data.cycleLabel,
+      assessment_due_at: parsed.data.dueAt.toISOString(),
+      target_evaluator_id: parsed.data.evaluatorId || undefined,
+    },
+  );
+  if (error)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      error.message || "Não foi possível editar a aplicação.",
+    );
+
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Aplicação atualizada antes do início.",
+  );
+}
+
+export async function deletePendingDiagnosticAssessmentAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = deletePendingDiagnosticAssessmentSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    campaignId: value(formData, "campaignId"),
+  });
+  const returnTo = parsed.success
+    ? `${path(organizationSlug, incubatorSlug)}/campanhas/${parsed.data.campaignId}`
+    : path(organizationSlug, incubatorSlug);
+  if (!parsed.success)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Aplicação inválida.",
+    );
+
+  const { error } = await context.supabase.rpc(
+    "delete_pending_diagnostic_assessment",
+    { target_assessment_id: parsed.data.assessmentId },
+  );
+  if (error)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      error.message || "Não foi possível excluir a aplicação.",
+    );
+
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Aplicação removida da campanha.",
   );
 }
 
