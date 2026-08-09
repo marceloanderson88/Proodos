@@ -2,7 +2,7 @@
 -- autoridades distintas mesmo compartilhando a mesma instância.
 begin;
 
-select plan(8);
+select plan(9);
 
 insert into auth.users (
   id, email, email_confirmed_at, aud, role,
@@ -204,6 +204,15 @@ select public.submit_diagnostic_assessment(
 );
 
 select set_config('request.jwt.claim.sub', '74100000-0000-4000-8000-000000000003', true);
+select ok(
+  private.has_permission(
+    current_setting('test.diag_auth_org')::uuid,
+    'diagnostic.validate',
+    null,
+    current_setting('test.diag_auth_incubator')::uuid
+  ),
+  'nova organização provisiona diagnostic.validate para o papel avaliador'
+);
 select lives_ok(
   format(
     'update public.diagnostic_responses set validated_value = %L::jsonb, validated_by = %L::uuid, validated_at = now() where id = %L::uuid',

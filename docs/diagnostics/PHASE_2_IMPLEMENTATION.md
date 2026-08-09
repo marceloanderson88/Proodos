@@ -63,8 +63,13 @@ Cada nova incubadora recebe uma cópia publicada e imutável do modelo padrão. 
 - `20260803081200_mark_diagnostic_assessment_in_progress.sql`
 - `20260808090000_diagnostic_draft_editing.sql`
 - `20260808093000_diagnostic_participant_management.sql`
+- `20260808100000_seed_diagnostic_role_permissions.sql`
 
 As migrations corretivas 755–758 permanecem versionadas porque as versões anteriores já haviam sido aplicadas no projeto remoto; removê-las criaria divergência entre o histórico local e o Supabase.
+
+A migration `20260808100000` corrige também o bootstrap: papéis sistêmicos de
+organizações novas passam a receber as permissões de diagnóstico previstas para
+gestores, agentes, avaliadores e auditores, com backfill idempotente.
 
 ## Evidências e Google Drive
 
