@@ -3165,6 +3165,18 @@ export type Database = {
         };
         Returns: string;
       };
+      assign_diagnostic_evaluator: {
+        Args: { target_assessment_id: string; target_user_id: string };
+        Returns: undefined;
+      };
+      assign_diagnostic_respondent: {
+        Args: {
+          target_assessment_id: string;
+          target_role: Database["public"]["Enums"]["diagnostic_respondent_role"];
+          target_user_id: string;
+        };
+        Returns: string;
+      };
       create_diagnostic_campaign: {
         Args: {
           campaign_ends_at: string;
@@ -3203,6 +3215,14 @@ export type Database = {
           slug: string;
         }[];
       };
+      delete_diagnostic_criterion: {
+        Args: { target_criterion_id: string };
+        Returns: undefined;
+      };
+      delete_diagnostic_dimension: {
+        Args: { target_dimension_id: string };
+        Returns: undefined;
+      };
       duplicate_diagnostic_template_version: {
         Args: {
           new_version_label?: string;
@@ -3235,8 +3255,51 @@ export type Database = {
         Args: { target_assessment_id: string };
         Returns: undefined;
       };
+      reorder_diagnostic_criteria: {
+        Args: {
+          ordered_criterion_ids: string[];
+          target_dimension_id: string;
+        };
+        Returns: undefined;
+      };
+      reorder_diagnostic_dimensions: {
+        Args: {
+          ordered_dimension_ids: string[];
+          target_template_id: string;
+        };
+        Returns: undefined;
+      };
+      revoke_diagnostic_respondent: {
+        Args: { target_assessment_id: string; target_user_id: string };
+        Returns: undefined;
+      };
       submit_diagnostic_assessment: {
         Args: { target_assessment_id: string };
+        Returns: undefined;
+      };
+      update_diagnostic_criterion_with_rubric: {
+        Args: {
+          criterion_allows_na: boolean;
+          criterion_code: string;
+          criterion_evidence_required_from: number | null;
+          criterion_help_text: string;
+          criterion_prompt: string;
+          criterion_requires_na_justification: boolean;
+          criterion_weight: number;
+          rubric_descriptions: string[];
+          target_criterion_id: string;
+        };
+        Returns: undefined;
+      };
+      update_diagnostic_dimension: {
+        Args: {
+          dimension_code: string;
+          dimension_description: string;
+          dimension_is_essential: boolean;
+          dimension_name: string;
+          dimension_weight: number;
+          target_dimension_id: string;
+        };
         Returns: undefined;
       };
       system_readiness: { Args: never; Returns: boolean };

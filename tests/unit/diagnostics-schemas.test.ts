@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  addDiagnosticExternalEvidenceSchema,
+  assignDiagnosticRespondentSchema,
   createDiagnosticCampaignSchema,
   createDiagnosticCriterionSchema,
   createDiagnosticDimensionSchema,
   diagnosticAssessmentTransitionSchema,
   duplicateDiagnosticTemplateSchema,
   saveDiagnosticResponseSchema,
+  updateDiagnosticDimensionSchema,
 } from "@/lib/diagnostics/schemas";
 
 describe("schemas de diagnósticos", () => {
@@ -103,5 +106,47 @@ describe("schemas de diagnósticos", () => {
       communicationMessage: "",
     });
     expect(result.success).toBe(false);
+  });
+
+  it("valida edição de dimensão e vínculo de responsável", () => {
+    expect(
+      updateDiagnosticDimensionSchema.safeParse({
+        templateId: "11111111-1111-4111-8111-111111111111",
+        dimensionId: "22222222-2222-4222-8222-222222222222",
+        code: "D1",
+        name: "Estratégia e mercado",
+        description: "Leitura revisada.",
+        weight: "25",
+        isEssential: true,
+      }).success,
+    ).toBe(true);
+    expect(
+      assignDiagnosticRespondentSchema.safeParse({
+        assessmentId: "11111111-1111-4111-8111-111111111111",
+        userId: "22222222-2222-4222-8222-222222222222",
+        role: "primary",
+        returnTo: "/o/proodos/i/sertao-maker/diagnosticos/avaliacoes/1",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("aceita somente URL HTTPS como evidência externa", () => {
+    const base = {
+      responseId: "11111111-1111-4111-8111-111111111111",
+      label: "Canvas validado",
+      returnTo: "/o/proodos/i/sertao-maker/diagnosticos/avaliacoes/1",
+    };
+    expect(
+      addDiagnosticExternalEvidenceSchema.safeParse({
+        ...base,
+        externalUrl: "https://drive.google.com/document/d/arquivo",
+      }).success,
+    ).toBe(true);
+    expect(
+      addDiagnosticExternalEvidenceSchema.safeParse({
+        ...base,
+        externalUrl: "http://exemplo.inseguro/arquivo",
+      }).success,
+    ).toBe(false);
   });
 });

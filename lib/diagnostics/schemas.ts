@@ -18,6 +18,19 @@ export const createDiagnosticDimensionSchema = z.object({
   isEssential: z.boolean(),
 });
 
+export const updateDiagnosticDimensionSchema =
+  createDiagnosticDimensionSchema.extend({ dimensionId: z.uuid() });
+
+export const deleteDiagnosticDimensionSchema = z.object({
+  templateId: z.uuid(),
+  dimensionId: z.uuid(),
+});
+
+export const reorderDiagnosticDimensionsSchema = z.object({
+  templateId: z.uuid(),
+  dimensionIds: z.array(z.uuid()).min(1),
+});
+
 export const createDiagnosticCriterionSchema = z.object({
   templateId: z.uuid(),
   dimensionId: z.uuid(),
@@ -41,6 +54,20 @@ export const createDiagnosticCriterionSchema = z.object({
   rubric4: z.string().trim().min(2).max(2000),
 });
 
+export const updateDiagnosticCriterionSchema =
+  createDiagnosticCriterionSchema.extend({ criterionId: z.uuid() });
+
+export const deleteDiagnosticCriterionSchema = z.object({
+  templateId: z.uuid(),
+  criterionId: z.uuid(),
+});
+
+export const reorderDiagnosticCriteriaSchema = z.object({
+  templateId: z.uuid(),
+  dimensionId: z.uuid(),
+  criterionIds: z.array(z.uuid()).min(1),
+});
+
 export const duplicateDiagnosticTemplateSchema = z.object({
   templateId: z.uuid(),
   versionLabel: z.string().trim().max(40).default(""),
@@ -56,6 +83,25 @@ export const createDiagnosticAssessmentSchema = z.object({
   startupId: z.uuid(),
   templateId: z.uuid(),
   cycleLabel: z.string().trim().min(2).max(120),
+});
+
+export const assignDiagnosticRespondentSchema = z.object({
+  assessmentId: z.uuid(),
+  userId: z.uuid(),
+  role: z.enum(["primary", "collaborator", "viewer"]),
+  returnTo: z.string().trim().min(1).max(500),
+});
+
+export const revokeDiagnosticRespondentSchema = z.object({
+  assessmentId: z.uuid(),
+  userId: z.uuid(),
+  returnTo: z.string().trim().min(1).max(500),
+});
+
+export const assignDiagnosticEvaluatorSchema = z.object({
+  assessmentId: z.uuid(),
+  userId: z.uuid(),
+  returnTo: z.string().trim().min(1).max(500),
 });
 
 export const createDiagnosticCampaignSchema = z
@@ -116,6 +162,18 @@ export const saveDiagnosticResponseSchema = z
       });
     }
   });
+
+export const addDiagnosticExternalEvidenceSchema = z.object({
+  responseId: z.uuid(),
+  label: z.string().trim().min(2).max(200),
+  externalUrl: z.url().startsWith("https://").max(2048),
+  returnTo: z.string().trim().min(1).max(500),
+});
+
+export const deleteDiagnosticEvidenceSchema = z.object({
+  evidenceId: z.uuid(),
+  returnTo: z.string().trim().min(1).max(500),
+});
 
 export const validateDiagnosticResponseSchema = z.object({
   assessmentId: z.uuid(),

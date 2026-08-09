@@ -4,16 +4,25 @@ import {
   BadgeCheck,
   BarChart3,
   ClipboardCheck,
+  ExternalLink,
   FileText,
   ShieldCheck,
+  UserCheck,
+  UserRoundPlus,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 
 import {
+  addDiagnosticExternalEvidenceAction,
+  assignDiagnosticEvaluatorAction,
+  assignDiagnosticRespondentAction,
+  deleteDiagnosticEvidenceAction,
   finalizeDiagnosticAssessmentAction,
   reopenDiagnosticAssessmentAction,
   saveDiagnosticResponseAction,
   submitDiagnosticAssessmentAction,
+  revokeDiagnosticRespondentAction,
   validateDiagnosticResponseAction,
 } from "@/app/(private)/o/[organizationSlug]/i/[incubatorSlug]/diagnosticos/actions";
 import { FeedbackBanner } from "@/components/m6/feedback-banner";
@@ -36,6 +45,9 @@ type TriggerResult =
   Database["public"]["Tables"]["diagnostic_trigger_results"]["Row"];
 type TriggerRule =
   Database["public"]["Tables"]["diagnostic_trigger_rules"]["Row"];
+type Respondent = Database["public"]["Tables"]["diagnostic_respondents"]["Row"];
+type Evidence =
+  Database["public"]["Tables"]["diagnostic_response_evidence"]["Row"];
 
 function scalar(value: Json | null) {
   return typeof value === "string" || typeof value === "number"
@@ -56,6 +68,9 @@ export function DiagnosticAssessmentWorkspace({
   scores,
   triggerResults,
   triggerRules,
+  respondents,
+  people,
+  evidence,
   success,
   error,
 }: {
@@ -71,6 +86,13 @@ export function DiagnosticAssessmentWorkspace({
   scores: DimensionScore[];
   triggerResults: TriggerResult[];
   triggerRules: TriggerRule[];
+  respondents: Respondent[];
+  people: {
+    id: string;
+    display_name: string | null;
+    email: string | null;
+  }[];
+  evidence: Evidence[];
   success?: string;
   error?: string;
 }) {
@@ -101,6 +123,35 @@ export function DiagnosticAssessmentWorkspace({
     organizationSlug,
     incubatorSlug,
   );
+  const assignRespondent = assignDiagnosticRespondentAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const revokeRespondent = revokeDiagnosticRespondentAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const assignEvaluator = assignDiagnosticEvaluatorAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const addExternalEvidence = addDiagnosticExternalEvidenceAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const deleteEvidence = deleteDiagnosticEvidenceAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const personName = (userId: string) => {
+    const person = people.find((item) => item.id === userId);
+    return person?.display_name || person?.email || "Pessoa sem nome";
+  };
   const answered = responses.filter(
     (response) => response.self_value !== null || response.is_not_applicable,
   ).length;
@@ -283,6 +334,11 @@ export function DiagnosticAssessmentWorkspace({
                     const rubric = levels.filter(
                       (level) => level.criterion_id === criterion.id,
                     );
+                    const responseEvidence = response
+                      ? evidence.filter(
+                          (item) => item.response_id === response.id,
+                        )
+                      : [];
                     return (
                       <article key={criterion.id} className="px-5 py-6 sm:px-6">
                         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -306,122 +362,219 @@ export function DiagnosticAssessmentWorkspace({
                           )}
                         </div>
                         <div className="mt-5 grid gap-5 2xl:grid-cols-[1.2fr_0.8fr]">
-                          <form
-                            action={saveResponse}
-                            className="space-y-4 rounded-2xl border border-[#751118]/8 bg-[#fcf9f6] p-4"
-                          >
-                            <input
-                              type="hidden"
-                              name="returnTo"
-                              value={currentPath}
-                            />
-                            <input
-                              type="hidden"
-                              name="assessmentId"
-                              value={assessment.id}
-                            />
-                            <input
-                              type="hidden"
-                              name="criterionId"
-                              value={criterion.id}
-                            />
-                            <input
-                              type="hidden"
-                              name="responseType"
-                              value={criterion.response_type}
-                            />
-                            <fieldset>
-                              <legend className="text-sm font-black text-[#4b1719]">
-                                Autoavaliação
-                              </legend>
-                              {rubric.length > 0 ? (
-                                <div className="mt-3 grid gap-2">
-                                  {rubric.map((level) => (
-                                    <label
-                                      key={level.id}
-                                      className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#751118]/8 bg-white p-3 has-[:checked]:border-[#8b161d] has-[:checked]:bg-[#fff4ef]"
-                                    >
-                                      <input
-                                        className="mt-1 accent-[#811219]"
-                                        type="radio"
-                                        name="value"
-                                        value={Number(level.score)}
-                                        defaultChecked={
-                                          scalar(
-                                            response?.self_value ?? null,
-                                          ) === String(Number(level.score))
-                                        }
-                                        required={!response?.is_not_applicable}
-                                      />
-                                      <span>
-                                        <strong className="text-sm text-[#481014]">
-                                          {Number(level.score)} · {level.label}
-                                        </strong>
-                                        <span className="mt-0.5 block text-xs leading-5 text-[#7a6965]">
-                                          {level.description}
+                          <div className="rounded-2xl border border-[#751118]/8 bg-[#fcf9f6] p-4">
+                            <form action={saveResponse} className="space-y-4">
+                              <input
+                                type="hidden"
+                                name="returnTo"
+                                value={currentPath}
+                              />
+                              <input
+                                type="hidden"
+                                name="assessmentId"
+                                value={assessment.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="criterionId"
+                                value={criterion.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="responseType"
+                                value={criterion.response_type}
+                              />
+                              <fieldset>
+                                <legend className="text-sm font-black text-[#4b1719]">
+                                  Autoavaliação
+                                </legend>
+                                {rubric.length > 0 ? (
+                                  <div className="mt-3 grid gap-2">
+                                    {rubric.map((level) => (
+                                      <label
+                                        key={level.id}
+                                        className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#751118]/8 bg-white p-3 has-[:checked]:border-[#8b161d] has-[:checked]:bg-[#fff4ef]"
+                                      >
+                                        <input
+                                          className="mt-1 accent-[#811219]"
+                                          type="radio"
+                                          name="value"
+                                          value={Number(level.score)}
+                                          defaultChecked={
+                                            scalar(
+                                              response?.self_value ?? null,
+                                            ) === String(Number(level.score))
+                                          }
+                                          required={
+                                            !response?.is_not_applicable
+                                          }
+                                        />
+                                        <span>
+                                          <strong className="text-sm text-[#481014]">
+                                            {Number(level.score)} ·{" "}
+                                            {level.label}
+                                          </strong>
+                                          <span className="mt-0.5 block text-xs leading-5 text-[#7a6965]">
+                                            {level.description}
+                                          </span>
                                         </span>
-                                      </span>
-                                    </label>
-                                  ))}
-                                </div>
-                              ) : (
-                                <input
-                                  className={`${inputClassName} mt-3`}
-                                  name="value"
-                                  defaultValue={scalar(
-                                    response?.self_value ?? null,
-                                  )}
-                                  required
-                                />
-                              )}
-                            </fieldset>
-                            {criterion.allows_not_applicable && (
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-sm font-bold text-[#594745]">
+                                      </label>
+                                    ))}
+                                  </div>
+                                ) : (
                                   <input
-                                    type="checkbox"
-                                    name="isNotApplicable"
-                                    defaultChecked={response?.is_not_applicable}
-                                  />{" "}
-                                  Não se aplica
-                                </label>
+                                    className={`${inputClassName} mt-3`}
+                                    name="value"
+                                    defaultValue={scalar(
+                                      response?.self_value ?? null,
+                                    )}
+                                    required
+                                  />
+                                )}
+                              </fieldset>
+                              {criterion.allows_not_applicable && (
+                                <div className="space-y-2">
+                                  <label className="flex items-center gap-2 text-sm font-bold text-[#594745]">
+                                    <input
+                                      type="checkbox"
+                                      name="isNotApplicable"
+                                      defaultChecked={
+                                        response?.is_not_applicable
+                                      }
+                                    />{" "}
+                                    Não se aplica
+                                  </label>
+                                  <input
+                                    className={inputClassName}
+                                    name="notApplicableJustification"
+                                    defaultValue={
+                                      response?.not_applicable_justification ??
+                                      ""
+                                    }
+                                    placeholder="Justificativa para N/A"
+                                  />
+                                </div>
+                              )}
+                              <Field
+                                label="Justificativa / comentário"
+                                name={`comment-${criterion.id}`}
+                              >
+                                <textarea
+                                  className={`${inputClassName} min-h-20`}
+                                  name="comment"
+                                  defaultValue={response?.self_comment ?? ""}
+                                />
+                              </Field>
+                              <Field
+                                label="Referência da evidência"
+                                name={`evidence-${criterion.id}`}
+                              >
                                 <input
                                   className={inputClassName}
-                                  name="notApplicableJustification"
-                                  defaultValue={
-                                    response?.not_applicable_justification ?? ""
-                                  }
-                                  placeholder="Justificativa para N/A"
+                                  name="evidenceNotes"
+                                  defaultValue={response?.evidence_notes ?? ""}
+                                  placeholder="Descreva o documento ou registro comprobatório"
                                 />
+                              </Field>
+                              <SubmitButton disabled={!canRespond}>
+                                {canRespond
+                                  ? "Salvar resposta"
+                                  : "Resposta bloqueada"}
+                              </SubmitButton>
+                            </form>
+                            <div className="mt-5 border-t border-[#751118]/8 pt-4">
+                              <div className="flex items-center gap-2">
+                                <ExternalLink className="size-4 text-[#8b161d]" />
+                                <h4 className="text-sm font-black text-[#481014]">
+                                  Evidências vinculadas
+                                </h4>
                               </div>
-                            )}
-                            <Field
-                              label="Justificativa / comentário"
-                              name={`comment-${criterion.id}`}
-                            >
-                              <textarea
-                                className={`${inputClassName} min-h-20`}
-                                name="comment"
-                                defaultValue={response?.self_comment ?? ""}
-                              />
-                            </Field>
-                            <Field
-                              label="Referência da evidência"
-                              name={`evidence-${criterion.id}`}
-                            >
-                              <input
-                                className={inputClassName}
-                                name="evidenceNotes"
-                                defaultValue={response?.evidence_notes ?? ""}
-                                placeholder="Descreva o documento ou registro comprobatório"
-                              />
-                            </Field>
-                            <SubmitButton disabled={!canRespond}>
-                              {canRespond
-                                ? "Salvar resposta"
-                                : "Resposta bloqueada"}
-                            </SubmitButton>
-                          </form>
+                              {responseEvidence.length > 0 && (
+                                <ul className="mt-3 space-y-2">
+                                  {responseEvidence.map((item) => (
+                                    <li
+                                      key={item.id}
+                                      className="flex items-center justify-between gap-3 rounded-xl bg-white p-3 text-xs"
+                                    >
+                                      <a
+                                        href={item.external_url ?? "#"}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="min-w-0 truncate font-bold text-[#7b161c] underline decoration-[#7b161c]/30 underline-offset-4"
+                                      >
+                                        {item.label}
+                                      </a>
+                                      {canRespond && (
+                                        <form action={deleteEvidence}>
+                                          <input
+                                            type="hidden"
+                                            name="evidenceId"
+                                            value={item.id}
+                                          />
+                                          <input
+                                            type="hidden"
+                                            name="returnTo"
+                                            value={currentPath}
+                                          />
+                                          <button
+                                            type="submit"
+                                            aria-label={`Remover evidência ${item.label}`}
+                                            className="grid size-8 place-items-center rounded-lg text-[#a3242b] hover:bg-[#f8e1e1]"
+                                          >
+                                            <X className="size-3.5" />
+                                          </button>
+                                        </form>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                              {response && canRespond ? (
+                                <form
+                                  action={addExternalEvidence}
+                                  className="mt-3 grid gap-3"
+                                >
+                                  <input
+                                    type="hidden"
+                                    name="responseId"
+                                    value={response.id}
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="returnTo"
+                                    value={currentPath}
+                                  />
+                                  <input
+                                    name="label"
+                                    required
+                                    maxLength={200}
+                                    placeholder="Nome da evidência"
+                                    className={inputClassName}
+                                  />
+                                  <input
+                                    name="externalUrl"
+                                    type="url"
+                                    required
+                                    pattern="https://.*"
+                                    placeholder="https://..."
+                                    className={inputClassName}
+                                  />
+                                  <SubmitButton>
+                                    Vincular URL segura
+                                  </SubmitButton>
+                                </form>
+                              ) : !response ? (
+                                <p className="mt-3 text-xs leading-5 text-[#806f6b]">
+                                  Salve a resposta antes de anexar evidências.
+                                </p>
+                              ) : null}
+                              <p className="mt-3 text-[0.68rem] leading-5 text-[#8a7470]">
+                                Upload direto ao Drive será habilitado somente
+                                após a conta institucional e a política de
+                                arquivos serem confirmadas.
+                              </p>
+                            </div>
+                          </div>
                           <form
                             action={validateResponse}
                             className="space-y-4 rounded-2xl border border-[#7aad87]/20 bg-[#f4faf5] p-4"
@@ -503,6 +656,148 @@ export function DiagnosticAssessmentWorkspace({
         </main>
 
         <aside className="space-y-5 xl:sticky xl:top-24 xl:self-start">
+          <section className="dashboard-card rounded-[1.5rem] p-5">
+            <div className="flex items-center gap-2">
+              <UserRoundPlus className="size-5 text-[#8b161d]" />
+              <h2 className="font-black text-[#481014]">Responsáveis</h2>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-[#806f6b]">
+              O vínculo e as permissões são validados no banco antes de salvar.
+            </p>
+
+            <div className="mt-4 space-y-2">
+              {respondents.length === 0 ? (
+                <p className="rounded-xl bg-[#fcf8f5] p-3 text-xs text-[#806f6b]">
+                  Nenhum respondente específico vinculado.
+                </p>
+              ) : (
+                respondents.map((respondent) => (
+                  <div
+                    key={respondent.id}
+                    className="flex items-center justify-between gap-3 rounded-xl bg-[#fcf8f5] p-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-[#481014]">
+                        {personName(respondent.user_id)}
+                      </p>
+                      <p className="mt-0.5 text-[0.64rem] font-bold text-[#8a7470] uppercase">
+                        {respondent.role === "primary"
+                          ? "Responsável principal"
+                          : respondent.role === "collaborator"
+                            ? "Colaborador"
+                            : "Leitor"}
+                      </p>
+                    </div>
+                    <form action={revokeRespondent}>
+                      <input
+                        type="hidden"
+                        name="assessmentId"
+                        value={assessment.id}
+                      />
+                      <input
+                        type="hidden"
+                        name="userId"
+                        value={respondent.user_id}
+                      />
+                      <input
+                        type="hidden"
+                        name="returnTo"
+                        value={currentPath}
+                      />
+                      <button
+                        type="submit"
+                        aria-label={`Remover ${personName(respondent.user_id)}`}
+                        className="grid size-9 place-items-center rounded-xl text-[#a3242b] transition hover:bg-[#f8e1e1]"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </form>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <form
+              action={assignRespondent}
+              className="mt-4 grid gap-3 border-t border-[#751118]/8 pt-4"
+            >
+              <input type="hidden" name="assessmentId" value={assessment.id} />
+              <input type="hidden" name="returnTo" value={currentPath} />
+              <label className="grid gap-1 text-xs font-black text-[#5e4542]">
+                Pessoa
+                <select
+                  name="userId"
+                  required
+                  className={inputClassName}
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    Selecione
+                  </option>
+                  {people
+                    .filter(
+                      (person) =>
+                        !respondents.some((item) => item.user_id === person.id),
+                    )
+                    .map((person) => (
+                      <option key={person.id} value={person.id}>
+                        {person.display_name || person.email}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label className="grid gap-1 text-xs font-black text-[#5e4542]">
+                Papel na resposta
+                <select
+                  name="role"
+                  required
+                  className={inputClassName}
+                  defaultValue="collaborator"
+                >
+                  <option value="primary">Responsável principal</option>
+                  <option value="collaborator">Colaborador</option>
+                  <option value="viewer">Somente leitura</option>
+                </select>
+              </label>
+              <SubmitButton disabled={people.length === respondents.length}>
+                Vincular respondente
+              </SubmitButton>
+            </form>
+
+            <form
+              action={assignEvaluator}
+              className="mt-5 grid gap-3 border-t border-[#751118]/8 pt-4"
+            >
+              <input type="hidden" name="assessmentId" value={assessment.id} />
+              <input type="hidden" name="returnTo" value={currentPath} />
+              <div className="flex items-center gap-2 text-sm font-black text-[#315f3b]">
+                <UserCheck className="size-4" /> Avaliador oficial
+              </div>
+              {assessment.evaluator_id && (
+                <p className="rounded-xl bg-[#eef8f0] px-3 py-2 text-xs font-bold text-[#356442]">
+                  Atual: {personName(assessment.evaluator_id)}
+                </p>
+              )}
+              <select
+                name="userId"
+                required
+                className={inputClassName}
+                defaultValue={assessment.evaluator_id ?? ""}
+              >
+                <option value="" disabled>
+                  Selecione uma pessoa
+                </option>
+                {people.map((person) => (
+                  <option key={person.id} value={person.id}>
+                    {person.display_name || person.email}
+                  </option>
+                ))}
+              </select>
+              <SubmitButton disabled={people.length === 0}>
+                Definir avaliador
+              </SubmitButton>
+            </form>
+          </section>
           <section className="dashboard-card rounded-[1.5rem] p-5">
             <div className="flex items-center gap-2">
               <ClipboardCheck className="size-5 text-[#8b161d]" />

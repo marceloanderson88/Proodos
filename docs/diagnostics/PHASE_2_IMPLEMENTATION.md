@@ -29,6 +29,9 @@ Cada nova incubadora recebe uma cópia publicada e imutável do modelo padrão. 
 10. Editor funcional de rascunhos com códigos, pesos, essencialidade, critérios e rubricas 0–4.
 11. Duplicação integral de versão publicada para um novo rascunho, incluindo estágios, indicadores e gatilhos.
 12. Submissão, reabertura e validação final com histórico e snapshot imutável das validações.
+13. Edição, exclusão e reordenação atômica de dimensões e critérios em rascunhos.
+14. Gestão de responsável principal, colaboradores, leitores e avaliador oficial por aplicação.
+15. Evidências externas HTTPS vinculadas à resposta, com autoria, estado e remoção lógica.
 
 ## Segurança e isolamento
 
@@ -58,12 +61,14 @@ Cada nova incubadora recebe uma cópia publicada e imutável do modelo padrão. 
 - `20260803081000_diagnostics_editor_and_assessment_workflow.sql`
 - `20260803081100_grant_diagnostic_assessment_writes.sql`
 - `20260803081200_mark_diagnostic_assessment_in_progress.sql`
+- `20260808090000_diagnostic_draft_editing.sql`
+- `20260808093000_diagnostic_participant_management.sql`
 
 As migrations corretivas 755–758 permanecem versionadas porque as versões anteriores já haviam sido aplicadas no projeto remoto; removê-las criaria divergência entre o histórico local e o Supabase.
 
 ## Evidências e Google Drive
 
-A relação `diagnostic_response_evidence` armazena metadados, estado, autoria e referência ao arquivo gerenciado pelo módulo de arquivos. O upload binário continua no Google Drive. Nesta fase, a tela registra a referência textual legada; o seletor/upload resumível conectado ao Drive é uma pendência explícita e não foi simulado silenciosamente.
+A relação `diagnostic_response_evidence` armazena metadados, estado, autoria e referência ao arquivo gerenciado pelo módulo de arquivos. A tela permite vincular e remover evidências externas HTTPS de forma estruturada. O upload binário continua destinado ao Google Drive, mas o adapter real permanece bloqueado por B-03/B-04 (Shared Drive/conta de serviço e política institucional de arquivos); a API existente continua falhando explicitamente, sem simular upload.
 
 ## Testes e verificações
 
@@ -74,6 +79,8 @@ A relação `diagnostic_response_evidence` armazena metadados, estado, autoria e
 - Teste transacional remoto da duplicação integral, preservando 9 dimensões, 36 critérios, 180 rubricas, 25 indicadores e 13 gatilhos.
 - Teste transacional remoto do workflow completo, com 36 respostas, envio, validação final, 36 revisões imutáveis e eventos de histórico.
 - Testes unitários Zod para período e participantes da campanha.
+- Testes unitários Zod para edição, responsáveis e URL HTTPS de evidência.
+- Verificação transacional remota, com rollback, de edição/reordenação e atribuição de respondente/avaliador.
 - `lint`, `typecheck` e suíte Vitest são obrigatórios antes da conclusão.
 
 O projeto remoto não possui a extensão pgTAP. Os arquivos SQL são destinados ao ambiente local de testes do Supabase. A execução remota equivalente foi feita em transação com rollback, sem persistir dados sintéticos.
@@ -82,8 +89,7 @@ O advisor de segurança mantém avisos para RPCs `SECURITY DEFINER` intencionais
 
 ## Pendências após este incremento
 
-- atribuição e convite de respondentes por aplicação;
-- edição, remoção e reordenação de dimensões/critérios em rascunho;
+- convite por e-mail para pessoas ainda sem membership aceita;
 - autosave com controle otimista por `lock_version`;
 - upload resumível de evidências no Google Drive;
 - indicadores editáveis e fórmulas derivadas na interface;

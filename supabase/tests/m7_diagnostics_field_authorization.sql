@@ -124,6 +124,10 @@ update public.diagnostic_templates
 set status = 'published', published_at = now()
 where id = current_setting('test.diag_auth_template')::uuid;
 
+-- A montagem do fixture não é o objeto deste teste. A autorização de criação
+-- da avaliação é coberta por m7_diagnostics_rls.sql.
+reset role;
+
 with inserted as (
   insert into public.diagnostic_assessments (
     organization_id, incubator_id, startup_id, template_id, cycle_label, started_by
@@ -139,7 +143,7 @@ with inserted as (
 
 insert into public.diagnostic_respondents (
   organization_id, incubator_id, assessment_id, user_id,
-  respondent_role, can_submit, invited_by, accepted_at
+  role, can_submit, invited_by, accepted_at
 ) values (
   current_setting('test.diag_auth_org')::uuid,
   current_setting('test.diag_auth_incubator')::uuid,
@@ -161,6 +165,10 @@ with inserted as (
     '1'::jsonb
   ) returning id
 ) select set_config('test.diag_auth_response', id::text, true) from inserted;
+
+set local role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claim.sub', '74100000-0000-4000-8000-000000000001', true);
 
 select ok(
   not has_column_privilege('authenticated', 'public.diagnostic_assessments', 'self_score', 'UPDATE'),

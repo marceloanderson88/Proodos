@@ -1,21 +1,31 @@
 import {
   AlertTriangle,
+  ArrowDown,
   ArrowLeft,
+  ArrowUp,
   BarChart3,
   CheckCircle2,
   ClipboardList,
   CopyPlus,
   Plus,
+  Save,
   Send,
   ShieldCheck,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 
 import {
   addDiagnosticCriterionAction,
   addDiagnosticDimensionAction,
+  deleteDiagnosticCriterionAction,
+  deleteDiagnosticDimensionAction,
   duplicateDiagnosticTemplateAction,
   publishDiagnosticTemplateAction,
+  reorderDiagnosticCriteriaAction,
+  reorderDiagnosticDimensionsAction,
+  updateDiagnosticCriterionAction,
+  updateDiagnosticDimensionAction,
 } from "@/app/(private)/o/[organizationSlug]/i/[incubatorSlug]/diagnosticos/actions";
 import { FeedbackBanner } from "@/components/m6/feedback-banner";
 import {
@@ -23,6 +33,7 @@ import {
   inputClassName,
   SubmitButton,
 } from "@/components/m6/form-controls";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Template = Database["public"]["Tables"]["diagnostic_templates"]["Row"];
@@ -34,6 +45,18 @@ type Classification =
 type Indicator =
   Database["public"]["Tables"]["diagnostic_indicator_definitions"]["Row"];
 type Rule = Database["public"]["Tables"]["diagnostic_trigger_rules"]["Row"];
+
+function moveId(ids: string[], index: number, offset: -1 | 1) {
+  const next = [...ids];
+  const target = index + offset;
+  if (target < 0 || target >= next.length) return next;
+  const currentId = next[index];
+  const targetId = next[target];
+  if (!currentId || !targetId) return next;
+  next[index] = targetId;
+  next[target] = currentId;
+  return next;
+}
 
 export function DiagnosticModelDetail({
   organizationSlug,
@@ -77,6 +100,36 @@ export function DiagnosticModelDetail({
     incubatorSlug,
   );
   const duplicate = duplicateDiagnosticTemplateAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const updateDimension = updateDiagnosticDimensionAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const deleteDimension = deleteDiagnosticDimensionAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const reorderDimensions = reorderDiagnosticDimensionsAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const updateCriterion = updateDiagnosticCriterionAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const deleteCriterion = deleteDiagnosticCriterionAction.bind(
+    null,
+    organizationSlug,
+    incubatorSlug,
+  );
+  const reorderCriteria = reorderDiagnosticCriteriaAction.bind(
     null,
     organizationSlug,
     incubatorSlug,
@@ -432,7 +485,7 @@ export function DiagnosticModelDetail({
 
       <div className="grid gap-6 xl:grid-cols-[1.55fr_0.65fr]">
         <section className="space-y-4">
-          {dimensions.map((dimension) => {
+          {dimensions.map((dimension, dimensionIndex) => {
             const dimensionCriteria = criteria.filter(
               (criterion) => criterion.dimension_id === dimension.id,
             );
@@ -455,7 +508,7 @@ export function DiagnosticModelDetail({
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-end gap-2">
                     {dimension.is_essential && (
                       <span className="rounded-full bg-[#f9e8dc] px-3 py-1 text-[0.64rem] font-black text-[#7b201e]">
                         Essencial
@@ -464,10 +517,166 @@ export function DiagnosticModelDetail({
                     <span className="rounded-full bg-white px-3 py-1 text-[0.64rem] font-black text-[#65524f]">
                       Peso {Number(dimension.weight)}%
                     </span>
+                    {template.status === "draft" && dimensions.length > 1 && (
+                      <>
+                        {([-1, 1] as const).map((offset) => {
+                          const disabled =
+                            dimensionIndex + offset < 0 ||
+                            dimensionIndex + offset >= dimensions.length;
+                          const orderedIds = moveId(
+                            dimensions.map((item) => item.id),
+                            dimensionIndex,
+                            offset,
+                          );
+                          return (
+                            <form action={reorderDimensions} key={offset}>
+                              <input
+                                type="hidden"
+                                name="templateId"
+                                value={template.id}
+                              />
+                              {orderedIds.map((id) => (
+                                <input
+                                  key={id}
+                                  type="hidden"
+                                  name="dimensionIds"
+                                  value={id}
+                                />
+                              ))}
+                              <button
+                                type="submit"
+                                disabled={disabled}
+                                aria-label={
+                                  offset === -1
+                                    ? `Mover ${dimension.name} para cima`
+                                    : `Mover ${dimension.name} para baixo`
+                                }
+                                className="grid size-9 place-items-center rounded-xl border border-[#7b161c]/15 bg-white text-[#7b161c] transition hover:bg-[#f7e7de] disabled:cursor-not-allowed disabled:opacity-35"
+                              >
+                                {offset === -1 ? (
+                                  <ArrowUp className="size-4" />
+                                ) : (
+                                  <ArrowDown className="size-4" />
+                                )}
+                              </button>
+                            </form>
+                          );
+                        })}
+                      </>
+                    )}
                   </div>
                 </div>
+                {template.status === "draft" && (
+                  <details className="border-b border-[#751118]/8 bg-white px-5 py-4 sm:px-6">
+                    <summary className="cursor-pointer text-sm font-black text-[#7b161c]">
+                      Editar dimensão
+                    </summary>
+                    <form action={updateDimension} className="mt-4 grid gap-4">
+                      <input
+                        type="hidden"
+                        name="templateId"
+                        value={template.id}
+                      />
+                      <input
+                        type="hidden"
+                        name="dimensionId"
+                        value={dimension.id}
+                      />
+                      <div className="grid gap-4 sm:grid-cols-[8rem_1fr_8rem]">
+                        <Field
+                          label="Código"
+                          name={`dimension-code-${dimension.id}`}
+                        >
+                          <input
+                            id={`dimension-code-${dimension.id}`}
+                            name="code"
+                            defaultValue={dimension.code ?? ""}
+                            required
+                            className={inputClassName}
+                          />
+                        </Field>
+                        <Field
+                          label="Nome"
+                          name={`dimension-name-${dimension.id}`}
+                        >
+                          <input
+                            id={`dimension-name-${dimension.id}`}
+                            name="name"
+                            defaultValue={dimension.name}
+                            required
+                            className={inputClassName}
+                          />
+                        </Field>
+                        <Field
+                          label="Peso (%)"
+                          name={`dimension-weight-${dimension.id}`}
+                        >
+                          <input
+                            id={`dimension-weight-${dimension.id}`}
+                            name="weight"
+                            type="number"
+                            min="0.001"
+                            max="100"
+                            step="0.001"
+                            defaultValue={Number(dimension.weight)}
+                            required
+                            className={inputClassName}
+                          />
+                        </Field>
+                      </div>
+                      <Field
+                        label="Descrição"
+                        name={`dimension-description-${dimension.id}`}
+                      >
+                        <textarea
+                          id={`dimension-description-${dimension.id}`}
+                          name="description"
+                          rows={2}
+                          defaultValue={dimension.description}
+                          className={inputClassName}
+                        />
+                      </Field>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <label className="flex items-center gap-3 text-sm font-bold text-[#5e4542]">
+                          <input
+                            type="checkbox"
+                            name="isEssential"
+                            defaultChecked={dimension.is_essential}
+                            className="size-4 accent-[#8a141b]"
+                          />
+                          Dimensão essencial
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          <SubmitButton>
+                            <Save className="size-4" /> Salvar dimensão
+                          </SubmitButton>
+                        </div>
+                      </div>
+                    </form>
+                    <form
+                      action={deleteDimension}
+                      className="mt-3 flex justify-end"
+                    >
+                      <input
+                        type="hidden"
+                        name="templateId"
+                        value={template.id}
+                      />
+                      <input
+                        type="hidden"
+                        name="dimensionId"
+                        value={dimension.id}
+                      />
+                      <ConfirmSubmitButton
+                        message={`Excluir a dimensão “${dimension.name}” e todos os seus critérios?`}
+                      >
+                        <Trash2 className="size-4" /> Excluir dimensão
+                      </ConfirmSubmitButton>
+                    </form>
+                  </details>
+                )}
                 <div className="divide-y divide-[#751118]/8">
-                  {dimensionCriteria.map((criterion) => {
+                  {dimensionCriteria.map((criterion, criterionIndex) => {
                     const rubric = levels.filter(
                       (level) => level.criterion_id === criterion.id,
                     );
@@ -494,6 +703,242 @@ export function DiagnosticModelDetail({
                             {rubric.length}/5 níveis
                           </span>
                         </summary>
+                        {template.status === "draft" && (
+                          <div className="mt-4 border-t border-[#751118]/8 pt-4">
+                            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-xs font-black tracking-[0.08em] text-[#8b6662] uppercase">
+                                Editar critério e rubrica
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {dimensionCriteria.length > 1 &&
+                                  ([-1, 1] as const).map((offset) => {
+                                    const disabled =
+                                      criterionIndex + offset < 0 ||
+                                      criterionIndex + offset >=
+                                        dimensionCriteria.length;
+                                    const orderedIds = moveId(
+                                      dimensionCriteria.map((item) => item.id),
+                                      criterionIndex,
+                                      offset,
+                                    );
+                                    return (
+                                      <form
+                                        action={reorderCriteria}
+                                        key={offset}
+                                      >
+                                        <input
+                                          type="hidden"
+                                          name="templateId"
+                                          value={template.id}
+                                        />
+                                        <input
+                                          type="hidden"
+                                          name="dimensionId"
+                                          value={dimension.id}
+                                        />
+                                        {orderedIds.map((id) => (
+                                          <input
+                                            key={id}
+                                            type="hidden"
+                                            name="criterionIds"
+                                            value={id}
+                                          />
+                                        ))}
+                                        <button
+                                          type="submit"
+                                          disabled={disabled}
+                                          aria-label={
+                                            offset === -1
+                                              ? `Mover ${criterion.code ?? "critério"} para cima`
+                                              : `Mover ${criterion.code ?? "critério"} para baixo`
+                                          }
+                                          className="grid size-9 place-items-center rounded-xl border border-[#7b161c]/15 bg-white text-[#7b161c] transition hover:bg-[#f7e7de] disabled:cursor-not-allowed disabled:opacity-35"
+                                        >
+                                          {offset === -1 ? (
+                                            <ArrowUp className="size-4" />
+                                          ) : (
+                                            <ArrowDown className="size-4" />
+                                          )}
+                                        </button>
+                                      </form>
+                                    );
+                                  })}
+                              </div>
+                            </div>
+                            <form
+                              action={updateCriterion}
+                              className="grid gap-4"
+                            >
+                              <input
+                                type="hidden"
+                                name="templateId"
+                                value={template.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="dimensionId"
+                                value={dimension.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="criterionId"
+                                value={criterion.id}
+                              />
+                              <div className="grid gap-4 sm:grid-cols-[8rem_1fr_7rem]">
+                                <Field
+                                  label="Código"
+                                  name={`criterion-code-${criterion.id}`}
+                                >
+                                  <input
+                                    id={`criterion-code-${criterion.id}`}
+                                    name="code"
+                                    defaultValue={criterion.code ?? ""}
+                                    required
+                                    className={inputClassName}
+                                  />
+                                </Field>
+                                <Field
+                                  label="Pergunta / critério"
+                                  name={`criterion-prompt-${criterion.id}`}
+                                >
+                                  <input
+                                    id={`criterion-prompt-${criterion.id}`}
+                                    name="prompt"
+                                    defaultValue={criterion.prompt}
+                                    required
+                                    className={inputClassName}
+                                  />
+                                </Field>
+                                <Field
+                                  label="Peso"
+                                  name={`criterion-weight-${criterion.id}`}
+                                >
+                                  <input
+                                    id={`criterion-weight-${criterion.id}`}
+                                    name="weight"
+                                    type="number"
+                                    min="0.001"
+                                    max="100"
+                                    step="0.001"
+                                    defaultValue={Number(criterion.weight)}
+                                    required
+                                    className={inputClassName}
+                                  />
+                                </Field>
+                              </div>
+                              <Field
+                                label="Ajuda ao respondente"
+                                name={`criterion-help-${criterion.id}`}
+                              >
+                                <textarea
+                                  id={`criterion-help-${criterion.id}`}
+                                  name="helpText"
+                                  rows={2}
+                                  defaultValue={criterion.help_text}
+                                  className={inputClassName}
+                                />
+                              </Field>
+                              <fieldset className="rounded-2xl border border-[#751118]/10 bg-[#fcf8f5] p-4">
+                                <legend className="px-2 text-sm font-black text-[#481014]">
+                                  Rubrica de maturidade
+                                </legend>
+                                <div className="grid gap-3">
+                                  {rubric.map((level) => (
+                                    <label
+                                      key={level.id}
+                                      className="grid gap-2 sm:grid-cols-[7rem_1fr] sm:items-center"
+                                    >
+                                      <span className="text-xs font-black text-[#6f201f]">
+                                        {Number(level.score)} · {level.label}
+                                      </span>
+                                      <input
+                                        name={`rubric${Number(level.score)}`}
+                                        defaultValue={level.description}
+                                        required
+                                        className={inputClassName}
+                                      />
+                                    </label>
+                                  ))}
+                                </div>
+                              </fieldset>
+                              <div className="grid gap-4 sm:grid-cols-2">
+                                <label className="flex items-center gap-3 text-sm font-bold text-[#5e4542]">
+                                  <input
+                                    type="checkbox"
+                                    name="allowsNotApplicable"
+                                    defaultChecked={
+                                      criterion.allows_not_applicable
+                                    }
+                                    className="size-4 accent-[#8a141b]"
+                                  />
+                                  Permitir “não se aplica”
+                                </label>
+                                <label className="flex items-center gap-3 text-sm font-bold text-[#5e4542]">
+                                  <input
+                                    type="checkbox"
+                                    name="requiresNotApplicableJustification"
+                                    defaultChecked={
+                                      criterion.requires_not_applicable_justification
+                                    }
+                                    className="size-4 accent-[#8a141b]"
+                                  />
+                                  Exigir justificativa para N/A
+                                </label>
+                                <Field
+                                  label="Evidência obrigatória a partir da nota"
+                                  name={`criterion-evidence-${criterion.id}`}
+                                >
+                                  <select
+                                    id={`criterion-evidence-${criterion.id}`}
+                                    name="evidenceRequiredFrom"
+                                    defaultValue={
+                                      criterion.evidence_required_from === null
+                                        ? ""
+                                        : String(
+                                            Number(
+                                              criterion.evidence_required_from,
+                                            ),
+                                          )
+                                    }
+                                    className={inputClassName}
+                                  >
+                                    <option value="">Não exigir</option>
+                                    {[0, 1, 2, 3, 4].map((score) => (
+                                      <option key={score} value={score}>
+                                        {score} ou superior
+                                      </option>
+                                    ))}
+                                  </select>
+                                </Field>
+                              </div>
+                              <div className="flex flex-wrap justify-end gap-2">
+                                <SubmitButton>
+                                  <Save className="size-4" /> Salvar critério
+                                </SubmitButton>
+                              </div>
+                            </form>
+                            <form
+                              action={deleteCriterion}
+                              className="mt-3 flex justify-end"
+                            >
+                              <input
+                                type="hidden"
+                                name="templateId"
+                                value={template.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="criterionId"
+                                value={criterion.id}
+                              />
+                              <ConfirmSubmitButton
+                                message={`Excluir o critério “${criterion.code ?? criterion.prompt}”?`}
+                              >
+                                <Trash2 className="size-4" /> Excluir critério
+                              </ConfirmSubmitButton>
+                            </form>
+                          </div>
+                        )}
                         <ol className="mt-4 grid gap-2 border-t border-[#751118]/8 pt-4">
                           {rubric.map((level) => (
                             <li

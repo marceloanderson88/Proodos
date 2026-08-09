@@ -4,14 +4,25 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  addDiagnosticExternalEvidenceSchema,
   createDiagnosticAssessmentSchema,
   createDiagnosticCampaignSchema,
   createDiagnosticCriterionSchema,
   createDiagnosticDimensionSchema,
   createDiagnosticTemplateSchema,
+  assignDiagnosticEvaluatorSchema,
+  assignDiagnosticRespondentSchema,
+  deleteDiagnosticCriterionSchema,
+  deleteDiagnosticDimensionSchema,
+  deleteDiagnosticEvidenceSchema,
   diagnosticAssessmentTransitionSchema,
   duplicateDiagnosticTemplateSchema,
+  reorderDiagnosticCriteriaSchema,
+  reorderDiagnosticDimensionsSchema,
+  revokeDiagnosticRespondentSchema,
   saveDiagnosticResponseSchema,
+  updateDiagnosticCriterionSchema,
+  updateDiagnosticDimensionSchema,
   validateDiagnosticResponseSchema,
 } from "@/lib/diagnostics/schemas";
 import { getIncubatorServerContext } from "@/lib/incubators/server-context";
@@ -139,6 +150,126 @@ export async function addDiagnosticDimensionAction(
   );
 }
 
+export async function updateDiagnosticDimensionAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = updateDiagnosticDimensionSchema.safeParse({
+    templateId: value(formData, "templateId"),
+    dimensionId: value(formData, "dimensionId"),
+    code: value(formData, "code"),
+    name: value(formData, "name"),
+    description: value(formData, "description"),
+    weight: value(formData, "weight"),
+    isEssential: formData.get("isEssential") === "on",
+  });
+  if (!parsed.success)
+    finish(organizationSlug, incubatorSlug, "error", "Dimensão inválida.");
+  const { error } = await context.supabase.rpc("update_diagnostic_dimension", {
+    target_dimension_id: parsed.data.dimensionId,
+    dimension_code: parsed.data.code.toUpperCase(),
+    dimension_name: parsed.data.name,
+    dimension_description: parsed.data.description,
+    dimension_weight: parsed.data.weight,
+    dimension_is_essential: parsed.data.isEssential,
+  });
+  const returnTo = `${path(organizationSlug, incubatorSlug)}/modelos/${parsed.data.templateId}`;
+  if (error)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      error.message || "Não foi possível editar a dimensão.",
+    );
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Dimensão atualizada.",
+  );
+}
+
+export async function deleteDiagnosticDimensionAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = deleteDiagnosticDimensionSchema.safeParse({
+    templateId: value(formData, "templateId"),
+    dimensionId: value(formData, "dimensionId"),
+  });
+  if (!parsed.success)
+    finish(organizationSlug, incubatorSlug, "error", "Dimensão inválida.");
+  const { error } = await context.supabase.rpc("delete_diagnostic_dimension", {
+    target_dimension_id: parsed.data.dimensionId,
+  });
+  const returnTo = `${path(organizationSlug, incubatorSlug)}/modelos/${parsed.data.templateId}`;
+  if (error)
+    finishAt(organizationSlug, incubatorSlug, returnTo, "error", error.message);
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Dimensão excluída.",
+  );
+}
+
+export async function reorderDiagnosticDimensionsAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = reorderDiagnosticDimensionsSchema.safeParse({
+    templateId: value(formData, "templateId"),
+    dimensionIds: formData
+      .getAll("dimensionIds")
+      .filter((item): item is string => typeof item === "string"),
+  });
+  if (!parsed.success)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "error",
+      "Ordem das dimensões inválida.",
+    );
+  const { error } = await context.supabase.rpc(
+    "reorder_diagnostic_dimensions",
+    {
+      target_template_id: parsed.data.templateId,
+      ordered_dimension_ids: parsed.data.dimensionIds,
+    },
+  );
+  const returnTo = `${path(organizationSlug, incubatorSlug)}/modelos/${parsed.data.templateId}`;
+  if (error)
+    finishAt(organizationSlug, incubatorSlug, returnTo, "error", error.message);
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Dimensões reordenadas.",
+  );
+}
+
 export async function addDiagnosticCriterionAction(
   organizationSlug: string,
   incubatorSlug: string,
@@ -211,6 +342,148 @@ export async function addDiagnosticCriterionAction(
     returnTo,
     "success",
     "Critério adicionado.",
+  );
+}
+
+export async function updateDiagnosticCriterionAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = updateDiagnosticCriterionSchema.safeParse({
+    templateId: value(formData, "templateId"),
+    dimensionId: value(formData, "dimensionId"),
+    criterionId: value(formData, "criterionId"),
+    code: value(formData, "code"),
+    prompt: value(formData, "prompt"),
+    helpText: value(formData, "helpText"),
+    weight: value(formData, "weight"),
+    allowsNotApplicable: formData.get("allowsNotApplicable") === "on",
+    requiresNotApplicableJustification:
+      formData.get("requiresNotApplicableJustification") === "on",
+    evidenceRequiredFrom: value(formData, "evidenceRequiredFrom"),
+    rubric0: value(formData, "rubric0"),
+    rubric1: value(formData, "rubric1"),
+    rubric2: value(formData, "rubric2"),
+    rubric3: value(formData, "rubric3"),
+    rubric4: value(formData, "rubric4"),
+  });
+  if (!parsed.success)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "error",
+      parsed.error.issues[0]?.message ?? "Critério inválido.",
+    );
+  const { error } = await context.supabase.rpc(
+    "update_diagnostic_criterion_with_rubric",
+    {
+      target_criterion_id: parsed.data.criterionId,
+      criterion_code: parsed.data.code.toUpperCase(),
+      criterion_prompt: parsed.data.prompt,
+      criterion_help_text: parsed.data.helpText,
+      criterion_weight: parsed.data.weight,
+      criterion_allows_na: parsed.data.allowsNotApplicable,
+      criterion_requires_na_justification:
+        parsed.data.requiresNotApplicableJustification,
+      criterion_evidence_required_from:
+        parsed.data.evidenceRequiredFrom === ""
+          ? null
+          : parsed.data.evidenceRequiredFrom,
+      rubric_descriptions: [
+        parsed.data.rubric0,
+        parsed.data.rubric1,
+        parsed.data.rubric2,
+        parsed.data.rubric3,
+        parsed.data.rubric4,
+      ],
+    },
+  );
+  const returnTo = `${path(organizationSlug, incubatorSlug)}/modelos/${parsed.data.templateId}`;
+  if (error)
+    finishAt(organizationSlug, incubatorSlug, returnTo, "error", error.message);
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Critério atualizado.",
+  );
+}
+
+export async function deleteDiagnosticCriterionAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = deleteDiagnosticCriterionSchema.safeParse({
+    templateId: value(formData, "templateId"),
+    criterionId: value(formData, "criterionId"),
+  });
+  if (!parsed.success)
+    finish(organizationSlug, incubatorSlug, "error", "Critério inválido.");
+  const { error } = await context.supabase.rpc("delete_diagnostic_criterion", {
+    target_criterion_id: parsed.data.criterionId,
+  });
+  const returnTo = `${path(organizationSlug, incubatorSlug)}/modelos/${parsed.data.templateId}`;
+  if (error)
+    finishAt(organizationSlug, incubatorSlug, returnTo, "error", error.message);
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Critério excluído.",
+  );
+}
+
+export async function reorderDiagnosticCriteriaAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = reorderDiagnosticCriteriaSchema.safeParse({
+    templateId: value(formData, "templateId"),
+    dimensionId: value(formData, "dimensionId"),
+    criterionIds: formData
+      .getAll("criterionIds")
+      .filter((item): item is string => typeof item === "string"),
+  });
+  if (!parsed.success)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "error",
+      "Ordem dos critérios inválida.",
+    );
+  const { error } = await context.supabase.rpc("reorder_diagnostic_criteria", {
+    target_dimension_id: parsed.data.dimensionId,
+    ordered_criterion_ids: parsed.data.criterionIds,
+  });
+  const returnTo = `${path(organizationSlug, incubatorSlug)}/modelos/${parsed.data.templateId}`;
+  if (error)
+    finishAt(organizationSlug, incubatorSlug, returnTo, "error", error.message);
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Critérios reordenados.",
   );
 }
 
@@ -394,6 +667,125 @@ export async function createDiagnosticAssessmentAction(
   );
 }
 
+export async function assignDiagnosticRespondentAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const returnTo = value(formData, "returnTo");
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = assignDiagnosticRespondentSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    userId: value(formData, "userId"),
+    role: value(formData, "role"),
+    returnTo,
+  });
+  if (!parsed.success)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Selecione a pessoa e o papel do respondente.",
+    );
+  const { error } = await context.supabase.rpc("assign_diagnostic_respondent", {
+    target_assessment_id: parsed.data.assessmentId,
+    target_user_id: parsed.data.userId,
+    target_role: parsed.data.role,
+  });
+  if (error)
+    finishAt(organizationSlug, incubatorSlug, returnTo, "error", error.message);
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Respondente vinculado.",
+  );
+}
+
+export async function revokeDiagnosticRespondentAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const returnTo = value(formData, "returnTo");
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = revokeDiagnosticRespondentSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    userId: value(formData, "userId"),
+    returnTo,
+  });
+  if (!parsed.success)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Respondente inválido.",
+    );
+  const { error } = await context.supabase.rpc("revoke_diagnostic_respondent", {
+    target_assessment_id: parsed.data.assessmentId,
+    target_user_id: parsed.data.userId,
+  });
+  if (error)
+    finishAt(organizationSlug, incubatorSlug, returnTo, "error", error.message);
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Respondente removido.",
+  );
+}
+
+export async function assignDiagnosticEvaluatorAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const returnTo = value(formData, "returnTo");
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = assignDiagnosticEvaluatorSchema.safeParse({
+    assessmentId: value(formData, "assessmentId"),
+    userId: value(formData, "userId"),
+    returnTo,
+  });
+  if (!parsed.success)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Selecione um avaliador.",
+    );
+  const { error } = await context.supabase.rpc("assign_diagnostic_evaluator", {
+    target_assessment_id: parsed.data.assessmentId,
+    target_user_id: parsed.data.userId,
+  });
+  if (error)
+    finishAt(organizationSlug, incubatorSlug, returnTo, "error", error.message);
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Avaliador definido.",
+  );
+}
+
 export async function saveDiagnosticResponseAction(
   organizationSlug: string,
   incubatorSlug: string,
@@ -484,6 +876,104 @@ export async function saveDiagnosticResponseAction(
     returnTo,
     "success",
     "Resposta salva.",
+  );
+}
+
+export async function addDiagnosticExternalEvidenceAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const returnTo = value(formData, "returnTo");
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = addDiagnosticExternalEvidenceSchema.safeParse({
+    responseId: value(formData, "responseId"),
+    label: value(formData, "label"),
+    externalUrl: value(formData, "externalUrl"),
+    returnTo,
+  });
+  if (!parsed.success)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Informe um nome e uma URL HTTPS válida para a evidência.",
+    );
+  const { error } = await context.supabase
+    .from("diagnostic_response_evidence")
+    .insert({
+      organization_id: context.organization.id,
+      incubator_id: context.incubator.id,
+      response_id: parsed.data.responseId,
+      kind: "external_link",
+      external_url: parsed.data.externalUrl,
+      label: parsed.data.label,
+      status: "available",
+      created_by: context.user.id,
+    });
+  if (error)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Não foi possível vincular a evidência.",
+    );
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Evidência vinculada.",
+  );
+}
+
+export async function deleteDiagnosticEvidenceAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const returnTo = value(formData, "returnTo");
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = deleteDiagnosticEvidenceSchema.safeParse({
+    evidenceId: value(formData, "evidenceId"),
+    returnTo,
+  });
+  if (!parsed.success)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Evidência inválida.",
+    );
+  const { error } = await context.supabase
+    .from("diagnostic_response_evidence")
+    .update({ status: "deleted", deleted_at: new Date().toISOString() })
+    .eq("id", parsed.data.evidenceId);
+  if (error)
+    finishAt(
+      organizationSlug,
+      incubatorSlug,
+      returnTo,
+      "error",
+      "Não foi possível remover a evidência.",
+    );
+  revalidatePath(returnTo);
+  finishAt(
+    organizationSlug,
+    incubatorSlug,
+    returnTo,
+    "success",
+    "Evidência removida.",
   );
 }
 
