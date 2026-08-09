@@ -230,3 +230,19 @@ impedir que um ID manipulado associe dados a outra incubadora.
 **Decisão:** modelos pertencem à incubadora ativa, são compostos por dimensões e critérios e se tornam imutáveis após publicação. Cada aplicação exige uma startup da mesma incubadora e preserva a versão aplicada. Autoavaliação e validação são campos distintos; “não se aplica” exige justificativa. CERNE é apenas uma possível metodologia e nunca uma dependência estrutural.
 
 **Consequências:** mudanças metodológicas exigem nova versão; aplicações históricas não mudam silenciosamente; RLS combina permissões `diagnostic.*` com o vínculo real à startup.
+
+## DEC-036 — Implantação guiada da incubadora e entrada por convite
+
+**Status:** Aceita e implementada
+
+**Decisão:** a central Proodos coleta identidade, natureza da operação, descrição, contato, território, responsável e logo antes de abrir o ambiente operacional. Uma pessoa que ainda não pertence à organização entra por convite expirável enviado pelo Supabase Auth; somente depois do aceite o vínculo e o papel contextual são efetivados pela RPC transacional existente.
+
+**Consequências:** atribuição de papel deixa de depender de uma pessoa previamente criada por meios externos; o token bruto nunca é persistido; a secret key usada para disparar o e-mail existe apenas no servidor; logo e metadados continuam protegidos por RLS e bucket privado.
+
+## DEC-037 — Programa é modelo; turma é execução
+
+**Status:** Aceita e implementada
+
+**Decisão:** programa concentra proposta permanente — nome, tipo, descrição, objetivos, público-alvo, modalidade, duração e capacidade sugeridas, identidade visual e vigência opcional. Turma representa uma edição executável, com lançamento, inscrições, ciclo, capacidade e startups matriculadas. Datas operacionais não são obrigatoriamente duplicadas no programa.
+
+**Consequências:** um mesmo programa pode abrir várias turmas preservando histórico; coordenação é atribuída ao programa; matrículas e acompanhamento ocorrem na turma; o detalhe do programa passa a ser o centro operacional, sem edição espalhada nos cartões da listagem.

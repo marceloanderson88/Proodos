@@ -1,29 +1,30 @@
 import {
   Archive,
+  ArrowRight,
   CalendarDays,
   CircleDot,
   Flag,
   Layers3,
-  Pencil,
   Plus,
+  Rocket,
   Trash2,
   UsersRound,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 import {
   createCohortAction,
-  createProgramAction,
   manageProgramLifecycleAction,
-  updateProgramAction,
 } from "@/app/(private)/o/[organizationSlug]/m6-actions";
 import { FeedbackBanner } from "@/components/m6/feedback-banner";
-import {
-  Field,
-  inputClassName,
-  SubmitButton,
-} from "@/components/m6/form-controls";
-import { ProgramTypeNameField } from "@/components/m6/program-type-name-field";
+import { ProgramCreateForm } from "@/components/programs/program-create-form";
+import { Button } from "@/components/ui/button";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { controlClassName, FormField } from "@/components/ui/form-field";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 type ProgramType = { id: string; name: string };
 type Cohort = {
@@ -37,6 +38,7 @@ type Cohort = {
   enrollment_ends_on: string | null;
   starts_on: string;
   ends_on: string | null;
+  capacity: number | null;
 };
 type Program = {
   id: string;
@@ -44,21 +46,31 @@ type Program = {
   name: string;
   code: string;
   status: string;
-  starts_on: string;
+  starts_on: string | null;
   ends_on: string | null;
   description: string | null;
+  objectives: string | null;
+  target_audience: string | null;
+  delivery_mode: "in_person" | "remote" | "hybrid" | null;
+  duration_weeks: number | null;
+  suggested_capacity: number | null;
   logo_url: string | null;
 };
 type Enrollment = { cohort_id: string; startup_id: string };
 
-const statusLabel: Record<string, string> = {
+const statusLabels: Record<string, string> = {
   draft: "Rascunho",
   planned: "Planejado",
-  active: "Em andamento",
+  active: "Publicado",
   completed: "Concluído",
   cancelled: "Cancelado",
   archived: "Arquivado",
 };
+const deliveryLabels = {
+  in_person: "Presencial",
+  remote: "Remoto",
+  hybrid: "Híbrido",
+} as const;
 
 function dateLabel(value: string | null) {
   if (!value) return "A definir";
@@ -86,158 +98,83 @@ export function ProgramsWorkspace({
   success?: string;
   error?: string;
 }) {
-  const activePrograms = programs.filter(
+  const publishedPrograms = programs.filter(
     (program) => program.status === "active",
   ).length;
-  const openCohorts = cohorts.filter((cohort) =>
+  const runningCohorts = cohorts.filter((cohort) =>
     ["enrollment_open", "active"].includes(cohort.status),
   ).length;
 
   return (
     <div className="page-enter space-y-6">
-      <header className="overflow-hidden rounded-[2rem] border border-[#751118]/10 bg-[#fffdf9] shadow-[0_18px_45px_rgb(63_9_13/7%)]">
-        <div className="relative px-6 py-7 sm:px-8 sm:py-9">
-          <div
-            className="dot-field absolute top-0 right-0 h-full w-56 opacity-35"
-            aria-hidden="true"
-          />
-          <div className="relative max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#edf7ee] px-3 py-1.5 text-[0.65rem] font-black tracking-[0.12em] text-[#27643a] uppercase">
-              <CircleDot className="size-3" aria-hidden="true" />
-              Dados reais · Supabase
-            </div>
-            <h1 className="mt-4 text-4xl font-black tracking-[-0.045em] text-[#3f090d] sm:text-5xl">
-              Programas e turmas
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-[#766868]">
-              Estruture os ciclos da incubadora e prepare as turmas que
-              receberão as startups. Nenhum programa exige metodologia CERNE.
-            </p>
-          </div>
-        </div>
-        <dl className="grid border-t border-[#751118]/8 bg-[#f9eee5]/55 sm:grid-cols-3">
-          {[
-            { label: "Programas", metric: programs.length, Icon: Layers3 },
-            { label: "Em andamento", metric: activePrograms, Icon: Flag },
-            {
-              label: "Turmas abertas/ativas",
-              metric: openCohorts,
-              Icon: UsersRound,
-            },
-          ].map(({ label, metric, Icon }) => (
+      <PageHeader
+        eyebrow="Portfólio da incubadora"
+        title="Programas e turmas"
+        description="Defina modelos de desenvolvimento reutilizáveis e crie turmas para cada execução concreta, com datas, capacidade e startups próprias."
+        icon={Layers3}
+      />
+      <FeedbackBanner success={success} error={error} />
+
+      <dl className="grid gap-3 sm:grid-cols-3">
+        {[
+          [programs.length, "Programas", Layers3],
+          [publishedPrograms, "Publicados", Flag],
+          [runningCohorts, "Turmas abertas/ativas", UsersRound],
+        ].map(([value, label, Icon]) => {
+          const MetricIcon = Icon as typeof Layers3;
+          return (
             <div
-              key={label}
-              className="flex items-center gap-3 border-b border-[#751118]/8 px-6 py-4 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0"
+              key={String(label)}
+              className="surface-card flex items-center gap-4 p-5"
             >
-              <Icon className="size-5 text-[#921a20]" aria-hidden="true" />
+              <span className="grid size-11 place-items-center rounded-2xl bg-[var(--surface-muted)] text-[var(--wine-800)]">
+                <MetricIcon className="size-5" />
+              </span>
               <div>
-                <dt className="text-[0.65rem] font-black tracking-[0.08em] text-[#806f6b] uppercase">
-                  {label}
+                <dt className="text-[0.65rem] font-extrabold text-[var(--text-muted)] uppercase">
+                  {String(label)}
                 </dt>
-                <dd className="text-2xl font-black text-[#3f090d]">{metric}</dd>
+                <dd className="text-2xl font-black text-[var(--wine-950)]">
+                  {Number(value)}
+                </dd>
               </div>
             </div>
-          ))}
-        </dl>
-      </header>
-
-      <FeedbackBanner success={success} error={error} />
+          );
+        })}
+      </dl>
 
       <section className="grid gap-5 xl:grid-cols-2">
         <details
-          className="dashboard-card group rounded-[1.6rem] p-5"
+          className="surface-card group p-5"
           open={programs.length === 0}
         >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
             <div>
-              <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                Programa
-              </p>
-              <h2 className="mt-1 text-xl font-black text-[#3f090d]">
+              <p className="eyebrow">Catálogo</p>
+              <h2 className="operational-heading mt-1 text-xl">
                 Novo programa
               </h2>
             </div>
-            <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
+            <Plus className="size-5 text-[var(--wine-700)] transition group-open:rotate-45" />
           </summary>
-          <form
-            action={createProgramAction.bind(
-              null,
-              organizationSlug,
-              incubatorSlug,
-            )}
-            className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
-          >
-            <Field
-              label="Nome do programa"
-              name="name"
-              hint="O código técnico será criado automaticamente."
-            >
-              <input
-                className={inputClassName}
-                name="name"
-                required
-                placeholder="Ciclo de Pré-incubação"
-              />
-            </Field>
-            <Field
-              label="Logo"
-              name="logo"
-              hint="PNG, JPG ou WebP, com até 2 MB. Ativo visual privado da incubadora."
-            >
-              <input
-                className={inputClassName}
-                type="file"
-                name="logo"
-                accept="image/png,image/jpeg,image/webp"
-              />
-            </Field>
-            <ProgramTypeNameField />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Início" name="startsOn">
-                <input
-                  className={inputClassName}
-                  type="date"
-                  name="startsOn"
-                  required
-                />
-              </Field>
-              <Field label="Fim" name="endsOn">
-                <input className={inputClassName} type="date" name="endsOn" />
-              </Field>
-            </div>
-            <Field label="Descrição" name="description">
-              <textarea
-                className={inputClassName}
-                name="description"
-                rows={2}
-              />
-            </Field>
-            <label className="flex items-center gap-3 rounded-xl border border-[#751118]/10 bg-white/70 px-4 py-3 text-sm font-bold text-[#5c0c12]">
-              <input
-                type="checkbox"
-                name="isActive"
-                className="size-4 accent-[#751118]"
-              />
-              Programa ativo
-            </label>
-            <SubmitButton>Criar programa</SubmitButton>
-          </form>
+          <div className="mt-5 border-t border-[var(--border)] pt-5">
+            <ProgramCreateForm
+              organizationSlug={organizationSlug}
+              incubatorSlug={incubatorSlug}
+            />
+          </div>
         </details>
 
         <details
-          className="dashboard-card group rounded-[1.6rem] p-5"
+          className="surface-card group p-5"
           open={cohorts.length === 0 && programs.length > 0}
         >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
             <div>
-              <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
-                Turma
-              </p>
-              <h2 className="mt-1 text-xl font-black text-[#3f090d]">
-                Nova turma
-              </h2>
+              <p className="eyebrow">Execução</p>
+              <h2 className="operational-heading mt-1 text-xl">Nova turma</h2>
             </div>
-            <Plus className="size-5 text-[#921a20] transition group-open:rotate-45" />
+            <Plus className="size-5 text-[var(--wine-700)] transition group-open:rotate-45" />
           </summary>
           <form
             action={createCohortAction.bind(
@@ -245,104 +182,135 @@ export function ProgramsWorkspace({
               organizationSlug,
               incubatorSlug,
             )}
-            className="mt-5 space-y-4 border-t border-[#751118]/8 pt-5"
+            className="mt-5 space-y-4 border-t border-[var(--border)] pt-5"
           >
-            <Field label="Programa" name="programId">
-              <select className={inputClassName} name="programId" required>
+            <FormField label="Programa" htmlFor="cohort-program" required>
+              <select
+                id="cohort-program"
+                className={controlClassName}
+                name="programId"
+                required
+              >
                 <option value="">Selecione</option>
-                {programs.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
+                {programs
+                  .filter((item) => item.status !== "archived")
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
               </select>
-            </Field>
-            <Field
-              label="Nome da turma"
-              name="name"
-              hint="O código técnico será criado automaticamente."
+            </FormField>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                label="Nome da turma"
+                htmlFor="cohort-name"
+                required
+                hint="O código será automático."
+              >
+                <input
+                  id="cohort-name"
+                  className={controlClassName}
+                  name="name"
+                  required
+                  placeholder="Turma 2027.1"
+                />
+              </FormField>
+              <FormField label="Capacidade" htmlFor="cohort-capacity">
+                <input
+                  id="cohort-capacity"
+                  className={controlClassName}
+                  name="capacity"
+                  type="number"
+                  min={1}
+                />
+              </FormField>
+            </div>
+            <FormField
+              label="Data de lançamento"
+              htmlFor="cohort-launch"
+              required
             >
               <input
-                className={inputClassName}
-                name="name"
-                required
-                placeholder="Turma 1"
-              />
-            </Field>
-            <Field label="Data de lançamento" name="launchesOn">
-              <input
-                className={inputClassName}
+                id="cohort-launch"
+                className={controlClassName}
                 type="date"
                 name="launchesOn"
                 required
               />
-            </Field>
-            <fieldset className="rounded-2xl border border-[#751118]/10 p-4">
-              <legend className="px-2 text-xs font-black tracking-[0.08em] text-[#751118] uppercase">
-                Período de inscrições (opcional)
+            </FormField>
+            <fieldset className="rounded-2xl border border-[var(--border)] p-4">
+              <legend className="px-2 text-xs font-extrabold text-[var(--wine-800)]">
+                Inscrições opcionais
               </legend>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Abertura" name="enrollmentStartsOn">
+                <FormField label="Abertura" htmlFor="cohort-enrollment-start">
                   <input
-                    className={inputClassName}
+                    id="cohort-enrollment-start"
+                    className={controlClassName}
                     type="date"
                     name="enrollmentStartsOn"
                   />
-                </Field>
-                <Field label="Encerramento" name="enrollmentEndsOn">
+                </FormField>
+                <FormField label="Encerramento" htmlFor="cohort-enrollment-end">
                   <input
-                    className={inputClassName}
+                    id="cohort-enrollment-end"
+                    className={controlClassName}
                     type="date"
                     name="enrollmentEndsOn"
                   />
-                </Field>
+                </FormField>
               </div>
             </fieldset>
-            <p className="text-xs font-black tracking-[0.08em] text-[#751118] uppercase">
-              Ciclo da turma
-            </p>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Início" name="startsOn">
+              <FormField
+                label="Início do ciclo"
+                htmlFor="cohort-start"
+                required
+              >
                 <input
-                  className={inputClassName}
+                  id="cohort-start"
+                  className={controlClassName}
                   type="date"
                   name="startsOn"
                   required
                 />
-              </Field>
-              <Field label="Fim" name="endsOn">
-                <input className={inputClassName} type="date" name="endsOn" />
-              </Field>
+              </FormField>
+              <FormField label="Fim do ciclo" htmlFor="cohort-end">
+                <input
+                  id="cohort-end"
+                  className={controlClassName}
+                  type="date"
+                  name="endsOn"
+                />
+              </FormField>
             </div>
-            <SubmitButton>Criar turma</SubmitButton>
+            <Button type="submit">Criar turma</Button>
           </form>
         </details>
       </section>
 
-      <section aria-labelledby="portfolio-programas">
-        <div className="mb-4 flex items-end justify-between gap-4">
+      <section aria-labelledby="program-portfolio" className="space-y-4">
+        <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-[0.65rem] font-black tracking-[0.14em] text-[#921a20] uppercase">
-              Portfólio operacional
-            </p>
+            <p className="eyebrow">Catálogo operacional</p>
             <h2
-              id="portfolio-programas"
-              className="mt-1 text-3xl font-black text-[#3f090d]"
+              id="program-portfolio"
+              className="mt-1 text-3xl font-black text-[var(--wine-950)]"
             >
               Programas cadastrados
             </h2>
           </div>
-          <span className="rounded-full border border-[#751118]/10 bg-white px-3 py-1.5 text-xs font-bold text-[#766868]">
-            {programs.length} registros
-          </span>
+          <StatusBadge>{programs.length} registros</StatusBadge>
         </div>
         {programs.length === 0 ? (
-          <div className="dashboard-card rounded-2xl p-8 text-center text-sm text-[#766868]">
-            Nenhum programa cadastrado. Conclua as etapas acima para iniciar o
-            portfólio.
-          </div>
+          <EmptyState
+            icon={Rocket}
+            title="Nenhum programa cadastrado"
+            description="Crie o modelo do programa e, depois, a primeira turma de execução."
+          />
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-5 lg:grid-cols-2">
             {programs.map((program) => {
               const programCohorts = cohorts.filter(
                 (cohort) => cohort.program_id === program.id,
@@ -358,185 +326,115 @@ export function ProgramsWorkspace({
               const type = programTypes.find(
                 (item) => item.id === program.type_id,
               );
+              const readiness = [
+                program.description,
+                program.objectives,
+                program.target_audience,
+                program.delivery_mode,
+              ].filter(Boolean).length;
               return (
                 <article
                   key={program.id}
-                  className="dashboard-card stagger-item rounded-[1.6rem] p-5"
+                  className="surface-card overflow-hidden"
                 >
-                  {program.logo_url && (
-                    <div className="mb-5 flex h-28 items-center justify-center overflow-hidden rounded-2xl border border-[#751118]/8 bg-white p-4">
-                      <Image
-                        src={program.logo_url}
-                        alt={`Logo do programa ${program.name}`}
-                        width={320}
-                        height={112}
-                        unoptimized
-                        className="h-full w-auto max-w-full object-contain"
-                      />
-                    </div>
-                  )}
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-md bg-[#f4e2d5] px-2 py-1 text-[0.6rem] font-black tracking-[0.08em] text-[#751118]">
-                          {program.code}
-                        </span>
-                        <span className="text-[0.65rem] font-bold text-[#8b7c76]">
-                          {type?.name ?? "Tipo indisponível"}
-                        </span>
-                      </div>
-                      <h3 className="mt-3 text-2xl font-black text-[#3f090d]">
-                        {program.name}
-                      </h3>
-                    </div>
-                    <span className="rounded-full bg-[#f7ebe4] px-3 py-1.5 text-[0.65rem] font-black text-[#751118]">
-                      {statusLabel[program.status] ?? program.status}
-                    </span>
-                  </div>
-                  <div className="mt-5 flex flex-wrap gap-3 border-t border-[#751118]/8 pt-4 text-xs text-[#6d5c58]">
-                    <span className="inline-flex items-center gap-1.5">
-                      <CalendarDays className="size-4 text-[#921a20]" />
-                      {dateLabel(program.starts_on)} —{" "}
-                      {dateLabel(program.ends_on)}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <UsersRound className="size-4 text-[#921a20]" />
-                      {programCohorts.length} turma(s)
-                    </span>
-                  </div>
-                  {programCohorts.length > 0 && (
-                    <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                      {programCohorts.map((cohort) => (
-                        <li
-                          key={cohort.id}
-                          className="rounded-xl border border-[#751118]/8 bg-white/70 px-3 py-3"
-                        >
-                          <p className="text-xs font-black text-[#5c0c12]">
-                            {cohort.name}
-                          </p>
-                          <p className="mt-1 text-[0.62rem] text-[#887875]">
-                            {cohort.code} · lançamento em{" "}
-                            {dateLabel(cohort.launches_on)}
-                          </p>
-                          <p className="mt-1 text-[0.62rem] text-[#887875]">
-                            Ciclo: {dateLabel(cohort.starts_on)} —{" "}
-                            {dateLabel(cohort.ends_on)}
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {program.status !== "archived" && (
-                    <div className="mt-5 border-t border-[#751118]/8 pt-4">
-                      <details className="group/edit rounded-2xl border border-[#751118]/10 bg-white/65 p-4">
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-[#5c0c12]">
-                          <span className="inline-flex items-center gap-2">
-                            <Pencil className="size-4" aria-hidden="true" />
-                            Editar programa
-                          </span>
-                          <Plus className="size-4 transition group-open/edit:rotate-45" />
-                        </summary>
-                        <form
-                          action={updateProgramAction.bind(
-                            null,
-                            organizationSlug,
-                            incubatorSlug,
-                          )}
-                          className="mt-4 space-y-4 border-t border-[#751118]/8 pt-4"
-                        >
-                          <input
-                            type="hidden"
-                            name="programId"
-                            value={program.id}
+                  <div className="p-5 sm:p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="relative grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl border border-[var(--border)] bg-white">
+                        {program.logo_url ? (
+                          <Image
+                            src={program.logo_url}
+                            alt={`Logo de ${program.name}`}
+                            fill
+                            unoptimized
+                            className="object-contain p-2"
                           />
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <Field label="Nome" name={`name-${program.id}`}>
-                              <input
-                                className={inputClassName}
-                                name="name"
-                                required
-                                defaultValue={program.name}
-                              />
-                            </Field>
-                            <ProgramTypeNameField
-                              currentName={type?.name}
-                              idSuffix={program.id}
-                            />
-                          </div>
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <Field label="Início" name={`starts-${program.id}`}>
-                              <input
-                                className={inputClassName}
-                                type="date"
-                                name="startsOn"
-                                defaultValue={program.starts_on ?? ""}
-                                required
-                              />
-                            </Field>
-                            <Field label="Fim" name={`ends-${program.id}`}>
-                              <input
-                                className={inputClassName}
-                                type="date"
-                                name="endsOn"
-                                defaultValue={program.ends_on ?? ""}
-                              />
-                            </Field>
-                          </div>
-                          <Field
-                            label="Substituir logo"
-                            name={`logo-${program.id}`}
-                            hint="Opcional. PNG, JPG ou WebP, com até 2 MB."
+                        ) : (
+                          <Layers3 className="size-7 text-[var(--wine-700)]" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap gap-2">
+                          <StatusBadge
+                            tone={
+                              program.status === "active"
+                                ? "success"
+                                : program.status === "draft"
+                                  ? "warning"
+                                  : "neutral"
+                            }
                           >
-                            <input
-                              className={inputClassName}
-                              type="file"
-                              name="logo"
-                              accept="image/png,image/jpeg,image/webp"
-                            />
-                          </Field>
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            <label className="flex items-center gap-3 rounded-xl border border-[#751118]/10 bg-white/70 px-4 py-3 text-sm font-bold text-[#5c0c12]">
-                              <input
-                                type="checkbox"
-                                name="isActive"
-                                defaultChecked={program.status === "active"}
-                                className="size-4 accent-[#751118]"
-                              />
-                              Programa ativo
-                            </label>
-                            {program.logo_url && (
-                              <label className="flex items-center gap-3 rounded-xl border border-[#751118]/10 bg-white/70 px-4 py-3 text-sm font-bold text-[#5c0c12]">
-                                <input
-                                  type="checkbox"
-                                  name="removeLogo"
-                                  className="size-4 accent-[#751118]"
-                                />
-                                Remover logo atual
-                              </label>
-                            )}
-                          </div>
-                          <Field
-                            label="Descrição"
-                            name={`description-${program.id}`}
-                          >
-                            <textarea
-                              className={inputClassName}
-                              name="description"
-                              rows={3}
-                              defaultValue={program.description ?? ""}
-                            />
-                          </Field>
-                          <SubmitButton>Salvar alterações</SubmitButton>
-                        </form>
-                      </details>
-
+                            {statusLabels[program.status] ?? program.status}
+                          </StatusBadge>
+                          <span className="text-[0.68rem] font-bold text-[var(--text-muted)]">
+                            {type?.name ?? "Tipo indisponível"}
+                          </span>
+                        </div>
+                        <h3 className="mt-2 text-2xl font-black text-[var(--wine-950)]">
+                          {program.name}
+                        </h3>
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--text-muted)]">
+                          {program.description ??
+                            "Descrição ainda não preenchida."}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-5 grid grid-cols-3 gap-3 rounded-2xl bg-[var(--surface-subtle)] p-4 text-center">
+                      <div>
+                        <p className="text-lg font-black">
+                          {programCohorts.length}
+                        </p>
+                        <p className="text-[0.62rem] text-[var(--text-muted)] uppercase">
+                          Turmas
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-black">
+                          {linkedStartupCount}
+                        </p>
+                        <p className="text-[0.62rem] text-[var(--text-muted)] uppercase">
+                          Startups
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-black">{readiness}/4</p>
+                        <p className="text-[0.62rem] text-[var(--text-muted)] uppercase">
+                          Preparação
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-3 text-xs text-[var(--text-muted)]">
+                      {program.delivery_mode && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <CircleDot className="size-3.5 text-[var(--wine-700)]" />
+                          {deliveryLabels[program.delivery_mode]}
+                        </span>
+                      )}
+                      {program.duration_weeks && (
+                        <span>{program.duration_weeks} semanas</span>
+                      )}
+                      {program.starts_on && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <CalendarDays className="size-3.5 text-[var(--wine-700)]" />
+                          Vigência: {dateLabel(program.starts_on)} —{" "}
+                          {dateLabel(program.ends_on)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] bg-[var(--surface-subtle)] px-5 py-4 sm:px-6">
+                    <Link
+                      href={`/o/${organizationSlug}/i/${incubatorSlug}/programas/${program.id}`}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] bg-[var(--wine-800)] px-4 py-3 text-sm font-extrabold text-white hover:bg-[var(--wine-700)]"
+                    >
+                      Abrir programa <ArrowRight className="size-4" />
+                    </Link>
+                    {program.status !== "archived" && (
                       <form
                         action={manageProgramLifecycleAction.bind(
                           null,
                           organizationSlug,
                           incubatorSlug,
                         )}
-                        className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#fbf5ef] p-4"
                       >
                         <input
                           type="hidden"
@@ -548,27 +446,23 @@ export function ProgramsWorkspace({
                           name="action"
                           value={linkedStartupCount > 0 ? "archive" : "delete"}
                         />
-                        <p className="max-w-md text-xs leading-5 text-[#766868]">
-                          {linkedStartupCount > 0
-                            ? `${linkedStartupCount} startup(s) vinculada(s). O histórico será preservado.`
-                            : "Sem startups vinculadas. A exclusão removerá o programa do portfólio ativo."}
-                        </p>
-                        <button
-                          type="submit"
-                          className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#921a20]/20 bg-white px-4 py-2 text-xs font-black text-[#751118] transition hover:border-[#921a20]/40 hover:bg-[#fff8f3]"
+                        <ConfirmSubmitButton
+                          message={
+                            linkedStartupCount > 0
+                              ? `Arquivar ${program.name} preservando ${linkedStartupCount} vínculo(s)?`
+                              : `Excluir o programa vazio ${program.name}?`
+                          }
                         >
                           {linkedStartupCount > 0 ? (
-                            <Archive className="size-4" aria-hidden="true" />
+                            <Archive className="size-4" />
                           ) : (
-                            <Trash2 className="size-4" aria-hidden="true" />
+                            <Trash2 className="size-4" />
                           )}
-                          {linkedStartupCount > 0
-                            ? "Arquivar programa"
-                            : "Excluir programa"}
-                        </button>
+                          {linkedStartupCount > 0 ? "Arquivar" : "Excluir"}
+                        </ConfirmSubmitButton>
                       </form>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </article>
               );
             })}

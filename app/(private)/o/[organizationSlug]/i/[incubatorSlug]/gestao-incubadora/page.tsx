@@ -20,8 +20,8 @@ export default async function IncubatorPeoplePage({
     incubatorSlug,
   );
 
-  const [membershipsResult, rolesResult, assignmentsResult] = await Promise.all(
-    [
+  const [membershipsResult, rolesResult, assignmentsResult, invitationsResult] =
+    await Promise.all([
       supabase
         .from("organization_memberships")
         .select("id, user_id")
@@ -41,9 +41,22 @@ export default async function IncubatorPeoplePage({
         .eq("organization_id", organization.id)
         .eq("incubator_id", incubator.id)
         .order("created_at"),
-    ],
-  );
-  if (membershipsResult.error || rolesResult.error || assignmentsResult.error)
+      supabase
+        .from("invitations")
+        .select(
+          "id, invited_name, email, role_id, status, expires_at, created_at",
+        )
+        .eq("organization_id", organization.id)
+        .eq("incubator_id", incubator.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false }),
+    ]);
+  if (
+    membershipsResult.error ||
+    rolesResult.error ||
+    assignmentsResult.error ||
+    invitationsResult.error
+  )
     throw new Error("Falha ao consultar a equipe da incubadora.");
 
   const memberships = membershipsResult.data ?? [];
@@ -68,15 +81,36 @@ export default async function IncubatorPeoplePage({
     };
   });
 
+  const logoUrl = incubator.logo_path
+    ? ((
+        await supabase.storage
+          .from("incubator-logos")
+          .createSignedUrl(incubator.logo_path, 60 * 60)
+      ).data?.signedUrl ?? null)
+    : null;
+
   return (
     <IncubatorPeopleManagement
       organizationSlug={organizationSlug}
       incubatorSlug={incubatorSlug}
       incubatorName={incubator.name}
       incubatorSettings={{
+        name: incubator.name,
         timezone: incubator.timezone,
         locale: incubator.locale,
         settings: incubator.settings,
+        kind: incubator.kind,
+        customKind: incubator.custom_kind,
+        legalName: incubator.legal_name,
+        description: incubator.short_description,
+        logoUrl,
+        contactEmail: incubator.contact_email,
+        phone: incubator.phone,
+        website: incubator.website_url,
+        city: incubator.city,
+        state: incubator.state,
+        countryCode: incubator.country_code,
+        responsibleName: incubator.responsible_name,
       }}
       people={people}
       roles={rolesResult.data ?? []}
@@ -85,6 +119,7 @@ export default async function IncubatorPeoplePage({
         membershipId: assignment.membership_id,
         roleId: assignment.role_id,
       }))}
+      invitations={invitationsResult.data ?? []}
       success={firstSearchValue(feedback.success)}
       error={firstSearchValue(feedback.error)}
     />

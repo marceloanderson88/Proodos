@@ -71,7 +71,7 @@ Confirmar tamanho máximo por tipo, tipos proibidos, retenção, quarentena/anti
 ### G-08 — Provedor de e-mail
 
 **Lacuna:** fornecedor transacional, remetente, domínio e templates.  
-**Suposição:** abstrair `EmailService`; usar apenas e-mails nativos necessários do Supabase Auth até a decisão.
+**Implementação atual:** convites de acesso usam o e-mail nativo do Supabase Auth com `SUPABASE_SECRET_KEY` exclusivamente no servidor. Um provedor transacional e templates institucionais continuam pendentes para comunicações de negócio.
 
 ### G-09 — Calendário
 

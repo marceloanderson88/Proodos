@@ -77,7 +77,7 @@ export type Database = {
         };
         Insert: {
           capacity?: number | null;
-          code?: string;
+          code: string;
           created_at?: string;
           created_by: string;
           deleted_at?: string | null;
@@ -132,11 +132,18 @@ export type Database = {
       };
       diagnostic_assessments: {
         Row: {
+          average_gap: number | null;
+          campaign_id: string | null;
+          campaign_startup_id: string | null;
+          classification_code: string | null;
           created_at: string;
           cycle_label: string;
+          due_at: string | null;
           evaluator_id: string | null;
+          evidence_coverage: number | null;
           id: string;
           incubator_id: string;
+          lock_version: number;
           organization_id: string;
           self_score: number | null;
           started_by: string;
@@ -149,11 +156,18 @@ export type Database = {
           validated_score: number | null;
         };
         Insert: {
+          average_gap?: number | null;
+          campaign_id?: string | null;
+          campaign_startup_id?: string | null;
+          classification_code?: string | null;
           created_at?: string;
           cycle_label: string;
+          due_at?: string | null;
           evaluator_id?: string | null;
+          evidence_coverage?: number | null;
           id?: string;
           incubator_id: string;
+          lock_version?: number;
           organization_id: string;
           self_score?: number | null;
           started_by: string;
@@ -166,11 +180,18 @@ export type Database = {
           validated_score?: number | null;
         };
         Update: {
+          average_gap?: number | null;
+          campaign_id?: string | null;
+          campaign_startup_id?: string | null;
+          classification_code?: string | null;
           created_at?: string;
           cycle_label?: string;
+          due_at?: string | null;
           evaluator_id?: string | null;
+          evidence_coverage?: number | null;
           id?: string;
           incubator_id?: string;
+          lock_version?: number;
           organization_id?: string;
           self_score?: number | null;
           started_by?: string;
@@ -183,6 +204,20 @@ export type Database = {
           validated_score?: number | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "diagnostic_assessments_campaign_fkey";
+            columns: ["organization_id", "campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_campaigns";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_assessments_campaign_startup_fkey";
+            columns: ["organization_id", "campaign_startup_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_campaign_startups";
+            referencedColumns: ["organization_id", "id"];
+          },
           {
             foreignKeyName: "diagnostic_assessments_evaluator_id_fkey";
             columns: ["evaluator_id"];
@@ -220,21 +255,268 @@ export type Database = {
           },
         ];
       };
+      diagnostic_campaign_startups: {
+        Row: {
+          campaign_id: string;
+          created_at: string;
+          evaluator_id: string | null;
+          id: string;
+          incubator_id: string;
+          invited_at: string | null;
+          last_reminded_at: string | null;
+          organization_id: string;
+          startup_id: string;
+          status: Database["public"]["Enums"]["diagnostic_participant_status"];
+          submitted_at: string | null;
+          updated_at: string;
+          validated_at: string | null;
+        };
+        Insert: {
+          campaign_id: string;
+          created_at?: string;
+          evaluator_id?: string | null;
+          id?: string;
+          incubator_id: string;
+          invited_at?: string | null;
+          last_reminded_at?: string | null;
+          organization_id: string;
+          startup_id: string;
+          status?: Database["public"]["Enums"]["diagnostic_participant_status"];
+          submitted_at?: string | null;
+          updated_at?: string;
+          validated_at?: string | null;
+        };
+        Update: {
+          campaign_id?: string;
+          created_at?: string;
+          evaluator_id?: string | null;
+          id?: string;
+          incubator_id?: string;
+          invited_at?: string | null;
+          last_reminded_at?: string | null;
+          organization_id?: string;
+          startup_id?: string;
+          status?: Database["public"]["Enums"]["diagnostic_participant_status"];
+          submitted_at?: string | null;
+          updated_at?: string;
+          validated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_campaign_startups_evaluator_id_fkey";
+            columns: ["evaluator_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_campaign_startups_organization_id_campaign_id_fkey";
+            columns: ["organization_id", "campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_campaigns";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_campaign_startups_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_campaign_startups_organization_id_startup_id_fkey";
+            columns: ["organization_id", "startup_id"];
+            isOneToOne: false;
+            referencedRelation: "startups";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_campaigns: {
+        Row: {
+          cancelled_at: string | null;
+          cohort_id: string | null;
+          communication_message: string;
+          communication_subject: string;
+          created_at: string;
+          created_by: string;
+          default_evaluator_id: string | null;
+          ends_at: string;
+          id: string;
+          incubator_id: string;
+          name: string;
+          organization_id: string;
+          program_id: string | null;
+          starts_at: string;
+          status: Database["public"]["Enums"]["diagnostic_campaign_status"];
+          template_id: string;
+          timezone: string;
+          updated_at: string;
+        };
+        Insert: {
+          cancelled_at?: string | null;
+          cohort_id?: string | null;
+          communication_message?: string;
+          communication_subject?: string;
+          created_at?: string;
+          created_by: string;
+          default_evaluator_id?: string | null;
+          ends_at: string;
+          id?: string;
+          incubator_id: string;
+          name: string;
+          organization_id: string;
+          program_id?: string | null;
+          starts_at: string;
+          status?: Database["public"]["Enums"]["diagnostic_campaign_status"];
+          template_id: string;
+          timezone?: string;
+          updated_at?: string;
+        };
+        Update: {
+          cancelled_at?: string | null;
+          cohort_id?: string | null;
+          communication_message?: string;
+          communication_subject?: string;
+          created_at?: string;
+          created_by?: string;
+          default_evaluator_id?: string | null;
+          ends_at?: string;
+          id?: string;
+          incubator_id?: string;
+          name?: string;
+          organization_id?: string;
+          program_id?: string | null;
+          starts_at?: string;
+          status?: Database["public"]["Enums"]["diagnostic_campaign_status"];
+          template_id?: string;
+          timezone?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_campaigns_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_campaigns_default_evaluator_id_fkey";
+            columns: ["default_evaluator_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_campaigns_organization_id_cohort_id_fkey";
+            columns: ["organization_id", "cohort_id"];
+            isOneToOne: false;
+            referencedRelation: "cohorts";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_campaigns_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_campaigns_organization_id_program_id_fkey";
+            columns: ["organization_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "programs";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_campaigns_organization_id_template_id_fkey";
+            columns: ["organization_id", "template_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_templates";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_classification_ranges: {
+        Row: {
+          code: string;
+          color_token: string | null;
+          created_at: string;
+          id: string;
+          incubator_id: string;
+          label: string;
+          maximum_score: number;
+          minimum_score: number;
+          organization_id: string;
+          position: number;
+          template_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          code: string;
+          color_token?: string | null;
+          created_at?: string;
+          id?: string;
+          incubator_id: string;
+          label: string;
+          maximum_score: number;
+          minimum_score: number;
+          organization_id: string;
+          position: number;
+          template_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          code?: string;
+          color_token?: string | null;
+          created_at?: string;
+          id?: string;
+          incubator_id?: string;
+          label?: string;
+          maximum_score?: number;
+          minimum_score?: number;
+          organization_id?: string;
+          position?: number;
+          template_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_classification_ran_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_classification_rang_organization_id_template_id_fkey";
+            columns: ["organization_id", "template_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_templates";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
       diagnostic_criteria: {
         Row: {
           allows_not_applicable: boolean;
+          code: string | null;
           created_at: string;
           dimension_id: string;
           evidence_required_from: number | null;
           help_text: string;
           id: string;
           incubator_id: string;
+          internal_notes: string;
           is_required: boolean;
           maximum_score: number;
+          not_applicable_guidance: string;
           options: Json;
           organization_id: string;
           position: number;
           prompt: string;
+          requires_not_applicable_justification: boolean;
           response_type: Database["public"]["Enums"]["diagnostic_response_type"];
           rubric: Json;
           template_id: string;
@@ -243,18 +525,22 @@ export type Database = {
         };
         Insert: {
           allows_not_applicable?: boolean;
+          code?: string | null;
           created_at?: string;
           dimension_id: string;
           evidence_required_from?: number | null;
           help_text?: string;
           id?: string;
           incubator_id: string;
+          internal_notes?: string;
           is_required?: boolean;
           maximum_score?: number;
+          not_applicable_guidance?: string;
           options?: Json;
           organization_id: string;
           position?: number;
           prompt: string;
+          requires_not_applicable_justification?: boolean;
           response_type?: Database["public"]["Enums"]["diagnostic_response_type"];
           rubric?: Json;
           template_id: string;
@@ -263,18 +549,22 @@ export type Database = {
         };
         Update: {
           allows_not_applicable?: boolean;
+          code?: string | null;
           created_at?: string;
           dimension_id?: string;
           evidence_required_from?: number | null;
           help_text?: string;
           id?: string;
           incubator_id?: string;
+          internal_notes?: string;
           is_required?: boolean;
           maximum_score?: number;
+          not_applicable_guidance?: string;
           options?: Json;
           organization_id?: string;
           position?: number;
           prompt?: string;
+          requires_not_applicable_justification?: boolean;
           response_type?: Database["public"]["Enums"]["diagnostic_response_type"];
           rubric?: Json;
           template_id?: string;
@@ -305,12 +595,223 @@ export type Database = {
           },
         ];
       };
+      diagnostic_criterion_levels: {
+        Row: {
+          created_at: string;
+          criterion_id: string;
+          description: string;
+          id: string;
+          incubator_id: string;
+          label: string;
+          organization_id: string;
+          position: number;
+          score: number;
+          template_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          criterion_id: string;
+          description: string;
+          id?: string;
+          incubator_id: string;
+          label: string;
+          organization_id: string;
+          position: number;
+          score: number;
+          template_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          criterion_id?: string;
+          description?: string;
+          id?: string;
+          incubator_id?: string;
+          label?: string;
+          organization_id?: string;
+          position?: number;
+          score?: number;
+          template_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_criterion_levels_organization_id_criterion_id_fkey";
+            columns: ["organization_id", "criterion_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_criteria";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_criterion_levels_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_criterion_levels_organization_id_template_id_fkey";
+            columns: ["organization_id", "template_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_templates";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_criterion_stages: {
+        Row: {
+          created_at: string;
+          criterion_id: string;
+          organization_id: string;
+          stage: Database["public"]["Enums"]["startup_stage"];
+          template_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          criterion_id: string;
+          organization_id: string;
+          stage: Database["public"]["Enums"]["startup_stage"];
+          template_id: string;
+        };
+        Update: {
+          created_at?: string;
+          criterion_id?: string;
+          organization_id?: string;
+          stage?: Database["public"]["Enums"]["startup_stage"];
+          template_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_criterion_stages_organization_id_criterion_id_fkey";
+            columns: ["organization_id", "criterion_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_criteria";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_criterion_stages_organization_id_template_id_fkey";
+            columns: ["organization_id", "template_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_templates";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_dimension_scores: {
+        Row: {
+          answered_criteria: number;
+          applicable_criteria: number;
+          assessment_id: string;
+          calculated_at: string;
+          dimension_id: string;
+          effective_weight: number;
+          id: string;
+          incubator_id: string;
+          organization_id: string;
+          self_score: number | null;
+          validated_criteria: number;
+          validated_score: number | null;
+        };
+        Insert: {
+          answered_criteria?: number;
+          applicable_criteria?: number;
+          assessment_id: string;
+          calculated_at?: string;
+          dimension_id: string;
+          effective_weight: number;
+          id?: string;
+          incubator_id: string;
+          organization_id: string;
+          self_score?: number | null;
+          validated_criteria?: number;
+          validated_score?: number | null;
+        };
+        Update: {
+          answered_criteria?: number;
+          applicable_criteria?: number;
+          assessment_id?: string;
+          calculated_at?: string;
+          dimension_id?: string;
+          effective_weight?: number;
+          id?: string;
+          incubator_id?: string;
+          organization_id?: string;
+          self_score?: number | null;
+          validated_criteria?: number;
+          validated_score?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_dimension_scores_organization_id_assessment_id_fkey";
+            columns: ["organization_id", "assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_assessments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_dimension_scores_organization_id_dimension_id_fkey";
+            columns: ["organization_id", "dimension_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_dimensions";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_dimension_scores_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_dimension_stages: {
+        Row: {
+          created_at: string;
+          dimension_id: string;
+          organization_id: string;
+          stage: Database["public"]["Enums"]["startup_stage"];
+          template_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          dimension_id: string;
+          organization_id: string;
+          stage: Database["public"]["Enums"]["startup_stage"];
+          template_id: string;
+        };
+        Update: {
+          created_at?: string;
+          dimension_id?: string;
+          organization_id?: string;
+          stage?: Database["public"]["Enums"]["startup_stage"];
+          template_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_dimension_stages_organization_id_dimension_id_fkey";
+            columns: ["organization_id", "dimension_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_dimensions";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_dimension_stages_organization_id_template_id_fkey";
+            columns: ["organization_id", "template_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_templates";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
       diagnostic_dimensions: {
         Row: {
+          code: string | null;
           created_at: string;
           description: string;
           id: string;
           incubator_id: string;
+          is_essential: boolean;
           name: string;
           organization_id: string;
           position: number;
@@ -319,10 +820,12 @@ export type Database = {
           weight: number;
         };
         Insert: {
+          code?: string | null;
           created_at?: string;
           description?: string;
           id?: string;
           incubator_id: string;
+          is_essential?: boolean;
           name: string;
           organization_id: string;
           position?: number;
@@ -331,10 +834,12 @@ export type Database = {
           weight?: number;
         };
         Update: {
+          code?: string | null;
           created_at?: string;
           description?: string;
           id?: string;
           incubator_id?: string;
+          is_essential?: boolean;
           name?: string;
           organization_id?: string;
           position?: number;
@@ -356,6 +861,505 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "diagnostic_templates";
             referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_history_events: {
+        Row: {
+          actor_id: string | null;
+          assessment_id: string;
+          created_at: string;
+          details: Json;
+          event_type: string;
+          from_status: string | null;
+          id: number;
+          incubator_id: string;
+          organization_id: string;
+          to_status: string | null;
+        };
+        Insert: {
+          actor_id?: string | null;
+          assessment_id: string;
+          created_at?: string;
+          details?: Json;
+          event_type: string;
+          from_status?: string | null;
+          id?: never;
+          incubator_id: string;
+          organization_id: string;
+          to_status?: string | null;
+        };
+        Update: {
+          actor_id?: string | null;
+          assessment_id?: string;
+          created_at?: string;
+          details?: Json;
+          event_type?: string;
+          from_status?: string | null;
+          id?: never;
+          incubator_id?: string;
+          organization_id?: string;
+          to_status?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_history_events_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_history_events_organization_id_assessment_id_fkey";
+            columns: ["organization_id", "assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_assessments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_history_events_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_indicator_definitions: {
+        Row: {
+          category: string;
+          code: string;
+          created_at: string;
+          evidence_hint: string;
+          formula_key: string | null;
+          id: string;
+          incubator_id: string;
+          is_derived: boolean;
+          name: string;
+          organization_id: string;
+          position: number;
+          template_id: string;
+          unit: string;
+          updated_at: string;
+          value_type: Database["public"]["Enums"]["diagnostic_indicator_value_type"];
+        };
+        Insert: {
+          category: string;
+          code: string;
+          created_at?: string;
+          evidence_hint?: string;
+          formula_key?: string | null;
+          id?: string;
+          incubator_id: string;
+          is_derived?: boolean;
+          name: string;
+          organization_id: string;
+          position: number;
+          template_id: string;
+          unit: string;
+          updated_at?: string;
+          value_type: Database["public"]["Enums"]["diagnostic_indicator_value_type"];
+        };
+        Update: {
+          category?: string;
+          code?: string;
+          created_at?: string;
+          evidence_hint?: string;
+          formula_key?: string | null;
+          id?: string;
+          incubator_id?: string;
+          is_derived?: boolean;
+          name?: string;
+          organization_id?: string;
+          position?: number;
+          template_id?: string;
+          unit?: string;
+          updated_at?: string;
+          value_type?: Database["public"]["Enums"]["diagnostic_indicator_value_type"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_indicator_definiti_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_indicator_definitio_organization_id_template_id_fkey";
+            columns: ["organization_id", "template_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_templates";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_indicator_values: {
+        Row: {
+          assessment_id: string;
+          created_at: string;
+          evidence_notes: string;
+          id: string;
+          incubator_id: string;
+          indicator_definition_id: string;
+          is_not_applicable: boolean;
+          not_applicable_justification: string | null;
+          numeric_value: number | null;
+          organization_id: string;
+          recorded_by: string;
+          target_value: number | null;
+          updated_at: string;
+        };
+        Insert: {
+          assessment_id: string;
+          created_at?: string;
+          evidence_notes?: string;
+          id?: string;
+          incubator_id: string;
+          indicator_definition_id: string;
+          is_not_applicable?: boolean;
+          not_applicable_justification?: string | null;
+          numeric_value?: number | null;
+          organization_id: string;
+          recorded_by: string;
+          target_value?: number | null;
+          updated_at?: string;
+        };
+        Update: {
+          assessment_id?: string;
+          created_at?: string;
+          evidence_notes?: string;
+          id?: string;
+          incubator_id?: string;
+          indicator_definition_id?: string;
+          is_not_applicable?: boolean;
+          not_applicable_justification?: string | null;
+          numeric_value?: number | null;
+          organization_id?: string;
+          recorded_by?: string;
+          target_value?: number | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_indicator_values_organization_id_assessment_id_fkey";
+            columns: ["organization_id", "assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_assessments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_indicator_values_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_indicator_values_organization_id_indicator_defi_fkey";
+            columns: ["organization_id", "indicator_definition_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_indicator_definitions";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_indicator_values_recorded_by_fkey";
+            columns: ["recorded_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      diagnostic_respondents: {
+        Row: {
+          accepted_at: string | null;
+          assessment_id: string;
+          can_submit: boolean;
+          created_at: string;
+          id: string;
+          incubator_id: string;
+          invited_at: string;
+          invited_by: string;
+          organization_id: string;
+          revoked_at: string | null;
+          role: Database["public"]["Enums"]["diagnostic_respondent_role"];
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          assessment_id: string;
+          can_submit?: boolean;
+          created_at?: string;
+          id?: string;
+          incubator_id: string;
+          invited_at?: string;
+          invited_by: string;
+          organization_id: string;
+          revoked_at?: string | null;
+          role?: Database["public"]["Enums"]["diagnostic_respondent_role"];
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          assessment_id?: string;
+          can_submit?: boolean;
+          created_at?: string;
+          id?: string;
+          incubator_id?: string;
+          invited_at?: string;
+          invited_by?: string;
+          organization_id?: string;
+          revoked_at?: string | null;
+          role?: Database["public"]["Enums"]["diagnostic_respondent_role"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_respondents_invited_by_fkey";
+            columns: ["invited_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_respondents_organization_id_assessment_id_fkey";
+            columns: ["organization_id", "assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_assessments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_respondents_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_respondents_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      diagnostic_respondent_invitations: {
+        Row: {
+          accepted_at: string | null;
+          assessment_id: string;
+          can_submit: boolean;
+          created_at: string;
+          created_by: string;
+          id: string;
+          incubator_id: string;
+          invitation_id: string;
+          organization_id: string;
+          respondent_role: Database["public"]["Enums"]["diagnostic_respondent_role"];
+          respondent_user_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          assessment_id: string;
+          can_submit?: boolean;
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          incubator_id: string;
+          invitation_id: string;
+          organization_id: string;
+          respondent_role?: Database["public"]["Enums"]["diagnostic_respondent_role"];
+          respondent_user_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          assessment_id?: string;
+          can_submit?: boolean;
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          incubator_id?: string;
+          invitation_id?: string;
+          organization_id?: string;
+          respondent_role?: Database["public"]["Enums"]["diagnostic_respondent_role"];
+          respondent_user_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_respondent_invitations_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_respondent_invitations_invitation_id_fkey";
+            columns: ["invitation_id"];
+            isOneToOne: true;
+            referencedRelation: "invitations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_respondent_invitations_organization_id_assessment_id_fkey";
+            columns: ["organization_id", "assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_assessments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_respondent_invitations_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_respondent_invitations_respondent_user_id_fkey";
+            columns: ["respondent_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      diagnostic_response_evidence: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          deleted_at: string | null;
+          external_url: string | null;
+          file_id: string | null;
+          id: string;
+          incubator_id: string;
+          kind: Database["public"]["Enums"]["diagnostic_evidence_kind"];
+          label: string;
+          organization_id: string;
+          response_id: string;
+          status: Database["public"]["Enums"]["diagnostic_evidence_status"];
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          deleted_at?: string | null;
+          external_url?: string | null;
+          file_id?: string | null;
+          id?: string;
+          incubator_id: string;
+          kind: Database["public"]["Enums"]["diagnostic_evidence_kind"];
+          label: string;
+          organization_id: string;
+          response_id: string;
+          status?: Database["public"]["Enums"]["diagnostic_evidence_status"];
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          deleted_at?: string | null;
+          external_url?: string | null;
+          file_id?: string | null;
+          id?: string;
+          incubator_id?: string;
+          kind?: Database["public"]["Enums"]["diagnostic_evidence_kind"];
+          label?: string;
+          organization_id?: string;
+          response_id?: string;
+          status?: Database["public"]["Enums"]["diagnostic_evidence_status"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_response_evidence_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_response_evidence_organization_id_file_id_fkey";
+            columns: ["organization_id", "file_id"];
+            isOneToOne: false;
+            referencedRelation: "files";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_response_evidence_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_response_evidence_response_id_fkey";
+            columns: ["response_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_responses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      diagnostic_response_validations: {
+        Row: {
+          created_at: string;
+          evaluator_comment: string;
+          finalized_at: string | null;
+          id: string;
+          incubator_id: string;
+          organization_id: string;
+          response_id: string;
+          revision: number;
+          status: Database["public"]["Enums"]["diagnostic_validation_status"];
+          validated_value: Json | null;
+          validator_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          evaluator_comment?: string;
+          finalized_at?: string | null;
+          id?: string;
+          incubator_id: string;
+          organization_id: string;
+          response_id: string;
+          revision?: number;
+          status?: Database["public"]["Enums"]["diagnostic_validation_status"];
+          validated_value?: Json | null;
+          validator_id: string;
+        };
+        Update: {
+          created_at?: string;
+          evaluator_comment?: string;
+          finalized_at?: string | null;
+          id?: string;
+          incubator_id?: string;
+          organization_id?: string;
+          response_id?: string;
+          revision?: number;
+          status?: Database["public"]["Enums"]["diagnostic_validation_status"];
+          validated_value?: Json | null;
+          validator_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_response_validations_response_id_fkey";
+            columns: ["response_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_responses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_response_validations_validator_id_fkey";
+            columns: ["validator_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
         ];
       };
@@ -445,9 +1449,81 @@ export type Database = {
           },
         ];
       };
+      diagnostic_template_families: {
+        Row: {
+          archived_at: string | null;
+          code: string;
+          created_at: string;
+          created_by: string;
+          description: string;
+          id: string;
+          incubator_id: string | null;
+          is_standard: boolean;
+          methodology_name: string | null;
+          name: string;
+          organization_id: string;
+          scope: Database["public"]["Enums"]["diagnostic_template_scope"];
+          updated_at: string;
+        };
+        Insert: {
+          archived_at?: string | null;
+          code: string;
+          created_at?: string;
+          created_by: string;
+          description?: string;
+          id?: string;
+          incubator_id?: string | null;
+          is_standard?: boolean;
+          methodology_name?: string | null;
+          name: string;
+          organization_id: string;
+          scope?: Database["public"]["Enums"]["diagnostic_template_scope"];
+          updated_at?: string;
+        };
+        Update: {
+          archived_at?: string | null;
+          code?: string;
+          created_at?: string;
+          created_by?: string;
+          description?: string;
+          id?: string;
+          incubator_id?: string | null;
+          is_standard?: boolean;
+          methodology_name?: string | null;
+          name?: string;
+          organization_id?: string;
+          scope?: Database["public"]["Enums"]["diagnostic_template_scope"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_template_families_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_template_families_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_template_families_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
       diagnostic_templates: {
         Row: {
           archived_at: string | null;
+          based_on_version_id: string | null;
+          changelog: string;
           created_at: string;
           created_by: string;
           description: string;
@@ -458,12 +1534,16 @@ export type Database = {
           name: string;
           organization_id: string;
           published_at: string | null;
+          source_checksum: string | null;
           status: Database["public"]["Enums"]["diagnostic_template_status"];
           updated_at: string;
           version: number;
+          version_label: string;
         };
         Insert: {
           archived_at?: string | null;
+          based_on_version_id?: string | null;
+          changelog?: string;
           created_at?: string;
           created_by: string;
           description?: string;
@@ -474,12 +1554,16 @@ export type Database = {
           name: string;
           organization_id: string;
           published_at?: string | null;
+          source_checksum?: string | null;
           status?: Database["public"]["Enums"]["diagnostic_template_status"];
           updated_at?: string;
           version?: number;
+          version_label: string;
         };
         Update: {
           archived_at?: string | null;
+          based_on_version_id?: string | null;
+          changelog?: string;
           created_at?: string;
           created_by?: string;
           description?: string;
@@ -490,17 +1574,33 @@ export type Database = {
           name?: string;
           organization_id?: string;
           published_at?: string | null;
+          source_checksum?: string | null;
           status?: Database["public"]["Enums"]["diagnostic_template_status"];
           updated_at?: string;
           version?: number;
+          version_label?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "diagnostic_templates_based_on_fkey";
+            columns: ["based_on_version_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_templates";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "diagnostic_templates_created_by_fkey";
             columns: ["created_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diagnostic_templates_family_fkey";
+            columns: ["organization_id", "family_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_template_families";
+            referencedColumns: ["organization_id", "id"];
           },
           {
             foreignKeyName: "diagnostic_templates_organization_id_fkey";
@@ -514,6 +1614,156 @@ export type Database = {
             columns: ["organization_id", "incubator_id"];
             isOneToOne: false;
             referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_trigger_results: {
+        Row: {
+          assessment_id: string;
+          evaluated_at: string;
+          id: string;
+          incubator_id: string;
+          message: string;
+          observed_value: number | null;
+          organization_id: string;
+          status: Database["public"]["Enums"]["diagnostic_trigger_result_status"];
+          trigger_rule_id: string;
+        };
+        Insert: {
+          assessment_id: string;
+          evaluated_at?: string;
+          id?: string;
+          incubator_id: string;
+          message: string;
+          observed_value?: number | null;
+          organization_id: string;
+          status: Database["public"]["Enums"]["diagnostic_trigger_result_status"];
+          trigger_rule_id: string;
+        };
+        Update: {
+          assessment_id?: string;
+          evaluated_at?: string;
+          id?: string;
+          incubator_id?: string;
+          message?: string;
+          observed_value?: number | null;
+          organization_id?: string;
+          status?: Database["public"]["Enums"]["diagnostic_trigger_result_status"];
+          trigger_rule_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_trigger_results_organization_id_assessment_id_fkey";
+            columns: ["organization_id", "assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_assessments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_trigger_results_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_trigger_results_organization_id_trigger_rule_id_fkey";
+            columns: ["organization_id", "trigger_rule_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_trigger_rules";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      diagnostic_trigger_rules: {
+        Row: {
+          aggregate_key: string | null;
+          code: string;
+          created_at: string;
+          criterion_id: string | null;
+          id: string;
+          incubator_id: string;
+          indicator_definition_id: string | null;
+          message: string;
+          name: string;
+          operator: Database["public"]["Enums"]["diagnostic_trigger_operator"];
+          organization_id: string;
+          position: number;
+          recommended_action: string;
+          severity: Database["public"]["Enums"]["diagnostic_trigger_severity"];
+          source_type: Database["public"]["Enums"]["diagnostic_trigger_source"];
+          template_id: string;
+          threshold: number;
+          updated_at: string;
+        };
+        Insert: {
+          aggregate_key?: string | null;
+          code: string;
+          created_at?: string;
+          criterion_id?: string | null;
+          id?: string;
+          incubator_id: string;
+          indicator_definition_id?: string | null;
+          message: string;
+          name: string;
+          operator: Database["public"]["Enums"]["diagnostic_trigger_operator"];
+          organization_id: string;
+          position: number;
+          recommended_action?: string;
+          severity?: Database["public"]["Enums"]["diagnostic_trigger_severity"];
+          source_type: Database["public"]["Enums"]["diagnostic_trigger_source"];
+          template_id: string;
+          threshold: number;
+          updated_at?: string;
+        };
+        Update: {
+          aggregate_key?: string | null;
+          code?: string;
+          created_at?: string;
+          criterion_id?: string | null;
+          id?: string;
+          incubator_id?: string;
+          indicator_definition_id?: string | null;
+          message?: string;
+          name?: string;
+          operator?: Database["public"]["Enums"]["diagnostic_trigger_operator"];
+          organization_id?: string;
+          position?: number;
+          recommended_action?: string;
+          severity?: Database["public"]["Enums"]["diagnostic_trigger_severity"];
+          source_type?: Database["public"]["Enums"]["diagnostic_trigger_source"];
+          template_id?: string;
+          threshold?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_trigger_rules_organization_id_criterion_id_fkey";
+            columns: ["organization_id", "criterion_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_criteria";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_trigger_rules_organization_id_incubator_id_fkey";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_trigger_rules_organization_id_indicator_definit_fkey";
+            columns: ["organization_id", "indicator_definition_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_indicator_definitions";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "diagnostic_trigger_rules_organization_id_template_id_fkey";
+            columns: ["organization_id", "template_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_templates";
             referencedColumns: ["organization_id", "id"];
           },
         ];
@@ -829,49 +2079,88 @@ export type Database = {
       };
       incubators: {
         Row: {
+          city: string | null;
+          contact_email: string | null;
+          country_code: string;
           created_at: string;
           created_by: string;
+          custom_kind: string | null;
           deleted_at: string | null;
           id: string;
+          kind: Database["public"]["Enums"]["incubator_kind"];
+          legal_name: string | null;
           locale: string;
+          logo_path: string | null;
           name: string;
+          onboarding_completed_at: string | null;
           organization_id: string;
+          phone: string | null;
+          responsible_name: string | null;
           settings: Json;
+          short_description: string | null;
           slug: string;
+          state: string | null;
           status: Database["public"]["Enums"]["organization_status"];
           timezone: string;
           unit_id: string | null;
           updated_at: string;
+          website_url: string | null;
         };
         Insert: {
+          city?: string | null;
+          contact_email?: string | null;
+          country_code?: string;
           created_at?: string;
           created_by: string;
+          custom_kind?: string | null;
           deleted_at?: string | null;
           id?: string;
+          kind?: Database["public"]["Enums"]["incubator_kind"];
+          legal_name?: string | null;
           locale?: string;
+          logo_path?: string | null;
           name: string;
+          onboarding_completed_at?: string | null;
           organization_id: string;
+          phone?: string | null;
+          responsible_name?: string | null;
           settings?: Json;
+          short_description?: string | null;
           slug: string;
+          state?: string | null;
           status?: Database["public"]["Enums"]["organization_status"];
           timezone?: string;
           unit_id?: string | null;
           updated_at?: string;
+          website_url?: string | null;
         };
         Update: {
+          city?: string | null;
+          contact_email?: string | null;
+          country_code?: string;
           created_at?: string;
           created_by?: string;
+          custom_kind?: string | null;
           deleted_at?: string | null;
           id?: string;
+          kind?: Database["public"]["Enums"]["incubator_kind"];
+          legal_name?: string | null;
           locale?: string;
+          logo_path?: string | null;
           name?: string;
+          onboarding_completed_at?: string | null;
           organization_id?: string;
+          phone?: string | null;
+          responsible_name?: string | null;
           settings?: Json;
+          short_description?: string | null;
           slug?: string;
+          state?: string | null;
           status?: Database["public"]["Enums"]["organization_status"];
           timezone?: string;
           unit_id?: string | null;
           updated_at?: string;
+          website_url?: string | null;
         };
         Relationships: [
           {
@@ -900,9 +2189,12 @@ export type Database = {
           id: string;
           incubator_id: string | null;
           invited_by: string;
+          invited_name: string | null;
+          last_sent_at: string;
           organization_id: string;
           revoked_at: string | null;
           role_id: string;
+          send_count: number;
           status: Database["public"]["Enums"]["invitation_status"];
           token_hash: string;
           unit_id: string | null;
@@ -917,9 +2209,12 @@ export type Database = {
           id?: string;
           incubator_id?: string | null;
           invited_by: string;
+          invited_name?: string | null;
+          last_sent_at?: string;
           organization_id: string;
           revoked_at?: string | null;
           role_id: string;
+          send_count?: number;
           status?: Database["public"]["Enums"]["invitation_status"];
           token_hash: string;
           unit_id?: string | null;
@@ -934,9 +2229,12 @@ export type Database = {
           id?: string;
           incubator_id?: string | null;
           invited_by?: string;
+          invited_name?: string | null;
+          last_sent_at?: string;
           organization_id?: string;
           revoked_at?: string | null;
           role_id?: string;
+          send_count?: number;
           status?: Database["public"]["Enums"]["invitation_status"];
           token_hash?: string;
           unit_id?: string | null;
@@ -1290,35 +2588,45 @@ export type Database = {
           created_at: string;
           created_by: string;
           deleted_at: string | null;
+          delivery_mode: Database["public"]["Enums"]["delivery_mode"] | null;
           description: string | null;
+          duration_weeks: number | null;
           ends_on: string | null;
           id: string;
           incubator_id: string;
           logo_path: string | null;
           name: string;
+          objectives: string | null;
           organization_id: string;
           settings: Json;
-          starts_on: string;
+          starts_on: string | null;
           status: Database["public"]["Enums"]["program_status"];
+          suggested_capacity: number | null;
+          target_audience: string | null;
           type_id: string;
           updated_at: string;
         };
         Insert: {
           admission_criteria?: Json;
-          code?: string;
+          code: string;
           created_at?: string;
           created_by: string;
           deleted_at?: string | null;
+          delivery_mode?: Database["public"]["Enums"]["delivery_mode"] | null;
           description?: string | null;
+          duration_weeks?: number | null;
           ends_on?: string | null;
           id?: string;
           incubator_id: string;
           logo_path?: string | null;
           name: string;
+          objectives?: string | null;
           organization_id: string;
           settings?: Json;
-          starts_on: string;
+          starts_on?: string | null;
           status?: Database["public"]["Enums"]["program_status"];
+          suggested_capacity?: number | null;
+          target_audience?: string | null;
           type_id: string;
           updated_at?: string;
         };
@@ -1328,16 +2636,21 @@ export type Database = {
           created_at?: string;
           created_by?: string;
           deleted_at?: string | null;
+          delivery_mode?: Database["public"]["Enums"]["delivery_mode"] | null;
           description?: string | null;
+          duration_weeks?: number | null;
           ends_on?: string | null;
           id?: string;
           incubator_id?: string;
           logo_path?: string | null;
           name?: string;
+          objectives?: string | null;
           organization_id?: string;
           settings?: Json;
-          starts_on?: string;
+          starts_on?: string | null;
           status?: Database["public"]["Enums"]["program_status"];
+          suggested_capacity?: number | null;
+          target_audience?: string | null;
           type_id?: string;
           updated_at?: string;
         };
@@ -1746,7 +3059,7 @@ export type Database = {
         Insert: {
           business_model?: string | null;
           city?: string | null;
-          code?: string;
+          code: string;
           country_code?: string;
           created_at?: string;
           created_by: string;
@@ -1908,6 +3221,86 @@ export type Database = {
           organization_slug: string;
         }[];
       };
+      add_diagnostic_criterion_with_rubric: {
+        Args: {
+          criterion_allows_na: boolean;
+          criterion_code: string;
+          criterion_evidence_required_from: number | null;
+          criterion_help_text: string;
+          criterion_prompt: string;
+          criterion_requires_na_justification: boolean;
+          criterion_weight: number;
+          rubric_descriptions: string[];
+          target_dimension_id: string;
+        };
+        Returns: string;
+      };
+      add_diagnostic_dimension: {
+        Args: {
+          dimension_code: string;
+          dimension_description: string;
+          dimension_is_essential?: boolean;
+          dimension_name: string;
+          dimension_weight: number;
+          target_template_id: string;
+        };
+        Returns: string;
+      };
+      assign_diagnostic_evaluator: {
+        Args: { target_assessment_id: string; target_user_id: string };
+        Returns: undefined;
+      };
+      assign_diagnostic_respondent: {
+        Args: {
+          target_assessment_id: string;
+          target_role: Database["public"]["Enums"]["diagnostic_respondent_role"];
+          target_user_id: string;
+        };
+        Returns: string;
+      };
+      autosave_diagnostic_response: {
+        Args: {
+          expected_lock_version: number;
+          target_assessment_id: string;
+          target_criterion_id: string;
+          target_evidence_notes?: string;
+          target_is_not_applicable: boolean;
+          target_not_applicable_justification?: string | null;
+          target_self_comment?: string;
+          target_self_value: Json | null;
+        };
+        Returns: {
+          lock_version: number;
+          response_id: string;
+          saved_at: string;
+        }[];
+      };
+      create_diagnostic_campaign: {
+        Args: {
+          campaign_ends_at: string;
+          campaign_name: string;
+          campaign_starts_at: string;
+          campaign_timezone?: string;
+          communication_message?: string;
+          communication_subject?: string;
+          target_cohort_id?: string;
+          target_evaluator_id?: string;
+          target_incubator_id: string;
+          target_program_id?: string;
+          target_startup_ids: string[];
+          target_template_id: string;
+        };
+        Returns: string;
+      };
+      create_diagnostic_template_draft: {
+        Args: {
+          target_incubator_id: string;
+          template_description?: string;
+          template_instructions?: string;
+          template_name: string;
+        };
+        Returns: string;
+      };
       create_organization: {
         Args: {
           organization_locale?: string;
@@ -1920,13 +3313,109 @@ export type Database = {
           slug: string;
         }[];
       };
+      delete_diagnostic_criterion: {
+        Args: { target_criterion_id: string };
+        Returns: undefined;
+      };
+      delete_diagnostic_dimension: {
+        Args: { target_dimension_id: string };
+        Returns: undefined;
+      };
+      duplicate_diagnostic_template_version: {
+        Args: {
+          new_version_label?: string;
+          source_template_id: string;
+          version_changelog?: string;
+        };
+        Returns: string;
+      };
+      finalize_diagnostic_assessment: {
+        Args: { target_assessment_id: string };
+        Returns: undefined;
+      };
       manage_incubator_lifecycle: {
         Args: { requested_action: string; target_incubator_id: string };
         Returns: string;
       };
+      mark_diagnostic_assessment_in_progress: {
+        Args: { target_assessment_id: string };
+        Returns: undefined;
+      };
       manage_program_lifecycle: {
         Args: { requested_action: string; target_program_id: string };
         Returns: string;
+      };
+      publish_diagnostic_template_version: {
+        Args: { target_template_id: string };
+        Returns: undefined;
+      };
+      reopen_diagnostic_assessment: {
+        Args: { target_assessment_id: string };
+        Returns: undefined;
+      };
+      reorder_diagnostic_criteria: {
+        Args: {
+          ordered_criterion_ids: string[];
+          target_dimension_id: string;
+        };
+        Returns: undefined;
+      };
+      reorder_diagnostic_dimensions: {
+        Args: {
+          ordered_dimension_ids: string[];
+          target_template_id: string;
+        };
+        Returns: undefined;
+      };
+      revoke_diagnostic_respondent: {
+        Args: { target_assessment_id: string; target_user_id: string };
+        Returns: undefined;
+      };
+      save_diagnostic_indicator_value: {
+        Args: {
+          expected_lock_version: number;
+          target_assessment_id: string;
+          target_evidence_notes?: string;
+          target_indicator_definition_id: string;
+          target_is_not_applicable?: boolean;
+          target_not_applicable_justification?: string | null;
+          target_numeric_value: number | null;
+          target_target_value?: number | null;
+        };
+        Returns: {
+          indicator_value_id: string;
+          lock_version: number;
+          saved_at: string;
+        }[];
+      };
+      submit_diagnostic_assessment: {
+        Args: { target_assessment_id: string };
+        Returns: undefined;
+      };
+      update_diagnostic_criterion_with_rubric: {
+        Args: {
+          criterion_allows_na: boolean;
+          criterion_code: string;
+          criterion_evidence_required_from: number | null;
+          criterion_help_text: string;
+          criterion_prompt: string;
+          criterion_requires_na_justification: boolean;
+          criterion_weight: number;
+          rubric_descriptions: string[];
+          target_criterion_id: string;
+        };
+        Returns: undefined;
+      };
+      update_diagnostic_dimension: {
+        Args: {
+          dimension_code: string;
+          dimension_description: string;
+          dimension_is_essential: boolean;
+          dimension_name: string;
+          dimension_weight: number;
+          target_dimension_id: string;
+        };
+        Returns: undefined;
       };
       system_readiness: { Args: never; Returns: boolean };
       transfer_startup_enrollment: {
@@ -1941,6 +3430,7 @@ export type Database = {
     Enums: {
       cohort_status:
         "planned" | "enrollment_open" | "active" | "completed" | "cancelled";
+      delivery_mode: "in_person" | "remote" | "hybrid";
       diagnostic_assessment_status:
         | "draft"
         | "in_progress"
@@ -1948,6 +3438,22 @@ export type Database = {
         | "under_review"
         | "validated"
         | "cancelled";
+      diagnostic_campaign_status:
+        "draft" | "scheduled" | "open" | "closed" | "cancelled";
+      diagnostic_evidence_kind: "file" | "external_link";
+      diagnostic_evidence_status:
+        "pending" | "available" | "rejected" | "deleted" | "restore_pending";
+      diagnostic_indicator_value_type:
+        "integer" | "numeric" | "currency" | "percentage";
+      diagnostic_participant_status:
+        | "invited"
+        | "not_started"
+        | "in_progress"
+        | "submitted"
+        | "overdue"
+        | "validated"
+        | "cancelled";
+      diagnostic_respondent_role: "primary" | "collaborator" | "viewer";
       diagnostic_response_type:
         | "numeric"
         | "text"
@@ -1957,7 +3463,13 @@ export type Database = {
         | "date"
         | "link"
         | "file";
+      diagnostic_template_scope: "incubator" | "organization";
       diagnostic_template_status: "draft" | "published" | "archived";
+      diagnostic_trigger_operator: "lt" | "lte" | "eq" | "gte" | "gt";
+      diagnostic_trigger_result_status: "clear" | "triggered" | "no_data";
+      diagnostic_trigger_severity: "info" | "warning" | "high" | "critical";
+      diagnostic_trigger_source: "criterion" | "indicator" | "aggregate";
+      diagnostic_validation_status: "draft" | "final";
       enrollment_source: "manual" | "invitation" | "selection_process";
       enrollment_status:
         | "invited"
@@ -2004,6 +3516,12 @@ export type Database = {
         | "missing"
         | "purge_pending"
         | "purged";
+      incubator_kind:
+        | "incubator"
+        | "accelerator"
+        | "innovation_hub"
+        | "innovation_center"
+        | "other";
       invitation_status: "pending" | "accepted" | "revoked" | "expired";
       membership_status: "invited" | "active" | "suspended" | "removed";
       organization_status: "active" | "inactive" | "suspended";
@@ -2171,6 +3689,7 @@ export const Constants = {
         "completed",
         "cancelled",
       ],
+      delivery_mode: ["in_person", "remote", "hybrid"],
       diagnostic_assessment_status: [
         "draft",
         "in_progress",
@@ -2179,6 +3698,37 @@ export const Constants = {
         "validated",
         "cancelled",
       ],
+      diagnostic_campaign_status: [
+        "draft",
+        "scheduled",
+        "open",
+        "closed",
+        "cancelled",
+      ],
+      diagnostic_evidence_kind: ["file", "external_link"],
+      diagnostic_evidence_status: [
+        "pending",
+        "available",
+        "rejected",
+        "deleted",
+        "restore_pending",
+      ],
+      diagnostic_indicator_value_type: [
+        "integer",
+        "numeric",
+        "currency",
+        "percentage",
+      ],
+      diagnostic_participant_status: [
+        "invited",
+        "not_started",
+        "in_progress",
+        "submitted",
+        "overdue",
+        "validated",
+        "cancelled",
+      ],
+      diagnostic_respondent_role: ["primary", "collaborator", "viewer"],
       diagnostic_response_type: [
         "numeric",
         "text",
@@ -2189,7 +3739,13 @@ export const Constants = {
         "link",
         "file",
       ],
+      diagnostic_template_scope: ["incubator", "organization"],
       diagnostic_template_status: ["draft", "published", "archived"],
+      diagnostic_trigger_operator: ["lt", "lte", "eq", "gte", "gt"],
+      diagnostic_trigger_result_status: ["clear", "triggered", "no_data"],
+      diagnostic_trigger_severity: ["info", "warning", "high", "critical"],
+      diagnostic_trigger_source: ["criterion", "indicator", "aggregate"],
+      diagnostic_validation_status: ["draft", "final"],
       enrollment_source: ["manual", "invitation", "selection_process"],
       enrollment_status: [
         "invited",
@@ -2238,6 +3794,13 @@ export const Constants = {
         "missing",
         "purge_pending",
         "purged",
+      ],
+      incubator_kind: [
+        "incubator",
+        "accelerator",
+        "innovation_hub",
+        "innovation_center",
+        "other",
       ],
       invitation_status: ["pending", "accepted", "revoked", "expired"],
       membership_status: ["invited", "active", "suspended", "removed"],

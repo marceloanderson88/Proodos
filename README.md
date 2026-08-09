@@ -51,6 +51,7 @@ pnpm test:e2e
 | `NEXT_PUBLIC_APP_ENV`                  | Não         | `development`, `test`, `staging` ou `production`. |
 | `NEXT_PUBLIC_SUPABASE_URL`             | Sim         | URL pública do projeto Supabase.                  |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Sim         | Chave publicável; nunca usar secret/service role. |
+| `SUPABASE_SECRET_KEY`                  | Sim         | Chave secreta somente do servidor para convites.  |
 | `APP_BASE_URL`                         | Recomendado | URL canônica por ambiente.                        |
 | `GOOGLE_DRIVE_UPLOAD_ENABLED`          | Não         | Deve permanecer `false` até concluir B-03/B-04.   |
 | `PRODUCTION_SUPABASE_PROJECT_REF`      | No Preview  | Bloqueia Preview ligado ao banco de produção.     |

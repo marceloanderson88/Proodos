@@ -34,10 +34,16 @@ with inserted as (
   insert into public.startups (organization_id, incubator_id, name, stage, created_by)
   values (current_setting('test.m7_org_a')::uuid, current_setting('test.m7_incubator_a')::uuid, 'Startup M7 A', 'validation', '74000000-0000-4000-8000-000000000001') returning id
 ) select set_config('test.m7_startup_a', id::text, true) from inserted;
-with inserted as (
-  insert into public.diagnostic_templates (organization_id, incubator_id, name, created_by)
-  values (current_setting('test.m7_org_a')::uuid, current_setting('test.m7_incubator_a')::uuid, 'Maturidade M7', '74000000-0000-4000-8000-000000000001') returning id
-) select set_config('test.m7_template_a', id::text, true) from inserted;
+select set_config(
+  'test.m7_template_a',
+  public.create_diagnostic_template_draft(
+    current_setting('test.m7_incubator_a')::uuid,
+    'Maturidade M7',
+    'Fixture de isolamento multi-tenant',
+    ''
+  )::text,
+  true
+);
 with inserted as (
   insert into public.diagnostic_dimensions (organization_id, incubator_id, template_id, name, position)
   values (current_setting('test.m7_org_a')::uuid, current_setting('test.m7_incubator_a')::uuid, current_setting('test.m7_template_a')::uuid, 'Mercado', 0) returning id
