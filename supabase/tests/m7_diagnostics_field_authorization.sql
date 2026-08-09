@@ -130,14 +130,16 @@ reset role;
 
 with inserted as (
   insert into public.diagnostic_assessments (
-    organization_id, incubator_id, startup_id, template_id, cycle_label, started_by
+    organization_id, incubator_id, startup_id, template_id, cycle_label,
+    started_by, evaluator_id
   ) values (
     current_setting('test.diag_auth_org')::uuid,
     current_setting('test.diag_auth_incubator')::uuid,
     current_setting('test.diag_auth_startup')::uuid,
     current_setting('test.diag_auth_template')::uuid,
     'Ciclo seguro',
-    '74100000-0000-4000-8000-000000000001'
+    '74100000-0000-4000-8000-000000000001',
+    '74100000-0000-4000-8000-000000000003'
   ) returning id
 ) select set_config('test.diag_auth_assessment', id::text, true) from inserted;
 
