@@ -85,6 +85,23 @@ export const createDiagnosticAssessmentSchema = z.object({
   cycleLabel: z.string().trim().min(2).max(120),
 });
 
+export const updatePendingDiagnosticAssessmentSchema = z.object({
+  assessmentId: z.uuid(),
+  campaignId: z.uuid(),
+  cycleLabel: z.string().trim().min(2).max(120),
+  dueAt: z.coerce.date(),
+  evaluatorId: z.union([z.literal(""), z.uuid()]).default(""),
+});
+
+export const deletePendingDiagnosticAssessmentSchema = z.object({
+  assessmentId: z.uuid(),
+  campaignId: z.uuid(),
+});
+
+export const deleteDiagnosticTemplateSchema = z.object({
+  templateId: z.uuid(),
+});
+
 export const assignDiagnosticRespondentSchema = z.object({
   assessmentId: z.uuid(),
   userId: z.uuid(),

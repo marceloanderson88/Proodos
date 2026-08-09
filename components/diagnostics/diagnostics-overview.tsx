@@ -166,8 +166,9 @@ export function DiagnosticsOverview({
             Casos fictícios para conhecer o fluxo completo
           </h2>
           <p className="mt-1 text-sm text-[#806f6b]">
-            Instala 3 startups marcadas como [EXEMPLO], com aplicações temporais
-            nos dois modos. Nenhum dado real é alterado.
+            Instala 1 programa, 1 turma, 3 startups e 6 aplicações temporais nos
+            dois modos, todos marcados como [EXEMPLO]. Nenhum dado real é
+            alterado.
           </p>
         </div>
         {demoCount > 0 ? (

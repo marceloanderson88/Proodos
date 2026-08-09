@@ -8,12 +8,15 @@ import {
   createDiagnosticCampaignSchema,
   createDiagnosticCriterionSchema,
   createDiagnosticDimensionSchema,
+  deleteDiagnosticTemplateSchema,
+  deletePendingDiagnosticAssessmentSchema,
   diagnosticAssessmentTransitionSchema,
   duplicateDiagnosticTemplateSchema,
   inviteDiagnosticRespondentSchema,
   saveDiagnosticResponseSchema,
   saveDiagnosticIndicatorValueSchema,
   updateDiagnosticDimensionSchema,
+  updatePendingDiagnosticAssessmentSchema,
 } from "@/lib/diagnostics/schemas";
 
 describe("schemas de diagnósticos", () => {
@@ -251,6 +254,47 @@ describe("schemas de diagnósticos", () => {
         respondentRole: "owner",
         returnTo: "/",
       }).success,
+    ).toBe(false);
+  });
+
+  it("valida edição e exclusão de uma aplicação ainda pendente", () => {
+    const assessmentId = "11111111-1111-4111-8111-111111111111";
+    const campaignId = "22222222-2222-4222-8222-222222222222";
+    expect(
+      updatePendingDiagnosticAssessmentSchema.safeParse({
+        assessmentId,
+        campaignId,
+        cycleLabel: "Ciclo de agosto",
+        dueAt: "2026-08-31T18:00",
+        evaluatorId: "",
+      }).success,
+    ).toBe(true);
+    expect(
+      updatePendingDiagnosticAssessmentSchema.safeParse({
+        assessmentId,
+        campaignId,
+        cycleLabel: "",
+        dueAt: "data-inválida",
+        evaluatorId: "",
+      }).success,
+    ).toBe(false);
+    expect(
+      deletePendingDiagnosticAssessmentSchema.safeParse({
+        assessmentId,
+        campaignId,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("valida a identificação do modelo para exclusão segura", () => {
+    expect(
+      deleteDiagnosticTemplateSchema.safeParse({
+        templateId: "11111111-1111-4111-8111-111111111111",
+      }).success,
+    ).toBe(true);
+    expect(
+      deleteDiagnosticTemplateSchema.safeParse({ templateId: "modelo" })
+        .success,
     ).toBe(false);
   });
 });
