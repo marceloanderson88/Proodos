@@ -28,7 +28,7 @@ test.describe("smoke autenticado", () => {
 
     await page.goto(`${incubatorPath}/programas`);
     await expect(
-      page.getByRole("heading", { name: "Programas e turmas" }),
+      page.getByRole("heading", { name: "Programas", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Ciclo Sintético 2026", exact: true }),
