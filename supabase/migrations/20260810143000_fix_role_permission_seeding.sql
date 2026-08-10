@@ -114,3 +114,42 @@ cross join lateral unnest(
 ) as permissions(permission_code)
 where r.is_system
 on conflict do nothing;
+
+-- Estas tabelas são acessadas exclusivamente por RPCs SECURITY DEFINER que
+-- validam tenant, escopo e usuário. As policies explícitas preservam negação
+-- por padrão caso algum grant direto seja adicionado no futuro.
+do $$
+declare table_name text;
+begin
+  foreach table_name in array array[
+    'selection_form_versions',
+    'selection_questions',
+    'selection_criteria',
+    'selection_application_answers',
+    'selection_reviewers',
+    'selection_assignments',
+    'selection_conflicts',
+    'selection_reviews',
+    'selection_review_scores',
+    'selection_rankings',
+    'selection_appeals',
+    'selection_publications',
+    'selection_convocations',
+    'selection_application_events',
+    'cerne_practice_owners',
+    'cerne_evidence_slots',
+    'cerne_drive_folders',
+    'cerne_review_assignments',
+    'cerne_evidence_reviews',
+    'cerne_alerts'
+  ] loop
+    begin
+      execute format(
+        'create policy %I on public.%I for all to authenticated using (false) with check (false)',
+        table_name || '_rpc_only',
+        table_name
+      );
+    exception when duplicate_object then null;
+    end;
+  end loop;
+end $$;
