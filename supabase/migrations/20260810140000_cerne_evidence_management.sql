@@ -322,10 +322,15 @@ on conflict(code) do update set name=excluded.name,description=excluded.descript
 insert into public.role_permissions(organization_id,role_id,permission_code)
 select r.organization_id,r.id,p.code from public.roles r cross join (values
 ('cerne.read'),('cerne.manage'),('cerne.submit'),('cerne.review')) p(code)
-where r.code in ('organization_admin','organization_manager','incubator_manager') on conflict do nothing;
+where r.code in ('organization_admin','incubator_manager','program_coordinator') on conflict do nothing;
 insert into public.role_permissions(organization_id,role_id,permission_code)
 select r.organization_id,r.id,p.code from public.roles r cross join (values('cerne.read'),('cerne.submit')) p(code)
-where r.code in ('analyst','mentor','startup_representative') on conflict do nothing;
+where r.code in ('agent','mentor') on conflict do nothing;
+insert into public.role_permissions(organization_id,role_id,permission_code)
+select r.organization_id,r.id,p.code from public.roles r cross join (values('cerne.read'),('cerne.review')) p(code)
+where r.code='evaluator' on conflict do nothing;
+insert into public.role_permissions(organization_id,role_id,permission_code)
+select r.organization_id,r.id,'cerne.read' from public.roles r where r.code='auditor' on conflict do nothing;
 
 create or replace function private.cerne_segment(value text) returns text language sql immutable set search_path='' as $$
  select regexp_replace(regexp_replace(btrim(coalesce(value,'sem nome')), '[\\/:*?"<>|]+', '-', 'g'), '\s+', ' ', 'g')
