@@ -39,6 +39,7 @@ test.describe("smoke autenticado", () => {
       page.getByRole("heading", {
         name: "Portfólio de startups",
         exact: true,
+        level: 1,
       }),
     ).toBeVisible();
     await expect(
