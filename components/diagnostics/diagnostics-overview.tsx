@@ -127,15 +127,18 @@ export function DiagnosticsOverview({
     },
     modelos: {
       title: "Modelos de diagnóstico",
-      description: "Organize dimensões, critérios e versões publicadas da biblioteca da incubadora.",
+      description:
+        "Organize dimensões, critérios e versões publicadas da biblioteca da incubadora.",
     },
     campanhas: {
       title: "Campanhas de diagnóstico",
-      description: "Planeje ciclos de aplicação, acompanhe participantes e monitore o avanço das respostas.",
+      description:
+        "Planeje ciclos de aplicação, acompanhe participantes e monitore o avanço das respostas.",
     },
     avaliacoes: {
       title: "Avaliações",
-      description: "Acompanhe aplicações em andamento, envios pendentes e resultados validados por startup.",
+      description:
+        "Acompanhe aplicações em andamento, envios pendentes e resultados validados por startup.",
     },
   }[view];
 

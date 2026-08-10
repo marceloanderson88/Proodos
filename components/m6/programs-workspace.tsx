@@ -360,19 +360,25 @@ export function ProgramsWorkspace({
                   </div>
                   <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-[var(--border)] pt-4 text-sm">
                     <div>
-                      <dt className="text-xs text-[var(--text-muted)]">Início</dt>
+                      <dt className="text-xs text-[var(--text-muted)]">
+                        Início
+                      </dt>
                       <dd className="mt-1 font-extrabold text-[var(--text-strong)]">
                         {dateLabel(cohort.starts_on)}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-[var(--text-muted)]">Startups</dt>
+                      <dt className="text-xs text-[var(--text-muted)]">
+                        Startups
+                      </dt>
                       <dd className="mt-1 font-extrabold text-[var(--text-strong)]">
                         {startupCount}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-[var(--text-muted)]">Capacidade</dt>
+                      <dt className="text-xs text-[var(--text-muted)]">
+                        Capacidade
+                      </dt>
                       <dd className="mt-1 font-extrabold text-[var(--text-strong)]">
                         {cohort.capacity ?? "—"}
                       </dd>

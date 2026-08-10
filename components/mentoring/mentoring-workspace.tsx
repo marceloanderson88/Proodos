@@ -67,24 +67,46 @@ type Assignment = {
 };
 
 type Availability = {
-  id: string; mentor_profile_id: string; weekday: number; starts_at: string;
-  ends_at: string; timezone: string; effective_from: string;
-  effective_until: string | null; is_active: boolean;
+  id: string;
+  mentor_profile_id: string;
+  weekday: number;
+  starts_at: string;
+  ends_at: string;
+  timezone: string;
+  effective_from: string;
+  effective_until: string | null;
+  is_active: boolean;
 };
 
 type Session = {
-  id: string; assignment_id: string; diagnostic_assessment_id: string | null;
-  objective: string; mode: "remote" | "in_person" | "hybrid"; timezone: string;
-  scheduled_start_at: string | null; scheduled_end_at: string | null;
-  meeting_url: string | null; location: string | null;
+  id: string;
+  assignment_id: string;
+  diagnostic_assessment_id: string | null;
+  objective: string;
+  mode: "remote" | "in_person" | "hybrid";
+  timezone: string;
+  scheduled_start_at: string | null;
+  scheduled_end_at: string | null;
+  meeting_url: string | null;
+  location: string | null;
   status: "requested" | "scheduled" | "completed" | "cancelled";
-  cancellation_reason: string | null; created_at: string;
+  cancellation_reason: string | null;
+  created_at: string;
 };
 
 type Assessment = {
-  id: string; startup_id: string; cycle_label: string;
-  status: "draft" | "in_progress" | "submitted" | "under_review" | "validated" | "cancelled";
-  evaluator_id: string | null; execution_mode: "self_assessment" | "facilitated";
+  id: string;
+  startup_id: string;
+  cycle_label: string;
+  status:
+    | "draft"
+    | "in_progress"
+    | "submitted"
+    | "under_review"
+    | "validated"
+    | "cancelled";
+  evaluator_id: string | null;
+  execution_mode: "self_assessment" | "facilitated";
 };
 
 const stageLabels: Record<Startup["stage"], string> = {
@@ -172,8 +194,9 @@ export function MentoringWorkspace({
   const canManageAvailability = availabilityMentors.length > 0;
   const canRequestSession = openAssignments.length > 0;
   const canScheduleSessions = canManage || Boolean(ownMentor);
-  const upcomingSessions = sessions.filter((session) =>
-    session.status === "requested" || session.status === "scheduled",
+  const upcomingSessions = sessions.filter(
+    (session) =>
+      session.status === "requested" || session.status === "scheduled",
   );
   const pageCopy = {
     overview: {
@@ -182,15 +205,18 @@ export function MentoringWorkspace({
     },
     mentores: {
       title: "Diretório de mentores",
-      description: "Gerencie perfis, especialidades, setores de experiência e disponibilidade da rede.",
+      description:
+        "Gerencie perfis, especialidades, setores de experiência e disponibilidade da rede.",
     },
     vinculos: {
       title: "Vínculos de mentoria",
-      description: "Conecte mentores e startups e acompanhe o ciclo de cada relacionamento.",
+      description:
+        "Conecte mentores e startups e acompanhe o ciclo de cada relacionamento.",
     },
     agenda: {
       title: "Agenda de mentorias",
-      description: "Organize janelas de atendimento, solicitações e sessões agendadas.",
+      description:
+        "Organize janelas de atendimento, solicitações e sessões agendadas.",
     },
   }[view];
 
@@ -910,56 +936,387 @@ export function MentoringWorkspace({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="eyebrow">Disponibilidade</p>
-              <h2 className="operational-heading mt-1 text-2xl">Janelas de atendimento</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">Horários recorrentes usados como referência para novas solicitações.</p>
+              <h2 className="operational-heading mt-1 text-2xl">
+                Janelas de atendimento
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
+                Horários recorrentes usados como referência para novas
+                solicitações.
+              </p>
             </div>
             <CalendarClock className="size-5 text-[var(--wine-700)]" />
           </div>
           {canManageAvailability ? (
-            <form action={createMentorAvailabilityAction.bind(null, organizationSlug, incubatorSlug)} className="mt-5 grid gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-4 sm:grid-cols-2">
+            <form
+              action={createMentorAvailabilityAction.bind(
+                null,
+                organizationSlug,
+                incubatorSlug,
+              )}
+              className="mt-5 grid gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-4 sm:grid-cols-2"
+            >
               <FormField label="Mentor" htmlFor="availability-mentor" required>
-                <select id="availability-mentor" name="mentorProfileId" className={controlClassName} required>
+                <select
+                  id="availability-mentor"
+                  name="mentorProfileId"
+                  className={controlClassName}
+                  required
+                >
                   <option value="">Selecione</option>
-                  {availabilityMentors.map((mentor) => <option key={mentor.id} value={mentor.id}>{mentor.displayName}</option>)}
+                  {availabilityMentors.map((mentor) => (
+                    <option key={mentor.id} value={mentor.id}>
+                      {mentor.displayName}
+                    </option>
+                  ))}
                 </select>
               </FormField>
               <FormField label="Dia" htmlFor="availability-weekday" required>
-                <select id="availability-weekday" name="weekday" className={controlClassName} defaultValue="1" required>
-                  {weekdayLabels.map((day, index) => <option key={day} value={index}>{day}</option>)}
+                <select
+                  id="availability-weekday"
+                  name="weekday"
+                  className={controlClassName}
+                  defaultValue="1"
+                  required
+                >
+                  {weekdayLabels.map((day, index) => (
+                    <option key={day} value={index}>
+                      {day}
+                    </option>
+                  ))}
                 </select>
               </FormField>
-              <FormField label="Início" htmlFor="availability-start" required><input id="availability-start" name="startsAt" type="time" className={controlClassName} required /></FormField>
-              <FormField label="Fim" htmlFor="availability-end" required><input id="availability-end" name="endsAt" type="time" className={controlClassName} required /></FormField>
-              <FormField label="Válido a partir de" htmlFor="availability-from" required><input id="availability-from" name="effectiveFrom" type="date" defaultValue={today} className={controlClassName} required /></FormField>
-              <FormField label="Válido até" htmlFor="availability-until"><input id="availability-until" name="effectiveUntil" type="date" className={controlClassName} /></FormField>
+              <FormField label="Início" htmlFor="availability-start" required>
+                <input
+                  id="availability-start"
+                  name="startsAt"
+                  type="time"
+                  className={controlClassName}
+                  required
+                />
+              </FormField>
+              <FormField label="Fim" htmlFor="availability-end" required>
+                <input
+                  id="availability-end"
+                  name="endsAt"
+                  type="time"
+                  className={controlClassName}
+                  required
+                />
+              </FormField>
+              <FormField
+                label="Válido a partir de"
+                htmlFor="availability-from"
+                required
+              >
+                <input
+                  id="availability-from"
+                  name="effectiveFrom"
+                  type="date"
+                  defaultValue={today}
+                  className={controlClassName}
+                  required
+                />
+              </FormField>
+              <FormField label="Válido até" htmlFor="availability-until">
+                <input
+                  id="availability-until"
+                  name="effectiveUntil"
+                  type="date"
+                  className={controlClassName}
+                />
+              </FormField>
               <input type="hidden" name="timezone" value={timezone} />
-              <Button type="submit" className="sm:col-span-2">Adicionar janela</Button>
+              <Button type="submit" className="sm:col-span-2">
+                Adicionar janela
+              </Button>
             </form>
           ) : null}
           <div className="mt-5 space-y-2">
-            {availability.length === 0 ? <p className="rounded-2xl border border-dashed border-[var(--border)] p-4 text-sm text-[var(--text-muted)]">Nenhuma janela cadastrada.</p> : availability.map((slot) => {
-              const mentor = mentors.find((item) => item.id === slot.mentor_profile_id);
-              const canDeleteSlot = canManage || slot.mentor_profile_id === ownMentor?.id;
-              return <div key={slot.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm"><div><p className="font-extrabold text-[var(--text-strong)]">{mentor?.displayName ?? "Mentor"} · {weekdayLabels[slot.weekday]}</p><p className="text-xs text-[var(--text-muted)]">{slot.starts_at.slice(0, 5)}–{slot.ends_at.slice(0, 5)} · {slot.timezone}</p></div>{canDeleteSlot ? <form action={deleteMentorAvailabilityAction.bind(null, organizationSlug, incubatorSlug)}><input type="hidden" name="availabilityId" value={slot.id} /><Button type="submit" variant="ghost" className="px-2 text-[var(--wine-700)]" aria-label={`Remover disponibilidade de ${mentor?.displayName ?? "mentor"}`}><Trash2 className="size-4" /></Button></form> : null}</div>;
-            })}
+            {availability.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-[var(--border)] p-4 text-sm text-[var(--text-muted)]">
+                Nenhuma janela cadastrada.
+              </p>
+            ) : (
+              availability.map((slot) => {
+                const mentor = mentors.find(
+                  (item) => item.id === slot.mentor_profile_id,
+                );
+                const canDeleteSlot =
+                  canManage || slot.mentor_profile_id === ownMentor?.id;
+                return (
+                  <div
+                    key={slot.id}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm"
+                  >
+                    <div>
+                      <p className="font-extrabold text-[var(--text-strong)]">
+                        {mentor?.displayName ?? "Mentor"} ·{" "}
+                        {weekdayLabels[slot.weekday]}
+                      </p>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {slot.starts_at.slice(0, 5)}–{slot.ends_at.slice(0, 5)}{" "}
+                        · {slot.timezone}
+                      </p>
+                    </div>
+                    {canDeleteSlot ? (
+                      <form
+                        action={deleteMentorAvailabilityAction.bind(
+                          null,
+                          organizationSlug,
+                          incubatorSlug,
+                        )}
+                      >
+                        <input
+                          type="hidden"
+                          name="availabilityId"
+                          value={slot.id}
+                        />
+                        <Button
+                          type="submit"
+                          variant="ghost"
+                          className="px-2 text-[var(--wine-700)]"
+                          aria-label={`Remover disponibilidade de ${mentor?.displayName ?? "mentor"}`}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </form>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
         <div className="surface-card p-5 sm:p-6">
-          <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="eyebrow">Agenda operacional</p><h2 className="operational-heading mt-1 text-2xl">Solicitações e sessões</h2></div><StatusBadge tone={upcomingSessions.length ? "warning" : "neutral"}>{upcomingSessions.length} em aberto</StatusBadge></div>
-          {canRequestSession ? <form action={createMentoringSessionAction.bind(null, organizationSlug, incubatorSlug)} className="mt-5 grid gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-4 sm:grid-cols-2">
-            <FormField label="Vínculo" htmlFor="session-assignment" required><select id="session-assignment" name="assignmentId" className={controlClassName} required><option value="">Selecione</option>{openAssignments.map((assignment) => { const mentor = mentors.find((item) => item.id === assignment.mentor_profile_id); const startup = startups.find((item) => item.id === assignment.startup_id); return <option key={assignment.id} value={assignment.id}>{mentor?.displayName ?? "Mentor"} · {startup?.name ?? "Startup"}</option>; })}</select></FormField>
-            <FormField label="Modalidade" htmlFor="session-mode" required><select id="session-mode" name="mode" className={controlClassName} defaultValue="remote" required><option value="remote">Remota</option><option value="in_person">Presencial</option><option value="hybrid">Híbrida</option></select></FormField>
-            <FormField label="Diagnóstico facilitado" htmlFor="session-assessment"><select id="session-assessment" name="diagnosticAssessmentId" className={controlClassName}><option value="">Nenhum</option>{assessments.map((assessment) => <option key={assessment.id} value={assessment.id}>{assessment.cycle_label} · {assessment.status}</option>)}</select></FormField>
-            <FormField label="Objetivo" htmlFor="session-objective" required className="sm:col-span-2"><textarea id="session-objective" name="objective" className={`${controlClassName} min-h-20`} placeholder="O que precisa ser resolvido nesta conversa?" required /></FormField>
-            <FormField label="Início (opcional)" htmlFor="session-start"><input id="session-start" name="scheduledStartAt" type="datetime-local" className={controlClassName} /></FormField>
-            <FormField label="Fim (opcional)" htmlFor="session-end"><input id="session-end" name="scheduledEndAt" type="datetime-local" className={controlClassName} /></FormField>
-            <FormField label="Link da reunião" htmlFor="session-meeting-url"><input id="session-meeting-url" name="meetingUrl" type="url" className={controlClassName} placeholder="https://..." /></FormField>
-            <FormField label="Local" htmlFor="session-location"><input id="session-location" name="location" className={controlClassName} placeholder="Sala ou endereço" /></FormField>
-            <input type="hidden" name="timezone" value={timezone} /><Button type="submit" className="sm:col-span-2">{canScheduleSessions ? "Agendar sessão" : "Solicitar sessão"}</Button>
-          </form> : null}
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="eyebrow">Agenda operacional</p>
+              <h2 className="operational-heading mt-1 text-2xl">
+                Solicitações e sessões
+              </h2>
+            </div>
+            <StatusBadge tone={upcomingSessions.length ? "warning" : "neutral"}>
+              {upcomingSessions.length} em aberto
+            </StatusBadge>
+          </div>
+          {canRequestSession ? (
+            <form
+              action={createMentoringSessionAction.bind(
+                null,
+                organizationSlug,
+                incubatorSlug,
+              )}
+              className="mt-5 grid gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-4 sm:grid-cols-2"
+            >
+              <FormField label="Vínculo" htmlFor="session-assignment" required>
+                <select
+                  id="session-assignment"
+                  name="assignmentId"
+                  className={controlClassName}
+                  required
+                >
+                  <option value="">Selecione</option>
+                  {openAssignments.map((assignment) => {
+                    const mentor = mentors.find(
+                      (item) => item.id === assignment.mentor_profile_id,
+                    );
+                    const startup = startups.find(
+                      (item) => item.id === assignment.startup_id,
+                    );
+                    return (
+                      <option key={assignment.id} value={assignment.id}>
+                        {mentor?.displayName ?? "Mentor"} ·{" "}
+                        {startup?.name ?? "Startup"}
+                      </option>
+                    );
+                  })}
+                </select>
+              </FormField>
+              <FormField label="Modalidade" htmlFor="session-mode" required>
+                <select
+                  id="session-mode"
+                  name="mode"
+                  className={controlClassName}
+                  defaultValue="remote"
+                  required
+                >
+                  <option value="remote">Remota</option>
+                  <option value="in_person">Presencial</option>
+                  <option value="hybrid">Híbrida</option>
+                </select>
+              </FormField>
+              <FormField
+                label="Diagnóstico facilitado"
+                htmlFor="session-assessment"
+              >
+                <select
+                  id="session-assessment"
+                  name="diagnosticAssessmentId"
+                  className={controlClassName}
+                >
+                  <option value="">Nenhum</option>
+                  {assessments.map((assessment) => (
+                    <option key={assessment.id} value={assessment.id}>
+                      {assessment.cycle_label} · {assessment.status}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField
+                label="Objetivo"
+                htmlFor="session-objective"
+                required
+                className="sm:col-span-2"
+              >
+                <textarea
+                  id="session-objective"
+                  name="objective"
+                  className={`${controlClassName} min-h-20`}
+                  placeholder="O que precisa ser resolvido nesta conversa?"
+                  required
+                />
+              </FormField>
+              <FormField label="Início (opcional)" htmlFor="session-start">
+                <input
+                  id="session-start"
+                  name="scheduledStartAt"
+                  type="datetime-local"
+                  className={controlClassName}
+                />
+              </FormField>
+              <FormField label="Fim (opcional)" htmlFor="session-end">
+                <input
+                  id="session-end"
+                  name="scheduledEndAt"
+                  type="datetime-local"
+                  className={controlClassName}
+                />
+              </FormField>
+              <FormField label="Link da reunião" htmlFor="session-meeting-url">
+                <input
+                  id="session-meeting-url"
+                  name="meetingUrl"
+                  type="url"
+                  className={controlClassName}
+                  placeholder="https://..."
+                />
+              </FormField>
+              <FormField label="Local" htmlFor="session-location">
+                <input
+                  id="session-location"
+                  name="location"
+                  className={controlClassName}
+                  placeholder="Sala ou endereço"
+                />
+              </FormField>
+              <input type="hidden" name="timezone" value={timezone} />
+              <Button type="submit" className="sm:col-span-2">
+                {canScheduleSessions ? "Agendar sessão" : "Solicitar sessão"}
+              </Button>
+            </form>
+          ) : null}
           <div className="mt-5 space-y-3">
-            {sessions.length === 0 ? <p className="rounded-2xl border border-dashed border-[var(--border)] p-4 text-sm text-[var(--text-muted)]">Nenhuma sessão registrada.</p> : sessions.slice(0, 8).map((session) => { const assignment = assignments.find((item) => item.id === session.assignment_id); const mentor = mentors.find((item) => item.id === assignment?.mentor_profile_id); const startup = startups.find((item) => item.id === assignment?.startup_id); return <article key={session.id} className="rounded-2xl border border-[var(--border)] bg-white p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-extrabold tracking-[0.08em] text-[var(--wine-700)] uppercase">{mentor?.displayName ?? "Mentor"} · {startup?.name ?? "Startup"}</p><h3 className="mt-1 font-extrabold text-[var(--text-strong)]">{session.objective}</h3><p className="mt-1 text-xs text-[var(--text-muted)]">{session.scheduled_start_at ? formatDateTime(session.scheduled_start_at, session.timezone) : "Aguardando agendamento"}</p></div><StatusBadge tone={session.status === "completed" ? "success" : session.status === "cancelled" ? "neutral" : session.status === "requested" ? "warning" : "info"}>{session.status === "requested" ? "Solicitada" : session.status === "scheduled" ? "Agendada" : session.status === "completed" ? "Concluída" : "Cancelada"}</StatusBadge></div><div className="mt-3 flex flex-wrap items-center gap-3"><Link href={`/o/${organizationSlug}/i/${incubatorSlug}/mentorias/sessoes/${session.id}`} className="inline-flex items-center gap-1 text-xs font-extrabold text-[var(--wine-700)] hover:underline">Abrir sessão <ArrowRight className="size-3.5" /></Link>{canManage && session.status === "requested" && session.scheduled_start_at ? <form action={updateMentoringSessionStatusAction.bind(null, organizationSlug, incubatorSlug)}><input type="hidden" name="sessionId" value={session.id} /><input type="hidden" name="status" value="scheduled" /><input type="hidden" name="reason" value="" /><Button type="submit" variant="secondary" className="px-3">Confirmar</Button></form> : null}</div></article>; })}
+            {sessions.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-[var(--border)] p-4 text-sm text-[var(--text-muted)]">
+                Nenhuma sessão registrada.
+              </p>
+            ) : (
+              sessions.slice(0, 8).map((session) => {
+                const assignment = assignments.find(
+                  (item) => item.id === session.assignment_id,
+                );
+                const mentor = mentors.find(
+                  (item) => item.id === assignment?.mentor_profile_id,
+                );
+                const startup = startups.find(
+                  (item) => item.id === assignment?.startup_id,
+                );
+                return (
+                  <article
+                    key={session.id}
+                    className="rounded-2xl border border-[var(--border)] bg-white p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-extrabold tracking-[0.08em] text-[var(--wine-700)] uppercase">
+                          {mentor?.displayName ?? "Mentor"} ·{" "}
+                          {startup?.name ?? "Startup"}
+                        </p>
+                        <h3 className="mt-1 font-extrabold text-[var(--text-strong)]">
+                          {session.objective}
+                        </h3>
+                        <p className="mt-1 text-xs text-[var(--text-muted)]">
+                          {session.scheduled_start_at
+                            ? formatDateTime(
+                                session.scheduled_start_at,
+                                session.timezone,
+                              )
+                            : "Aguardando agendamento"}
+                        </p>
+                      </div>
+                      <StatusBadge
+                        tone={
+                          session.status === "completed"
+                            ? "success"
+                            : session.status === "cancelled"
+                              ? "neutral"
+                              : session.status === "requested"
+                                ? "warning"
+                                : "info"
+                        }
+                      >
+                        {session.status === "requested"
+                          ? "Solicitada"
+                          : session.status === "scheduled"
+                            ? "Agendada"
+                            : session.status === "completed"
+                              ? "Concluída"
+                              : "Cancelada"}
+                      </StatusBadge>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <Link
+                        href={`/o/${organizationSlug}/i/${incubatorSlug}/mentorias/sessoes/${session.id}`}
+                        className="inline-flex items-center gap-1 text-xs font-extrabold text-[var(--wine-700)] hover:underline"
+                      >
+                        Abrir sessão <ArrowRight className="size-3.5" />
+                      </Link>
+                      {canManage &&
+                      session.status === "requested" &&
+                      session.scheduled_start_at ? (
+                        <form
+                          action={updateMentoringSessionStatusAction.bind(
+                            null,
+                            organizationSlug,
+                            incubatorSlug,
+                          )}
+                        >
+                          <input
+                            type="hidden"
+                            name="sessionId"
+                            value={session.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="status"
+                            value="scheduled"
+                          />
+                          <input type="hidden" name="reason" value="" />
+                          <Button
+                            type="submit"
+                            variant="secondary"
+                            className="px-3"
+                          >
+                            Confirmar
+                          </Button>
+                        </form>
+                      ) : null}
+                    </div>
+                  </article>
+                );
+              })
+            )}
           </div>
         </div>
       </section>

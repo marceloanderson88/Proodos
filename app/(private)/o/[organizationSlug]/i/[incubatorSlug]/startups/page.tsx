@@ -4,7 +4,12 @@ import { firstSearchValue } from "@/lib/m6/server-context";
 
 export const dynamic = "force-dynamic";
 
-const startupViews = new Set(["portfolio", "pendentes", "convites", "vinculos"]);
+const startupViews = new Set([
+  "portfolio",
+  "pendentes",
+  "convites",
+  "vinculos",
+]);
 
 export default async function IncubatorStartupsPage({
   params,

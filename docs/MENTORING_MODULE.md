@@ -36,14 +36,14 @@ ativos ou pausados.
 
 ## Papéis
 
-| Papel | Acesso inicial |
-| --- | --- |
-| Administrador da organização | Diretório, perfis e vínculos |
-| Gestor da incubadora | Diretório, perfis e vínculos |
-| Coordenador de programa | Diretório, perfis e vínculos |
-| Agente | Leitura e condução futura |
-| Mentor | Próprio perfil e startups vinculadas |
-| Membro da startup | Mentor vinculado à própria startup |
+| Papel                        | Acesso inicial                       |
+| ---------------------------- | ------------------------------------ |
+| Administrador da organização | Diretório, perfis e vínculos         |
+| Gestor da incubadora         | Diretório, perfis e vínculos         |
+| Coordenador de programa      | Diretório, perfis e vínculos         |
+| Agente                       | Leitura e condução futura            |
+| Mentor                       | Próprio perfil e startups vinculadas |
+| Membro da startup            | Mentor vinculado à própria startup   |
 
 ## Próximas entregas
 

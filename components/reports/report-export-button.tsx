@@ -22,7 +22,9 @@ export function ReportExportButton({
     const headers = Object.keys(firstRow);
     const csv = [
       headers.map(csvCell).join(";"),
-      ...rows.map((row) => headers.map((header) => csvCell(row[header] ?? null)).join(";")),
+      ...rows.map((row) =>
+        headers.map((header) => csvCell(row[header] ?? null)).join(";"),
+      ),
     ].join("\r\n");
     const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);

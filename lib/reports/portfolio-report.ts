@@ -138,9 +138,15 @@ const stageLabels: Record<string, string> = {
 };
 
 function average(values: Array<number | null | undefined>) {
-  const valid = values.filter((value): value is number => typeof value === "number");
+  const valid = values.filter(
+    (value): value is number => typeof value === "number",
+  );
   if (!valid.length) return null;
-  return Math.round((valid.reduce((sum, value) => sum + value, 0) / valid.length) * 10) / 10;
+  return (
+    Math.round(
+      (valid.reduce((sum, value) => sum + value, 0) / valid.length) * 10,
+    ) / 10
+  );
 }
 
 function distribution(
@@ -157,7 +163,9 @@ function distribution(
       value,
       percentage: Math.round((value / total) * 100),
     }))
-    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label, "pt-BR"));
+    .sort(
+      (a, b) => b.value - a.value || a.label.localeCompare(b.label, "pt-BR"),
+    );
 }
 
 export function buildPortfolioReport({
@@ -208,13 +216,17 @@ export function buildPortfolioReport({
     return true;
   });
   const scopedCohortIds = new Set(scopedCohorts.map((cohort) => cohort.id));
-  const scopedEnrollments = enrollments.filter((item) => scopedCohortIds.has(item.cohort_id));
-  const enrolledStartupIds = new Set(scopedEnrollments.map((item) => item.startup_id));
+  const scopedEnrollments = enrollments.filter((item) =>
+    scopedCohortIds.has(item.cohort_id),
+  );
+  const enrolledStartupIds = new Set(
+    scopedEnrollments.map((item) => item.startup_id),
+  );
   const isProgramFiltered = Boolean(
     selectedProgramTypeId ||
-      selectedProgramId ||
-      selectedCohortId ||
-      selectedYear,
+    selectedProgramId ||
+    selectedCohortId ||
+    selectedYear,
   );
   const scopedStartups = startups.filter((startup) => {
     if (isProgramFiltered && !enrolledStartupIds.has(startup.id)) return false;
@@ -227,7 +239,11 @@ export function buildPortfolioReport({
 
   const latestAssessmentByStartup = new Map<string, ReportAssessment>();
   assessments
-    .filter((assessment) => startupIds.has(assessment.startup_id) && assessment.status !== "cancelled")
+    .filter(
+      (assessment) =>
+        startupIds.has(assessment.startup_id) &&
+        assessment.status !== "cancelled",
+    )
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
     .forEach((assessment) => {
       if (!latestAssessmentByStartup.has(assessment.startup_id))
@@ -261,7 +277,9 @@ export function buildPortfolioReport({
     })
     .sort((a, b) => b.score - a.score);
 
-  const programNames = new Map(programs.map((program) => [program.id, program.name]));
+  const programNames = new Map(
+    programs.map((program) => [program.id, program.name]),
+  );
   const programTypeNames = new Map(
     programTypes.map((programType) => [programType.id, programType.name]),
   );
@@ -271,8 +289,12 @@ export function buildPortfolioReport({
       programTypeNames.get(program.type_id) ?? "Tipo não informado",
     ]),
   );
-  const cohortNames = new Map(scopedCohorts.map((cohort) => [cohort.id, cohort.name]));
-  const startupsById = new Map(scopedStartups.map((startup) => [startup.id, startup]));
+  const cohortNames = new Map(
+    scopedCohorts.map((cohort) => [cohort.id, cohort.name]),
+  );
+  const startupsById = new Map(
+    scopedStartups.map((startup) => [startup.id, startup]),
+  );
 
   const cohortSummaries = scopedCohorts.map((cohort) => {
     const cohortStartupIds = new Set(
@@ -294,9 +316,14 @@ export function buildPortfolioReport({
       status: cohort.status,
       capacity: cohort.capacity,
       startups: cohortStartups.length,
-      active: cohortStartups.filter((startup) => startup.status === "active").length,
+      active: cohortStartups.filter((startup) => startup.status === "active")
+        .length,
       diagnosed: cohortAssessments.length,
-      averageScore: average(cohortAssessments.map((item) => item.validated_score ?? item.self_score)),
+      averageScore: average(
+        cohortAssessments.map(
+          (item) => item.validated_score ?? item.self_score,
+        ),
+      ),
       occupancy:
         cohort.capacity && cohort.capacity > 0
           ? Math.round((cohortStartups.length / cohort.capacity) * 100)
@@ -314,7 +341,11 @@ export function buildPortfolioReport({
       const startupProgramIds = new Set(
         scopedEnrollments
           .filter((item) => item.startup_id === startup.id)
-          .map((item) => scopedCohorts.find((cohort) => cohort.id === item.cohort_id)?.program_id)
+          .map(
+            (item) =>
+              scopedCohorts.find((cohort) => cohort.id === item.cohort_id)
+                ?.program_id,
+          )
           .filter((id): id is string => Boolean(id)),
       );
       const startupProgramNames = [...startupProgramIds]
@@ -332,7 +363,9 @@ export function buildPortfolioReport({
         name: startup.name,
         status: statusLabels[startup.status] ?? startup.status,
         stage: stageLabels[startup.stage] ?? startup.stage,
-        region: [startup.city, startup.state].filter(Boolean).join(" / ") || "Não informada",
+        region:
+          [startup.city, startup.state].filter(Boolean).join(" / ") ||
+          "Não informada",
         sector: startup.sector ?? "Não informado",
         cohorts: startupCohorts.join(" · ") || "Sem turma",
         programTypes:
@@ -340,15 +373,19 @@ export function buildPortfolioReport({
             ? startupProgramTypes
             : ["Sem programa"],
         programNames: startupProgramNames,
-        diagnosticStatus: assessment?.status.replaceAll("_", " ") ?? "Sem diagnóstico",
-        diagnosticScore: assessment?.validated_score ?? assessment?.self_score ?? null,
+        diagnosticStatus:
+          assessment?.status.replaceAll("_", " ") ?? "Sem diagnóstico",
+        diagnosticScore:
+          assessment?.validated_score ?? assessment?.self_score ?? null,
         evidenceCoverage: assessment?.evidence_coverage ?? null,
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
   const diagnosed = latestAssessments.length;
-  const active = scopedStartups.filter((startup) => startup.status === "active").length;
+  const active = scopedStartups.filter(
+    (startup) => startup.status === "active",
+  ).length;
 
   return {
     metrics: {
@@ -360,7 +397,9 @@ export function buildPortfolioReport({
         ? Math.round((diagnosed / scopedStartups.length) * 100)
         : 0,
       averageValidatedScore: average(
-        latestAssessments.map((item) => item.validated_score ?? item.self_score),
+        latestAssessments.map(
+          (item) => item.validated_score ?? item.self_score,
+        ),
       ),
       averageEvidenceCoverage: average(
         latestAssessments.map((item) => item.evidence_coverage),
@@ -381,7 +420,9 @@ export function buildPortfolioReport({
       scopedStartups.map((startup) => startup.sector ?? "Não informado"),
     ).slice(0, 8),
     classificationDistribution: distribution(
-      latestAssessments.map((assessment) => assessment.classification_code ?? "Sem classificação"),
+      latestAssessments.map(
+        (assessment) => assessment.classification_code ?? "Sem classificação",
+      ),
     ),
     dimensionAverages,
     cohortSummaries,

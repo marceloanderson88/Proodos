@@ -120,11 +120,13 @@ export function IncubatorPeopleManagement({
     },
     equipe: {
       title: "Equipe e papéis",
-      description: "Consulte as pessoas ativas e conceda somente os papéis necessários para cada função.",
+      description:
+        "Consulte as pessoas ativas e conceda somente os papéis necessários para cada função.",
     },
     convites: {
       title: "Convites de acesso",
-      description: "Convide novas pessoas e acompanhe acessos que ainda aguardam aceite.",
+      description:
+        "Convide novas pessoas e acompanhe acessos que ainda aguardam aceite.",
     },
   }[view];
 
@@ -409,12 +411,12 @@ export function IncubatorPeopleManagement({
               <UserRoundPlus className="size-5" />
             </span>
             <div>
-                <p className="eyebrow">
-                  {view === "convites" ? "Novo acesso" : "Permissões"}
-                </p>
-                <h2 className="operational-heading mt-1 text-xl">
-                  {view === "convites" ? "Convidar pessoa" : "Atribuir papel"}
-                </h2>
+              <p className="eyebrow">
+                {view === "convites" ? "Novo acesso" : "Permissões"}
+              </p>
+              <h2 className="operational-heading mt-1 text-xl">
+                {view === "convites" ? "Convidar pessoa" : "Atribuir papel"}
+              </h2>
             </div>
           </div>
           <form

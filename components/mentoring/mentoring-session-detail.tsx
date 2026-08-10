@@ -150,7 +150,8 @@ export function MentoringSessionDetail({
   success?: string;
   error?: string;
 }) {
-  const isOpen = session.status === "requested" || session.status === "scheduled";
+  const isOpen =
+    session.status === "requested" || session.status === "scheduled";
   const canComplete = canSchedule && session.status === "scheduled";
   const statusTone =
     session.status === "completed"
@@ -192,7 +193,9 @@ export function MentoringSessionDetail({
               </span>
             </div>
           </div>
-          <StatusBadge tone={statusTone}>{statusLabels[session.status]}</StatusBadge>
+          <StatusBadge tone={statusTone}>
+            {statusLabels[session.status]}
+          </StatusBadge>
         </div>
       </section>
 
@@ -224,7 +227,8 @@ export function MentoringSessionDetail({
             </a>
           ) : session.location ? (
             <p className="mt-2 inline-flex items-center gap-2 font-bold text-[var(--text-strong)]">
-              <MapPin className="size-4 text-[var(--wine-700)]" /> {session.location}
+              <MapPin className="size-4 text-[var(--wine-700)]" />{" "}
+              {session.location}
             </p>
           ) : (
             <p className="mt-2 text-sm text-[var(--text-muted)]">
@@ -252,7 +256,9 @@ export function MentoringSessionDetail({
             <div>
               <p className="eyebrow">Agenda</p>
               <h2 className="operational-heading mt-1 text-xl">
-                {session.scheduled_start_at ? "Reagendar sessão" : "Definir horário"}
+                {session.scheduled_start_at
+                  ? "Reagendar sessão"
+                  : "Definir horário"}
               </h2>
             </div>
           </div>
@@ -294,7 +300,9 @@ export function MentoringSessionDetail({
             </FormField>
             <div className="flex items-end">
               <Button type="submit" className="w-full">
-                {session.scheduled_start_at ? "Salvar novo horário" : "Agendar sessão"}
+                {session.scheduled_start_at
+                  ? "Salvar novo horário"
+                  : "Agendar sessão"}
               </Button>
             </div>
           </form>
@@ -393,7 +401,9 @@ export function MentoringSessionDetail({
                   <StatusBadge
                     tone={note.visibility === "shared" ? "success" : "warning"}
                   >
-                    {note.visibility === "shared" ? "Compartilhado" : "Restrito"}
+                    {note.visibility === "shared"
+                      ? "Compartilhado"
+                      : "Restrito"}
                   </StatusBadge>
                   <span className="text-xs text-[var(--text-muted)]">
                     {new Intl.DateTimeFormat("pt-BR").format(
@@ -401,7 +411,7 @@ export function MentoringSessionDetail({
                     )}
                   </span>
                 </div>
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[var(--text-muted)]">
+                <p className="mt-3 text-sm leading-6 whitespace-pre-wrap text-[var(--text-muted)]">
                   {note.content}
                 </p>
               </article>
@@ -444,7 +454,9 @@ export function MentoringSessionDetail({
                   defaultValue="shared"
                 >
                   <option value="shared">Compartilhar com a startup</option>
-                  <option value="restricted">Restrito à equipe autorizada</option>
+                  <option value="restricted">
+                    Restrito à equipe autorizada
+                  </option>
                 </select>
               </FormField>
               <Button type="submit">Salvar registro</Button>
@@ -457,7 +469,9 @@ export function MentoringSessionDetail({
             <Sparkles className="size-5 text-[var(--wine-700)]" />
             <div>
               <p className="eyebrow">Próximos passos</p>
-              <h2 className="operational-heading mt-1 text-xl">Recomendações</h2>
+              <h2 className="operational-heading mt-1 text-xl">
+                Recomendações
+              </h2>
             </div>
           </div>
           <div className="mt-5 space-y-3">
@@ -512,7 +526,11 @@ export function MentoringSessionDetail({
                           value={recommendation.id}
                         />
                         <input type="hidden" name="status" value="accepted" />
-                        <Button type="submit" variant="secondary" className="px-3">
+                        <Button
+                          type="submit"
+                          variant="secondary"
+                          className="px-3"
+                        >
                           Aceitar
                         </Button>
                       </form>
@@ -617,7 +635,8 @@ export function MentoringSessionDetail({
                 Feedback da sessão
               </h2>
               <p className="mt-1 text-sm text-[var(--text-muted)]">
-                A direção da avaliação é definida automaticamente pelo seu vínculo.
+                A direção da avaliação é definida automaticamente pelo seu
+                vínculo.
               </p>
             </div>
           </div>

@@ -4,7 +4,12 @@ import { firstSearchValue } from "@/lib/m6/server-context";
 
 export const dynamic = "force-dynamic";
 
-const diagnosticViews = new Set(["overview", "modelos", "campanhas", "avaliacoes"]);
+const diagnosticViews = new Set([
+  "overview",
+  "modelos",
+  "campanhas",
+  "avaliacoes",
+]);
 
 export default async function DiagnosticsPage({
   params,

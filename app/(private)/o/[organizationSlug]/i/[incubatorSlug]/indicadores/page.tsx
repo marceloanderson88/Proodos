@@ -6,7 +6,12 @@ import { buildPortfolioReport } from "@/lib/reports/portfolio-report";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Relatórios e indicadores" };
 
-const reportViews = new Set(["overview", "portfolio", "diagnosticos", "territorio"]);
+const reportViews = new Set([
+  "overview",
+  "portfolio",
+  "diagnosticos",
+  "territorio",
+]);
 
 export default async function ReportsPage({
   params,
@@ -135,7 +140,9 @@ export default async function ReportsPage({
     ? requestedYear
     : undefined;
   const requestedCohortId = firstSearchValue(filters.cohort);
-  const selectedCohort = cohorts.find((cohort) => cohort.id === requestedCohortId);
+  const selectedCohort = cohorts.find(
+    (cohort) => cohort.id === requestedCohortId,
+  );
   const selectedCohortId =
     selectedCohort &&
     (!selectedProgramId || selectedCohort.program_id === selectedProgramId) &&

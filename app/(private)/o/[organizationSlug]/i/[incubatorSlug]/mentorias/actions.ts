@@ -363,167 +363,524 @@ export async function updateMentorAssignmentStatusAction(
 }
 
 export async function createMentorAvailabilityAction(
-  organizationSlug: string, incubatorSlug: string, formData: FormData,
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
 ) {
-  const context = await getIncubatorServerContext(organizationSlug, incubatorSlug);
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = createMentorAvailabilitySchema.safeParse({
     mentorProfileId: value(formData, "mentorProfileId"),
-    weekday: value(formData, "weekday"), startsAt: value(formData, "startsAt"),
-    endsAt: value(formData, "endsAt"), timezone: value(formData, "timezone") || context.incubator.timezone,
-    effectiveFrom: value(formData, "effectiveFrom"), effectiveUntil: value(formData, "effectiveUntil"),
+    weekday: value(formData, "weekday"),
+    startsAt: value(formData, "startsAt"),
+    endsAt: value(formData, "endsAt"),
+    timezone: value(formData, "timezone") || context.incubator.timezone,
+    effectiveFrom: value(formData, "effectiveFrom"),
+    effectiveUntil: value(formData, "effectiveUntil"),
   });
-  if (!parsed.success) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", parsed.error.issues[0]?.message ?? "Disponibilidade inválida."));
-  const { error } = await context.supabase.from("mentor_availability_slots").insert({
-    organization_id: context.organization.id, incubator_id: context.incubator.id,
-    mentor_profile_id: parsed.data.mentorProfileId, weekday: parsed.data.weekday,
-    starts_at: parsed.data.startsAt, ends_at: parsed.data.endsAt, timezone: parsed.data.timezone,
-    effective_from: parsed.data.effectiveFrom, effective_until: parsed.data.effectiveUntil,
-    created_by: context.user.id,
-  });
-  if (error) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", "Não foi possível registrar a disponibilidade."));
+  if (!parsed.success)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        parsed.error.issues[0]?.message ?? "Disponibilidade inválida.",
+      ),
+    );
+  const { error } = await context.supabase
+    .from("mentor_availability_slots")
+    .insert({
+      organization_id: context.organization.id,
+      incubator_id: context.incubator.id,
+      mentor_profile_id: parsed.data.mentorProfileId,
+      weekday: parsed.data.weekday,
+      starts_at: parsed.data.startsAt,
+      ends_at: parsed.data.endsAt,
+      timezone: parsed.data.timezone,
+      effective_from: parsed.data.effectiveFrom,
+      effective_until: parsed.data.effectiveUntil,
+      created_by: context.user.id,
+    });
+  if (error)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        "Não foi possível registrar a disponibilidade.",
+      ),
+    );
   refreshMentoring(organizationSlug, incubatorSlug);
-  redirect(mentoringUrl(organizationSlug, incubatorSlug, "success", "Disponibilidade adicionada."));
+  redirect(
+    mentoringUrl(
+      organizationSlug,
+      incubatorSlug,
+      "success",
+      "Disponibilidade adicionada.",
+    ),
+  );
 }
 
 export async function deleteMentorAvailabilityAction(
-  organizationSlug: string, incubatorSlug: string, formData: FormData,
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
 ) {
-  const context = await getIncubatorServerContext(organizationSlug, incubatorSlug);
-  const parsed = deleteMentorAvailabilitySchema.safeParse({ availabilityId: value(formData, "availabilityId") });
-  if (!parsed.success) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", "Disponibilidade inválida."));
-  const { error } = await context.supabase.from("mentor_availability_slots").delete()
-    .eq("organization_id", context.organization.id).eq("incubator_id", context.incubator.id).eq("id", parsed.data.availabilityId);
-  if (error) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", "Não foi possível remover a disponibilidade."));
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = deleteMentorAvailabilitySchema.safeParse({
+    availabilityId: value(formData, "availabilityId"),
+  });
+  if (!parsed.success)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        "Disponibilidade inválida.",
+      ),
+    );
+  const { error } = await context.supabase
+    .from("mentor_availability_slots")
+    .delete()
+    .eq("organization_id", context.organization.id)
+    .eq("incubator_id", context.incubator.id)
+    .eq("id", parsed.data.availabilityId);
+  if (error)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        "Não foi possível remover a disponibilidade.",
+      ),
+    );
   refreshMentoring(organizationSlug, incubatorSlug);
-  redirect(mentoringUrl(organizationSlug, incubatorSlug, "success", "Disponibilidade removida."));
+  redirect(
+    mentoringUrl(
+      organizationSlug,
+      incubatorSlug,
+      "success",
+      "Disponibilidade removida.",
+    ),
+  );
 }
 
 export async function createMentoringSessionAction(
-  organizationSlug: string, incubatorSlug: string, formData: FormData,
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
 ) {
-  const context = await getIncubatorServerContext(organizationSlug, incubatorSlug);
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = createMentoringSessionSchema.safeParse({
-    assignmentId: value(formData, "assignmentId"), diagnosticAssessmentId: value(formData, "diagnosticAssessmentId"),
-    objective: value(formData, "objective"), mode: value(formData, "mode"),
+    assignmentId: value(formData, "assignmentId"),
+    diagnosticAssessmentId: value(formData, "diagnosticAssessmentId"),
+    objective: value(formData, "objective"),
+    mode: value(formData, "mode"),
     timezone: value(formData, "timezone") || context.incubator.timezone,
-    scheduledStartAt: value(formData, "scheduledStartAt"), scheduledEndAt: value(formData, "scheduledEndAt"),
-    meetingUrl: value(formData, "meetingUrl"), location: value(formData, "location"),
+    scheduledStartAt: value(formData, "scheduledStartAt"),
+    scheduledEndAt: value(formData, "scheduledEndAt"),
+    meetingUrl: value(formData, "meetingUrl"),
+    location: value(formData, "location"),
   });
-  if (!parsed.success) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", parsed.error.issues[0]?.message ?? "Sessão inválida."));
-  const { data: sessionId, error } = await context.supabase.rpc("create_mentoring_session", {
-    target_assignment_id: parsed.data.assignmentId,
-    target_diagnostic_assessment_id: parsed.data.diagnosticAssessmentId,
-    session_objective: parsed.data.objective, session_mode: parsed.data.mode,
-    session_timezone: parsed.data.timezone, scheduled_start_local: parsed.data.scheduledStartAt,
-    scheduled_end_local: parsed.data.scheduledEndAt, session_meeting_url: parsed.data.meetingUrl,
-    session_location: parsed.data.location,
-  });
-  if (error) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", error.code === "23P01" ? "O mentor já possui sessão nesse horário." : "Não foi possível criar a sessão."));
+  if (!parsed.success)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        parsed.error.issues[0]?.message ?? "Sessão inválida.",
+      ),
+    );
+  const { data: sessionId, error } = await context.supabase.rpc(
+    "create_mentoring_session",
+    {
+      target_assignment_id: parsed.data.assignmentId,
+      target_diagnostic_assessment_id: parsed.data.diagnosticAssessmentId,
+      session_objective: parsed.data.objective,
+      session_mode: parsed.data.mode,
+      session_timezone: parsed.data.timezone,
+      scheduled_start_local: parsed.data.scheduledStartAt,
+      scheduled_end_local: parsed.data.scheduledEndAt,
+      session_meeting_url: parsed.data.meetingUrl,
+      session_location: parsed.data.location,
+    },
+  );
+  if (error)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        error.code === "23P01"
+          ? "O mentor já possui sessão nesse horário."
+          : "Não foi possível criar a sessão.",
+      ),
+    );
   refreshMentoring(organizationSlug, incubatorSlug);
-  redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, sessionId, "success", "Sessão registrada na agenda."));
+  redirect(
+    mentoringSessionUrl(
+      organizationSlug,
+      incubatorSlug,
+      sessionId,
+      "success",
+      "Sessão registrada na agenda.",
+    ),
+  );
 }
 
 export async function updateMentoringSessionStatusAction(
-  organizationSlug: string, incubatorSlug: string, formData: FormData,
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
 ) {
-  const context = await getIncubatorServerContext(organizationSlug, incubatorSlug);
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = updateMentoringSessionStatusSchema.safeParse({
-    sessionId: value(formData, "sessionId"), status: value(formData, "status"), reason: value(formData, "reason"),
+    sessionId: value(formData, "sessionId"),
+    status: value(formData, "status"),
+    reason: value(formData, "reason"),
   });
-  if (!parsed.success || (parsed.data.status === "cancelled" && !parsed.data.reason)) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", "Informe os dados necessários para atualizar a sessão."));
-  const { error } = await context.supabase.rpc("update_mentoring_session_status", {
-    target_session_id: parsed.data.sessionId, requested_status: parsed.data.status, reason: parsed.data.reason,
-  });
-  if (error) redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, parsed.data.sessionId, "error", "Não foi possível atualizar a sessão. Verifique o horário e o status atual."));
+  if (
+    !parsed.success ||
+    (parsed.data.status === "cancelled" && !parsed.data.reason)
+  )
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        "Informe os dados necessários para atualizar a sessão.",
+      ),
+    );
+  const { error } = await context.supabase.rpc(
+    "update_mentoring_session_status",
+    {
+      target_session_id: parsed.data.sessionId,
+      requested_status: parsed.data.status,
+      reason: parsed.data.reason,
+    },
+  );
+  if (error)
+    redirect(
+      mentoringSessionUrl(
+        organizationSlug,
+        incubatorSlug,
+        parsed.data.sessionId,
+        "error",
+        "Não foi possível atualizar a sessão. Verifique o horário e o status atual.",
+      ),
+    );
   refreshMentoring(organizationSlug, incubatorSlug);
-  redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, parsed.data.sessionId, "success", parsed.data.status === "completed" ? "Sessão concluída." : parsed.data.status === "cancelled" ? "Sessão cancelada." : "Sessão confirmada."));
+  redirect(
+    mentoringSessionUrl(
+      organizationSlug,
+      incubatorSlug,
+      parsed.data.sessionId,
+      "success",
+      parsed.data.status === "completed"
+        ? "Sessão concluída."
+        : parsed.data.status === "cancelled"
+          ? "Sessão cancelada."
+          : "Sessão confirmada.",
+    ),
+  );
 }
 
 export async function rescheduleMentoringSessionAction(
-  organizationSlug: string, incubatorSlug: string, formData: FormData,
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
 ) {
-  const context = await getIncubatorServerContext(organizationSlug, incubatorSlug);
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = rescheduleMentoringSessionSchema.safeParse({
-    sessionId: value(formData, "sessionId"), timezone: value(formData, "timezone") || context.incubator.timezone,
-    scheduledStartAt: value(formData, "scheduledStartAt"), scheduledEndAt: value(formData, "scheduledEndAt"),
+    sessionId: value(formData, "sessionId"),
+    timezone: value(formData, "timezone") || context.incubator.timezone,
+    scheduledStartAt: value(formData, "scheduledStartAt"),
+    scheduledEndAt: value(formData, "scheduledEndAt"),
   });
-  if (!parsed.success) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", parsed.error.issues[0]?.message ?? "Horário inválido."));
+  if (!parsed.success)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        parsed.error.issues[0]?.message ?? "Horário inválido.",
+      ),
+    );
   const { error } = await context.supabase.rpc("reschedule_mentoring_session", {
     target_session_id: parsed.data.sessionId,
     scheduled_start_local: parsed.data.scheduledStartAt,
     scheduled_end_local: parsed.data.scheduledEndAt,
     session_timezone: parsed.data.timezone,
   });
-  if (error) redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, parsed.data.sessionId, "error", error.code === "23P01" ? "O mentor já possui sessão nesse horário." : "Não foi possível reagendar a sessão."));
+  if (error)
+    redirect(
+      mentoringSessionUrl(
+        organizationSlug,
+        incubatorSlug,
+        parsed.data.sessionId,
+        "error",
+        error.code === "23P01"
+          ? "O mentor já possui sessão nesse horário."
+          : "Não foi possível reagendar a sessão.",
+      ),
+    );
   refreshMentoring(organizationSlug, incubatorSlug);
-  redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, parsed.data.sessionId, "success", "Sessão reagendada."));
+  redirect(
+    mentoringSessionUrl(
+      organizationSlug,
+      incubatorSlug,
+      parsed.data.sessionId,
+      "success",
+      "Sessão reagendada.",
+    ),
+  );
 }
 
 export async function createMentoringNoteAction(
-  organizationSlug: string, incubatorSlug: string, formData: FormData,
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
 ) {
-  const context = await getIncubatorServerContext(organizationSlug, incubatorSlug);
-  const parsed = createMentoringNoteSchema.safeParse({ sessionId: value(formData, "sessionId"), visibility: value(formData, "visibility"), content: value(formData, "content") });
-  if (!parsed.success) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", parsed.error.issues[0]?.message ?? "Registro inválido."));
-  const { error } = await context.supabase.from("mentoring_session_notes").insert({
-    organization_id: context.organization.id, session_id: parsed.data.sessionId,
-    visibility: parsed.data.visibility, content: parsed.data.content, author_user_id: context.user.id,
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = createMentoringNoteSchema.safeParse({
+    sessionId: value(formData, "sessionId"),
+    visibility: value(formData, "visibility"),
+    content: value(formData, "content"),
   });
-  if (error) redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, parsed.data.sessionId, "error", "Não foi possível salvar o registro da sessão."));
+  if (!parsed.success)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        parsed.error.issues[0]?.message ?? "Registro inválido.",
+      ),
+    );
+  const { error } = await context.supabase
+    .from("mentoring_session_notes")
+    .insert({
+      organization_id: context.organization.id,
+      session_id: parsed.data.sessionId,
+      visibility: parsed.data.visibility,
+      content: parsed.data.content,
+      author_user_id: context.user.id,
+    });
+  if (error)
+    redirect(
+      mentoringSessionUrl(
+        organizationSlug,
+        incubatorSlug,
+        parsed.data.sessionId,
+        "error",
+        "Não foi possível salvar o registro da sessão.",
+      ),
+    );
   refreshMentoring(organizationSlug, incubatorSlug);
-  redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, parsed.data.sessionId, "success", "Registro da sessão salvo."));
+  redirect(
+    mentoringSessionUrl(
+      organizationSlug,
+      incubatorSlug,
+      parsed.data.sessionId,
+      "success",
+      "Registro da sessão salvo.",
+    ),
+  );
 }
 
 export async function createMentoringRecommendationAction(
-  organizationSlug: string, incubatorSlug: string, formData: FormData,
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
 ) {
-  const context = await getIncubatorServerContext(organizationSlug, incubatorSlug);
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = createMentoringRecommendationSchema.safeParse({
-    sessionId: value(formData, "sessionId"), title: value(formData, "title"),
-    description: value(formData, "description"), priority: value(formData, "priority"), dueOn: value(formData, "dueOn"),
+    sessionId: value(formData, "sessionId"),
+    title: value(formData, "title"),
+    description: value(formData, "description"),
+    priority: value(formData, "priority"),
+    dueOn: value(formData, "dueOn"),
   });
-  if (!parsed.success) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", parsed.error.issues[0]?.message ?? "Recomendação inválida."));
-  const { error } = await context.supabase.from("mentoring_recommendations").insert({
-    organization_id: context.organization.id, session_id: parsed.data.sessionId,
-    title: parsed.data.title, description: parsed.data.description,
-    priority: parsed.data.priority, due_on: parsed.data.dueOn, created_by: context.user.id,
-  });
-  if (error) redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, parsed.data.sessionId, "error", "Não foi possível salvar a recomendação."));
+  if (!parsed.success)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        parsed.error.issues[0]?.message ?? "Recomendação inválida.",
+      ),
+    );
+  const { error } = await context.supabase
+    .from("mentoring_recommendations")
+    .insert({
+      organization_id: context.organization.id,
+      session_id: parsed.data.sessionId,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      priority: parsed.data.priority,
+      due_on: parsed.data.dueOn,
+      created_by: context.user.id,
+    });
+  if (error)
+    redirect(
+      mentoringSessionUrl(
+        organizationSlug,
+        incubatorSlug,
+        parsed.data.sessionId,
+        "error",
+        "Não foi possível salvar a recomendação.",
+      ),
+    );
   refreshMentoring(organizationSlug, incubatorSlug);
-  redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, parsed.data.sessionId, "success", "Recomendação registrada."));
+  redirect(
+    mentoringSessionUrl(
+      organizationSlug,
+      incubatorSlug,
+      parsed.data.sessionId,
+      "success",
+      "Recomendação registrada.",
+    ),
+  );
 }
 
 export async function updateMentoringRecommendationAction(
-  organizationSlug: string, incubatorSlug: string, formData: FormData,
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
 ) {
-  const context = await getIncubatorServerContext(organizationSlug, incubatorSlug);
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = updateMentoringRecommendationSchema.safeParse({
-    recommendationId: value(formData, "recommendationId"), status: value(formData, "status"), ownerUserId: value(formData, "ownerUserId"),
+    recommendationId: value(formData, "recommendationId"),
+    status: value(formData, "status"),
+    ownerUserId: value(formData, "ownerUserId"),
   });
-  if (!parsed.success) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", "Recomendação inválida."));
-  const recommendationResult = await context.supabase.from("mentoring_recommendations").select("session_id").eq("organization_id", context.organization.id).eq("id", parsed.data.recommendationId).maybeSingle();
-  if (recommendationResult.error || !recommendationResult.data) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", "Recomendação indisponível."));
-  const { error } = await context.supabase.from("mentoring_recommendations").update({ status: parsed.data.status, owner_user_id: parsed.data.ownerUserId }).eq("organization_id", context.organization.id).eq("id", parsed.data.recommendationId);
-  if (error) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", "Não foi possível atualizar a recomendação."));
+  if (!parsed.success)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        "Recomendação inválida.",
+      ),
+    );
+  const recommendationResult = await context.supabase
+    .from("mentoring_recommendations")
+    .select("session_id")
+    .eq("organization_id", context.organization.id)
+    .eq("id", parsed.data.recommendationId)
+    .maybeSingle();
+  if (recommendationResult.error || !recommendationResult.data)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        "Recomendação indisponível.",
+      ),
+    );
+  const { error } = await context.supabase
+    .from("mentoring_recommendations")
+    .update({
+      status: parsed.data.status,
+      owner_user_id: parsed.data.ownerUserId,
+    })
+    .eq("organization_id", context.organization.id)
+    .eq("id", parsed.data.recommendationId);
+  if (error)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        "Não foi possível atualizar a recomendação.",
+      ),
+    );
   refreshMentoring(organizationSlug, incubatorSlug);
-  redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, recommendationResult.data.session_id, "success", "Recomendação atualizada."));
+  redirect(
+    mentoringSessionUrl(
+      organizationSlug,
+      incubatorSlug,
+      recommendationResult.data.session_id,
+      "success",
+      "Recomendação atualizada.",
+    ),
+  );
 }
 
 export async function createMentoringFeedbackAction(
-  organizationSlug: string, incubatorSlug: string, formData: FormData,
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
 ) {
-  const context = await getIncubatorServerContext(organizationSlug, incubatorSlug);
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
   const parsed = createMentoringFeedbackSchema.safeParse({
-    sessionId: value(formData, "sessionId"), rating: value(formData, "rating"),
-    strengths: value(formData, "strengths"), improvements: value(formData, "improvements"), isShared: value(formData, "isShared") === "on",
+    sessionId: value(formData, "sessionId"),
+    rating: value(formData, "rating"),
+    strengths: value(formData, "strengths"),
+    improvements: value(formData, "improvements"),
+    isShared: value(formData, "isShared") === "on",
   });
-  if (!parsed.success) redirect(mentoringUrl(organizationSlug, incubatorSlug, "error", parsed.error.issues[0]?.message ?? "Feedback inválido."));
+  if (!parsed.success)
+    redirect(
+      mentoringUrl(
+        organizationSlug,
+        incubatorSlug,
+        "error",
+        parsed.error.issues[0]?.message ?? "Feedback inválido.",
+      ),
+    );
   const { error } = await context.supabase.rpc("create_mentoring_feedback", {
-    target_session_id: parsed.data.sessionId, feedback_rating: parsed.data.rating,
-    feedback_strengths: parsed.data.strengths, feedback_improvements: parsed.data.improvements,
+    target_session_id: parsed.data.sessionId,
+    feedback_rating: parsed.data.rating,
+    feedback_strengths: parsed.data.strengths,
+    feedback_improvements: parsed.data.improvements,
     share_feedback: parsed.data.isShared,
   });
-  if (error) redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, parsed.data.sessionId, "error", error.code === "23505" ? "Você já enviou feedback para esta sessão." : "Não foi possível salvar o feedback."));
+  if (error)
+    redirect(
+      mentoringSessionUrl(
+        organizationSlug,
+        incubatorSlug,
+        parsed.data.sessionId,
+        "error",
+        error.code === "23505"
+          ? "Você já enviou feedback para esta sessão."
+          : "Não foi possível salvar o feedback.",
+      ),
+    );
   refreshMentoring(organizationSlug, incubatorSlug);
-  redirect(mentoringSessionUrl(organizationSlug, incubatorSlug, parsed.data.sessionId, "success", "Feedback salvo."));
+  redirect(
+    mentoringSessionUrl(
+      organizationSlug,
+      incubatorSlug,
+      parsed.data.sessionId,
+      "success",
+      "Feedback salvo.",
+    ),
+  );
 }

@@ -29,9 +29,33 @@ const cohorts = [
   },
 ];
 const startups = [
-  { id: "s1", name: "Alpha", status: "active", stage: "traction", city: "São Paulo", state: "SP", sector: "SaaS" },
-  { id: "s2", name: "Beta", status: "inactive", stage: "validation", city: "Salvador", state: "BA", sector: "Impacto" },
-  { id: "s3", name: "Gamma", status: "active", stage: "idea", city: null, state: null, sector: null },
+  {
+    id: "s1",
+    name: "Alpha",
+    status: "active",
+    stage: "traction",
+    city: "São Paulo",
+    state: "SP",
+    sector: "SaaS",
+  },
+  {
+    id: "s2",
+    name: "Beta",
+    status: "inactive",
+    stage: "validation",
+    city: "Salvador",
+    state: "BA",
+    sector: "Impacto",
+  },
+  {
+    id: "s3",
+    name: "Gamma",
+    status: "active",
+    stage: "idea",
+    city: null,
+    state: null,
+    sector: null,
+  },
 ];
 const enrollments = [
   { startup_id: "s1", cohort_id: "c1", status: "active" },
@@ -39,9 +63,39 @@ const enrollments = [
   { startup_id: "s3", cohort_id: "c2", status: "active" },
 ];
 const assessments = [
-  { id: "a-old", startup_id: "s1", status: "validated", self_score: 40, validated_score: 40, evidence_coverage: 50, classification_code: "C1", cycle_label: "Inicial", updated_at: "2026-01-01T00:00:00Z" },
-  { id: "a1", startup_id: "s1", status: "validated", self_score: 65, validated_score: 70, evidence_coverage: 80, classification_code: "C2", cycle_label: "Final", updated_at: "2026-06-01T00:00:00Z" },
-  { id: "a2", startup_id: "s2", status: "submitted", self_score: 50, validated_score: null, evidence_coverage: 60, classification_code: null, cycle_label: "Inicial", updated_at: "2026-05-01T00:00:00Z" },
+  {
+    id: "a-old",
+    startup_id: "s1",
+    status: "validated",
+    self_score: 40,
+    validated_score: 40,
+    evidence_coverage: 50,
+    classification_code: "C1",
+    cycle_label: "Inicial",
+    updated_at: "2026-01-01T00:00:00Z",
+  },
+  {
+    id: "a1",
+    startup_id: "s1",
+    status: "validated",
+    self_score: 65,
+    validated_score: 70,
+    evidence_coverage: 80,
+    classification_code: "C2",
+    cycle_label: "Final",
+    updated_at: "2026-06-01T00:00:00Z",
+  },
+  {
+    id: "a2",
+    startup_id: "s2",
+    status: "submitted",
+    self_score: 50,
+    validated_score: null,
+    evidence_coverage: 60,
+    classification_code: null,
+    cycle_label: "Inicial",
+    updated_at: "2026-05-01T00:00:00Z",
+  },
 ];
 
 describe("buildPortfolioReport", () => {
@@ -72,8 +126,18 @@ describe("buildPortfolioReport", () => {
       startups,
       assessments,
       dimensionScores: [
-        { assessment_id: "a1", dimension_id: "d1", self_score: 70, validated_score: 80 },
-        { assessment_id: "a2", dimension_id: "d1", self_score: 60, validated_score: null },
+        {
+          assessment_id: "a1",
+          dimension_id: "d1",
+          self_score: 70,
+          validated_score: 80,
+        },
+        {
+          assessment_id: "a2",
+          dimension_id: "d1",
+          self_score: 60,
+          validated_score: null,
+        },
       ],
       dimensions: [{ id: "d1", code: "MKT", name: "Mercado" }],
       selectedProgramId: "p1",
@@ -82,7 +146,10 @@ describe("buildPortfolioReport", () => {
 
     expect(report.metrics.total).toBe(2);
     expect(report.metrics.active).toBe(1);
-    expect(report.startupRows.map((row) => row.name)).toEqual(["Alpha", "Beta"]);
+    expect(report.startupRows.map((row) => row.name)).toEqual([
+      "Alpha",
+      "Beta",
+    ]);
     expect(report.cohortSummaries[0]).toMatchObject({
       startups: 2,
       diagnosed: 2,

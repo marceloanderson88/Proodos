@@ -19,10 +19,8 @@ export default async function MentoringPage({
   ]);
   const requestedView = firstSearchValue(feedback.view) ?? "overview";
   const view = mentoringViews.has(requestedView) ? requestedView : "overview";
-  const { organization, incubator, supabase, user } = await getIncubatorServerContext(
-    organizationSlug,
-    incubatorSlug,
-  );
+  const { organization, incubator, supabase, user } =
+    await getIncubatorServerContext(organizationSlug, incubatorSlug);
 
   const [
     canManageResult,
@@ -78,7 +76,9 @@ export default async function MentoringPage({
       .maybeSingle(),
     supabase
       .from("mentor_availability_slots")
-      .select("id, mentor_profile_id, weekday, starts_at, ends_at, timezone, effective_from, effective_until, is_active")
+      .select(
+        "id, mentor_profile_id, weekday, starts_at, ends_at, timezone, effective_from, effective_until, is_active",
+      )
       .eq("organization_id", organization.id)
       .eq("incubator_id", incubator.id)
       .eq("is_active", true)
@@ -86,13 +86,17 @@ export default async function MentoringPage({
       .order("starts_at"),
     supabase
       .from("mentoring_sessions")
-      .select("id, assignment_id, diagnostic_assessment_id, objective, mode, timezone, scheduled_start_at, scheduled_end_at, meeting_url, location, status, cancellation_reason, created_at")
+      .select(
+        "id, assignment_id, diagnostic_assessment_id, objective, mode, timezone, scheduled_start_at, scheduled_end_at, meeting_url, location, status, cancellation_reason, created_at",
+      )
       .eq("organization_id", organization.id)
       .eq("incubator_id", incubator.id)
       .order("scheduled_start_at", { ascending: true, nullsFirst: false }),
     supabase
       .from("diagnostic_assessments")
-      .select("id, startup_id, cycle_label, status, evaluator_id, execution_mode")
+      .select(
+        "id, startup_id, cycle_label, status, evaluator_id, execution_mode",
+      )
       .eq("organization_id", organization.id)
       .eq("incubator_id", incubator.id)
       .eq("execution_mode", "facilitated")

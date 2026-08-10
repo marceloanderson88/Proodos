@@ -95,7 +95,10 @@ export const createMentorAvailabilitySchema = z
   .refine(
     ({ effectiveFrom, effectiveUntil }) =>
       !effectiveUntil || effectiveFrom <= effectiveUntil,
-    { message: "A vigência final deve ser posterior à inicial.", path: ["effectiveUntil"] },
+    {
+      message: "A vigência final deve ser posterior à inicial.",
+      path: ["effectiveUntil"],
+    },
   );
 
 export const deleteMentorAvailabilitySchema = z.object({
@@ -111,11 +114,17 @@ export const createMentoringSessionSchema = z
     timezone: z.string().trim().min(1).max(100),
     scheduledStartAt: z.preprocess(
       (value) => (value === "" ? null : value),
-      z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/).nullable(),
+      z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
+        .nullable(),
     ),
     scheduledEndAt: z.preprocess(
       (value) => (value === "" ? null : value),
-      z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/).nullable(),
+      z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
+        .nullable(),
     ),
     meetingUrl: z.preprocess(
       (value) => (value === "" ? null : value),
@@ -134,7 +143,10 @@ export const createMentoringSessionSchema = z
   .refine(
     ({ scheduledStartAt, scheduledEndAt }) =>
       !scheduledStartAt || !scheduledEndAt || scheduledStartAt < scheduledEndAt,
-    { message: "O término deve ser posterior ao início.", path: ["scheduledEndAt"] },
+    {
+      message: "O término deve ser posterior ao início.",
+      path: ["scheduledEndAt"],
+    },
   );
 
 export const updateMentoringSessionStatusSchema = z.object({
@@ -146,14 +158,20 @@ export const updateMentoringSessionStatusSchema = z.object({
   ),
 });
 
-export const rescheduleMentoringSessionSchema = z.object({
-  sessionId: z.string().uuid(),
-  timezone: z.string().trim().min(1).max(100),
-  scheduledStartAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
-  scheduledEndAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
-}).refine(({ scheduledStartAt, scheduledEndAt }) => scheduledStartAt < scheduledEndAt, {
-  message: "O término deve ser posterior ao início.", path: ["scheduledEndAt"],
-});
+export const rescheduleMentoringSessionSchema = z
+  .object({
+    sessionId: z.string().uuid(),
+    timezone: z.string().trim().min(1).max(100),
+    scheduledStartAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+    scheduledEndAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+  })
+  .refine(
+    ({ scheduledStartAt, scheduledEndAt }) => scheduledStartAt < scheduledEndAt,
+    {
+      message: "O término deve ser posterior ao início.",
+      path: ["scheduledEndAt"],
+    },
+  );
 
 export const createMentoringNoteSchema = z.object({
   sessionId: z.string().uuid(),
