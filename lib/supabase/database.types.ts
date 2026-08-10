@@ -3956,6 +3956,82 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: string[];
       };
+      accept_cerne_confidentiality: {
+        Args: { target_assignment_id: string };
+        Returns: undefined;
+      };
+      acknowledge_cerne_alert: {
+        Args: { target_alert_id: string };
+        Returns: undefined;
+      };
+      assign_cerne_practice_owner: {
+        Args: {
+          implementation_status?: string;
+          target_cycle_id: string;
+          target_practice_code: string;
+          target_user_id: string | null;
+        };
+        Returns: undefined;
+      };
+      assign_cerne_reviewer: {
+        Args: {
+          target_cycle_id: string;
+          target_practice_code?: string | null;
+          target_reviewer_user_id: string;
+        };
+        Returns: string;
+      };
+      create_cerne_cycle: {
+        Args: {
+          cycle_name: string;
+          ends_on: string;
+          reference_year: number;
+          starts_on: string;
+          target_incubator_id: string;
+          target_level: number;
+          target_organization_id: string;
+        };
+        Returns: string;
+      };
+      get_cerne_workspace: {
+        Args: {
+          target_incubator_id: string;
+          target_organization_id: string;
+        };
+        Returns: Json;
+      };
+      refresh_cerne_alerts: {
+        Args: {
+          target_incubator_id: string;
+          target_organization_id: string;
+        };
+        Returns: number;
+      };
+      register_cerne_evidence: {
+        Args: {
+          evidence_description: string | null;
+          evidence_title: string;
+          external_url: string | null;
+          scope_entity_id: string | null;
+          scope_type: string;
+          source_entity_id: string | null;
+          source_entity_type: string | null;
+          source_module: string | null;
+          source_snapshot: Json;
+          target_cycle_id: string;
+          target_practice_code: string;
+          target_requirement_id: string;
+        };
+        Returns: string;
+      };
+      review_cerne_evidence: {
+        Args: {
+          review_notes: string;
+          review_result: "valid" | "partial" | "invalid";
+          target_evidence_id: string;
+        };
+        Returns: undefined;
+      };
       get_selection_workspace: {
         Args: {
           target_incubator_id: string;

@@ -4,6 +4,7 @@ import {
   CalendarDays,
   ClipboardList,
   FileCheck2,
+  FolderTree,
   Gavel,
   FolderKanban,
   Layers3,
@@ -15,6 +16,8 @@ import {
   Plus,
   Rocket,
   Settings2,
+  ShieldAlert,
+  ShieldCheck,
   UserRoundCheck,
   UsersRound,
 } from "lucide-react";
@@ -76,6 +79,14 @@ const moduleNavigation: Record<string, NavigationItem[]> = {
     { label: "Portfólio", view: "portfolio", icon: Rocket },
     { label: "Diagnósticos", view: "diagnosticos", icon: FileCheck2 },
     { label: "Território", view: "territorio", icon: MapPinned },
+  ],
+  cerne: [
+    { label: "Visão geral", icon: LayoutGrid },
+    { label: "Matriz de práticas", view: "matrix", icon: ShieldCheck },
+    { label: "Evidências", view: "evidences", icon: FileCheck2 },
+    { label: "Alertas", view: "alerts", icon: ShieldAlert },
+    { label: "Pastas do Drive", view: "drive", icon: FolderTree },
+    { label: "Banca avaliadora", view: "review", icon: UserRoundCheck },
   ],
 };
 

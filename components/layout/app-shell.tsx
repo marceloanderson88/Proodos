@@ -12,6 +12,7 @@ import {
   PanelLeftClose,
   Rocket,
   Settings,
+  ShieldCheck,
   Target,
   UsersRound,
   X,
@@ -55,6 +56,7 @@ const navigation = [
         slug: "indicadores",
         icon: BarChart3,
       },
+      { label: "CERNE e evidências", slug: "cerne", icon: ShieldCheck },
     ],
   },
   {

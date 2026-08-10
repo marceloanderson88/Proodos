@@ -8,6 +8,7 @@ import {
   Gauge,
   Layers3,
   Settings2,
+  ShieldCheck,
   Trash2,
   UsersRound,
 } from "lucide-react";
@@ -430,7 +431,7 @@ export function ProgramDetail({
         <h2 className="operational-heading mt-1 text-xl">
           Recursos associados à execução
         </h2>
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[
             [
               ClipboardCheck,
@@ -451,6 +452,12 @@ export function ProgramDetail({
               "Planos e indicadores",
               "Aplicados às startups de cada turma",
               `${basePath}/planos-de-acao`,
+            ],
+            [
+              ShieldCheck,
+              "Evidência CERNE",
+              "Registrar este programa, sua execução ou resultados no dossiê",
+              `${basePath}/cerne?view=evidences&sourceType=program&sourceId=${program.id}&sourceName=${encodeURIComponent(program.name)}&practice=1.3.1`,
             ],
           ].map(([Icon, title, description, href]) => {
             const CardIcon = Icon as typeof ClipboardCheck;

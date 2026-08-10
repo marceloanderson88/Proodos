@@ -8,6 +8,7 @@ import {
   MapPin,
   PencilLine,
   Rocket,
+  ShieldCheck,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -154,12 +155,20 @@ export default async function StartupProfilePage({
         >
           <ArrowLeft className="size-4" /> Portfólio de startups
         </Link>
-        <Link
-          href={`${listPath}/${startupId}/editar`}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#751118]/15 bg-white px-5 py-3 text-sm font-extrabold text-[#751118] shadow-sm hover:bg-[#fff7f2]"
-        >
-          <PencilLine className="size-4" /> Editar startup
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/o/${organizationSlug}/i/${incubatorSlug}/cerne?view=evidences&sourceType=startup&sourceId=${startupId}&sourceName=${encodeURIComponent(startup.name)}&practice=1.3.1`}
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#751118]/15 bg-white px-5 py-3 text-sm font-extrabold text-[#751118] shadow-sm hover:bg-[#fff7f2]"
+          >
+            <ShieldCheck className="size-4" /> Adicionar ao CERNE
+          </Link>
+          <Link
+            href={`${listPath}/${startupId}/editar`}
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#751118]/15 bg-white px-5 py-3 text-sm font-extrabold text-[#751118] shadow-sm hover:bg-[#fff7f2]"
+          >
+            <PencilLine className="size-4" /> Editar startup
+          </Link>
+        </div>
       </div>
       <header className="relative overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#5c0c12,#79141b)] px-7 py-8 text-white shadow-[0_22px_55px_rgb(63_9_13/17%)] sm:px-9">
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
