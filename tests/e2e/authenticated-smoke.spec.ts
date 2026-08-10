@@ -36,7 +36,10 @@ test.describe("smoke autenticado", () => {
 
     await page.goto(`${incubatorPath}/startups`);
     await expect(
-      page.getByRole("heading", { name: "Startups e equipes" }),
+      page.getByRole("heading", {
+        name: "Portfólio de startups",
+        exact: true,
+      }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Agro Sintética", exact: true }),
