@@ -4,6 +4,8 @@ import { firstSearchValue } from "@/lib/m6/server-context";
 
 export const dynamic = "force-dynamic";
 
+const managementViews = new Set(["operacao", "equipe", "convites"]);
+
 export default async function IncubatorPeoplePage({
   params,
   searchParams,
@@ -15,6 +17,8 @@ export default async function IncubatorPeoplePage({
     params,
     searchParams,
   ]);
+  const requestedView = firstSearchValue(feedback.view) ?? "operacao";
+  const view = managementViews.has(requestedView) ? requestedView : "operacao";
   const { organization, incubator, supabase } = await getIncubatorServerContext(
     organizationSlug,
     incubatorSlug,
@@ -91,6 +95,7 @@ export default async function IncubatorPeoplePage({
 
   return (
     <IncubatorPeopleManagement
+      view={view as "operacao" | "equipe" | "convites"}
       organizationSlug={organizationSlug}
       incubatorSlug={incubatorSlug}
       incubatorName={incubator.name}

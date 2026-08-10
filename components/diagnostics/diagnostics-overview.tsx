@@ -68,6 +68,7 @@ function dateLabel(value: string) {
 }
 
 export function DiagnosticsOverview({
+  view,
   organizationSlug,
   incubatorSlug,
   incubatorName,
@@ -81,6 +82,7 @@ export function DiagnosticsOverview({
   success,
   error,
 }: {
+  view: "overview" | "modelos" | "campanhas" | "avaliacoes";
   organizationSlug: string;
   incubatorSlug: string;
   incubatorName: string;
@@ -118,6 +120,24 @@ export function DiagnosticsOverview({
     organizationSlug,
     incubatorSlug,
   );
+  const pageCopy = {
+    overview: {
+      title: "Diagnósticos",
+      description: `Acompanhe a operação de avaliações da ${incubatorName} e seus principais indicadores.`,
+    },
+    modelos: {
+      title: "Modelos de diagnóstico",
+      description: "Organize dimensões, critérios e versões publicadas da biblioteca da incubadora.",
+    },
+    campanhas: {
+      title: "Campanhas de diagnóstico",
+      description: "Planeje ciclos de aplicação, acompanhe participantes e monitore o avanço das respostas.",
+    },
+    avaliacoes: {
+      title: "Avaliações",
+      description: "Acompanhe aplicações em andamento, envios pendentes e resultados validados por startup.",
+    },
+  }[view];
 
   return (
     <div className="page-enter space-y-6">
@@ -129,12 +149,10 @@ export function DiagnosticsOverview({
               versionados
             </p>
             <h1 className="mt-4 text-4xl font-black tracking-[-0.045em] sm:text-5xl">
-              Diagnósticos
+              {pageCopy.title}
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-white/70">
-              Biblioteca de modelos, campanhas, autoavaliação e validação da{" "}
-              {incubatorName}. Cada aplicação pertence a uma startup e preserva
-              seu histórico.
+              {pageCopy.description}
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -157,7 +175,9 @@ export function DiagnosticsOverview({
 
       <FeedbackBanner success={success} error={error} />
 
-      <section className="flex flex-col justify-between gap-4 rounded-[1.4rem] border border-[#d6a761]/35 bg-[#fff8ea] p-5 sm:flex-row sm:items-center">
+      <section
+        className={`${view === "overview" ? "flex" : "hidden"} flex-col justify-between gap-4 rounded-[1.4rem] border border-[#d6a761]/35 bg-[#fff8ea] p-5 sm:flex-row sm:items-center`}
+      >
         <div>
           <p className="text-[0.65rem] font-black tracking-[0.12em] text-[#8a5216] uppercase">
             Ambiente de demonstração opcional
@@ -185,7 +205,7 @@ export function DiagnosticsOverview({
 
       <section
         aria-label="Resumo de diagnósticos"
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className={`${view === "overview" ? "grid" : "hidden"} gap-4 sm:grid-cols-2 xl:grid-cols-4`}
       >
         {[
           [Layers3, "Modelos publicados", publishedCount, "Versões imutáveis"],
@@ -233,7 +253,9 @@ export function DiagnosticsOverview({
         })}
       </section>
 
-      <section className="dashboard-card overflow-hidden rounded-[1.6rem]">
+      <section
+        className={`${view === "modelos" ? "block" : "hidden"} dashboard-card overflow-hidden rounded-[1.6rem]`}
+      >
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#751118]/8 px-5 py-5 sm:px-6">
           <div>
             <p className="text-[0.65rem] font-black tracking-[0.13em] text-[#9a2930] uppercase">
@@ -315,8 +337,12 @@ export function DiagnosticsOverview({
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="dashboard-card overflow-hidden rounded-[1.6rem]">
+      <section
+        className={`${view === "campanhas" || view === "avaliacoes" ? "grid" : "hidden"} gap-6`}
+      >
+        <div
+          className={`${view === "campanhas" ? "block" : "hidden"} dashboard-card overflow-hidden rounded-[1.6rem]`}
+        >
           <div className="flex items-center justify-between border-b border-[#751118]/8 px-5 py-5 sm:px-6">
             <div>
               <p className="text-[0.65rem] font-black tracking-[0.13em] text-[#9a2930] uppercase">
@@ -339,7 +365,7 @@ export function DiagnosticsOverview({
                 Nenhuma campanha criada.
               </p>
             ) : (
-              campaigns.slice(0, 5).map((campaign) => {
+              campaigns.map((campaign) => {
                 const invited = participants.filter(
                   (item) => item.campaign_id === campaign.id,
                 ).length;
@@ -377,7 +403,9 @@ export function DiagnosticsOverview({
           </div>
         </div>
 
-        <div className="dashboard-card overflow-hidden rounded-[1.6rem]">
+        <div
+          className={`${view === "avaliacoes" ? "block" : "hidden"} dashboard-card overflow-hidden rounded-[1.6rem]`}
+        >
           <div className="border-b border-[#751118]/8 px-5 py-5 sm:px-6">
             <p className="text-[0.65rem] font-black tracking-[0.13em] text-[#9a2930] uppercase">
               Aplicações
@@ -392,7 +420,7 @@ export function DiagnosticsOverview({
                 Nenhuma aplicação iniciada.
               </p>
             ) : (
-              assessments.slice(0, 6).map((assessment) => {
+              assessments.map((assessment) => {
                 const startup = startups.find(
                   (item) => item.id === assessment.startup_id,
                 );

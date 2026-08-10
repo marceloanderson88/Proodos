@@ -94,6 +94,7 @@ const memberRoleLabel: Record<string, string> = {
 };
 
 export function StartupsWorkspace({
+  view,
   organizationSlug,
   incubatorSlug,
   startups,
@@ -105,6 +106,7 @@ export function StartupsWorkspace({
   success,
   error,
 }: {
+  view: "portfolio" | "pendentes" | "convites" | "vinculos";
   organizationSlug: string;
   incubatorSlug: string;
   startups: Startup[];
@@ -124,6 +126,32 @@ export function StartupsWorkspace({
       .map((item) => item.startup_id),
   );
   const teamSize = members.filter((item) => item.role !== "advisor").length;
+  const viewCopy = {
+    portfolio: {
+      eyebrow: "Portfólio real e protegido",
+      title: "Portfólio de startups",
+      description:
+        "Acompanhe os empreendimentos, suas equipes e a participação em programas da incubadora.",
+    },
+    pendentes: {
+      eyebrow: "Fila de entrada",
+      title: "Solicitações pendentes",
+      description:
+        "Analise os autocadastros recebidos e decida quais startups entram no portfólio.",
+    },
+    convites: {
+      eyebrow: "Entrada pela incubadora",
+      title: "Convites para startups",
+      description:
+        "Convide representantes, acompanhe os acessos enviados e antecipe o vínculo com uma turma.",
+    },
+    vinculos: {
+      eyebrow: "Organização do portfólio",
+      title: "Equipes e turmas",
+      description:
+        "Mantenha as pessoas de cada startup e seus vínculos com programas em um espaço dedicado.",
+    },
+  }[view];
 
   return (
     <div className="page-enter space-y-6">
@@ -140,15 +168,13 @@ export function StartupsWorkspace({
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[0.65rem] font-black tracking-[0.12em] uppercase">
               <CircleDot className="size-3 text-[#f4c47a]" />
-              Portfólio real e protegido
+              {viewCopy.eyebrow}
             </div>
             <h1 className="mt-4 text-4xl font-black tracking-[-0.045em] sm:text-5xl">
-              Startups e equipes
+              {viewCopy.title}
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-white/72">
-              Cadastre os empreendimentos, organize as equipes e vincule cada
-              startup à turma correta. O histórico nasce junto com cada
-              operação.
+              {viewCopy.description}
             </p>
           </div>
           <dl className="grid grid-cols-3 gap-2 sm:min-w-[28rem]">
@@ -190,8 +216,12 @@ export function StartupsWorkspace({
 
       <FeedbackBanner success={success} error={error} />
 
-      <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-        <article className="dashboard-card rounded-[1.7rem] p-5 sm:p-6">
+      <section
+        className={`${view === "pendentes" || view === "convites" ? "grid" : "hidden"} gap-5 xl:grid-cols-2`}
+      >
+        <article
+          className={`${view === "pendentes" ? "block" : "hidden"} dashboard-card rounded-[1.7rem] p-5 sm:p-6`}
+        >
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[0.62rem] font-black tracking-[0.12em] text-[#921a20] uppercase">
@@ -284,7 +314,7 @@ export function StartupsWorkspace({
         </article>
 
         <details
-          className="dashboard-card group rounded-[1.7rem] p-5 sm:p-6"
+          className={`${view === "convites" ? "block" : "hidden"} dashboard-card group rounded-[1.7rem] p-5 sm:p-6`}
           open
         >
           <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
@@ -386,7 +416,9 @@ export function StartupsWorkspace({
         </details>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-2">
+      <section
+        className={`${view === "vinculos" ? "grid" : "hidden"} gap-5 xl:grid-cols-2`}
+      >
         <details
           className="dashboard-card group rounded-[1.6rem] p-5"
           open={members.length === 0 && startups.length > 0}
@@ -536,7 +568,10 @@ export function StartupsWorkspace({
         </details>
       </section>
 
-      <section aria-labelledby="portfolio-startups">
+      <section
+        aria-labelledby="portfolio-startups"
+        className={view === "portfolio" ? "block" : "hidden"}
+      >
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
             <p className="text-[0.65rem] font-black tracking-[0.14em] text-[#921a20] uppercase">

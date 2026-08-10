@@ -76,14 +76,22 @@ export default async function ProodosAdministrationPage({
       .eq("status", "pending")
       .not("incubator_id", "is", null),
   ]);
+  if (incubatorsResult.error)
+    throw new Error("Falha ao carregar a administração do Proodos.");
+
   if (
-    incubatorsResult.error ||
     programsResult.error ||
     startupsResult.error ||
     assignmentsResult.error ||
     invitationsResult.error
-  )
-    throw new Error("Falha ao carregar a administração do Proodos.");
+  ) {
+    console.error("Falha ao carregar indicadores auxiliares da administração", {
+      programs: programsResult.error?.code,
+      startups: startupsResult.error?.code,
+      assignments: assignmentsResult.error?.code,
+      invitations: invitationsResult.error?.code,
+    });
+  }
 
   const programs = programsResult.data ?? [];
   const startups = startupsResult.data ?? [];

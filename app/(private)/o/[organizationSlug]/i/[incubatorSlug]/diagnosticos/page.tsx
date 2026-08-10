@@ -4,6 +4,8 @@ import { firstSearchValue } from "@/lib/m6/server-context";
 
 export const dynamic = "force-dynamic";
 
+const diagnosticViews = new Set(["overview", "modelos", "campanhas", "avaliacoes"]);
+
 export default async function DiagnosticsPage({
   params,
   searchParams,
@@ -15,6 +17,8 @@ export default async function DiagnosticsPage({
     params,
     searchParams,
   ]);
+  const requestedView = firstSearchValue(feedback.view) ?? "overview";
+  const view = diagnosticViews.has(requestedView) ? requestedView : "overview";
   const { organization, incubator, supabase } = await getIncubatorServerContext(
     organizationSlug,
     incubatorSlug,
@@ -82,6 +86,7 @@ export default async function DiagnosticsPage({
 
   return (
     <DiagnosticsOverview
+      view={view as "overview" | "modelos" | "campanhas" | "avaliacoes"}
       organizationSlug={organizationSlug}
       incubatorSlug={incubatorSlug}
       incubatorName={incubator.name}

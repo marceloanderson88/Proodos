@@ -6,6 +6,7 @@ import {
   Building2,
   ClipboardCheck,
   Gauge,
+  Gavel,
   LayoutDashboard,
   Menu,
   PanelLeftClose,
@@ -21,6 +22,7 @@ import { useState } from "react";
 
 import { BrandMark } from "@/components/brand-mark";
 import { IncubatorSwitcher } from "@/components/layout/incubator-switcher";
+import { ModuleSubnav } from "@/components/layout/module-subnav";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -32,6 +34,7 @@ const navigation = [
     group: "Portfólio",
     items: [
       { label: "Programas e turmas", slug: "programas", icon: Target },
+      { label: "Chamadas e seleção", slug: "chamadas", icon: Gavel },
       { label: "Startups", slug: "startups", icon: Rocket },
     ],
   },
@@ -46,7 +49,13 @@ const navigation = [
   },
   {
     group: "Resultados",
-    items: [{ label: "Indicadores", slug: "indicadores", icon: BarChart3 }],
+    items: [
+      {
+        label: "Relatórios e indicadores",
+        slug: "indicadores",
+        icon: BarChart3,
+      },
+    ],
   },
   {
     group: "Administração",
@@ -274,6 +283,7 @@ export function AppShell({
         >
           Proodos · {currentIncubator.name} · acesso protegido por RLS
         </div>
+        <ModuleSubnav />
         <main
           id="conteudo-principal"
           className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8"

@@ -46,6 +46,7 @@ type Invitation = {
 type SettingsObject = Record<string, unknown>;
 
 export function IncubatorPeopleManagement({
+  view,
   organizationSlug,
   incubatorSlug,
   incubatorName,
@@ -57,6 +58,7 @@ export function IncubatorPeopleManagement({
   success,
   error,
 }: {
+  view: "operacao" | "equipe" | "convites";
   organizationSlug: string;
   incubatorSlug: string;
   incubatorName: string;
@@ -111,19 +113,33 @@ export function IncubatorPeopleManagement({
     incubatorSettings.responsibleName,
   );
   const teamReady = assignedPeople.length > 0;
+  const pageCopy = {
+    operacao: {
+      title: "Configuração da operação",
+      description: `Mantenha a identidade institucional e os módulos habilitados para ${incubatorName}.`,
+    },
+    equipe: {
+      title: "Equipe e papéis",
+      description: "Consulte as pessoas ativas e conceda somente os papéis necessários para cada função.",
+    },
+    convites: {
+      title: "Convites de acesso",
+      description: "Convide novas pessoas e acompanhe acessos que ainda aguardam aceite.",
+    },
+  }[view];
 
   return (
     <div className="page-enter space-y-6">
       <PageHeader
         eyebrow="Administração da incubadora"
-        title="Identidade, pessoas e acesso"
-        description={`Mantenha o perfil institucional de ${incubatorName}, convide a equipe e conceda somente os papéis necessários.`}
+        title={pageCopy.title}
+        description={pageCopy.description}
         icon={ShieldCheck}
       />
       <FeedbackBanner success={success} error={error} />
 
       <section
-        className="surface-card grid gap-4 p-5 sm:grid-cols-3 sm:p-6"
+        className={`${view === "operacao" ? "grid" : "hidden"} surface-card gap-4 p-5 sm:grid-cols-3 sm:p-6`}
         aria-label="Progresso de implantação"
       >
         {[
@@ -166,7 +182,9 @@ export function IncubatorPeopleManagement({
         ))}
       </section>
 
-      <section className="surface-card p-5 sm:p-7">
+      <section
+        className={`${view === "operacao" ? "block" : "hidden"} surface-card p-5 sm:p-7`}
+      >
         <div className="flex items-center gap-3">
           <span className="grid size-11 place-items-center rounded-2xl bg-[var(--surface-muted)] text-[var(--wine-800)]">
             <Building2 className="size-5" />
@@ -382,17 +400,21 @@ export function IncubatorPeopleManagement({
         </form>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
+      <section
+        className={`${view === "equipe" || view === "convites" ? "grid" : "hidden"} gap-5 xl:grid-cols-[0.8fr_1.2fr]`}
+      >
         <div className="surface-card p-5 sm:p-6">
           <div className="flex items-center gap-3">
             <span className="grid size-11 place-items-center rounded-2xl bg-[var(--surface-muted)] text-[var(--wine-800)]">
               <UserRoundPlus className="size-5" />
             </span>
             <div>
-              <p className="eyebrow">Novo acesso</p>
-              <h2 className="operational-heading mt-1 text-xl">
-                Convidar pessoa
-              </h2>
+                <p className="eyebrow">
+                  {view === "convites" ? "Novo acesso" : "Permissões"}
+                </p>
+                <h2 className="operational-heading mt-1 text-xl">
+                  {view === "convites" ? "Convidar pessoa" : "Atribuir papel"}
+                </h2>
             </div>
           </div>
           <form
@@ -401,7 +423,7 @@ export function IncubatorPeopleManagement({
               organizationSlug,
               incubatorSlug,
             )}
-            className="mt-5 space-y-4 border-t border-[var(--border)] pt-5"
+            className={`${view === "convites" ? "mt-5 space-y-4" : "hidden"} border-t border-[var(--border)] pt-5`}
           >
             <FormField label="Nome" htmlFor="invite-name" required>
               <input
@@ -458,7 +480,9 @@ export function IncubatorPeopleManagement({
             </Button>
           </form>
 
-          <div className="mt-7 border-t border-[var(--border)] pt-5">
+          <div
+            className={`${view === "equipe" ? "mt-7 block" : "hidden"} border-t border-[var(--border)] pt-5`}
+          >
             <p className="operational-heading text-sm">
               Adicionar papel a pessoa existente
             </p>
@@ -504,7 +528,9 @@ export function IncubatorPeopleManagement({
         </div>
 
         <div className="space-y-5">
-          <section className="surface-card p-5 sm:p-6">
+          <section
+            className={`${view === "equipe" ? "block" : "hidden"} surface-card p-5 sm:p-6`}
+          >
             <div className="flex items-center gap-3">
               <span className="grid size-11 place-items-center rounded-2xl bg-[var(--surface-muted)] text-[var(--wine-800)]">
                 <UsersRound className="size-5" />
@@ -582,7 +608,9 @@ export function IncubatorPeopleManagement({
             )}
           </section>
 
-          <section className="surface-card p-5 sm:p-6">
+          <section
+            className={`${view === "convites" ? "block" : "hidden"} surface-card p-5 sm:p-6`}
+          >
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="eyebrow">Aguardando aceite</p>

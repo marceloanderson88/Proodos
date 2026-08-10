@@ -62,6 +62,7 @@ const statusLabels: Record<string, string> = {
   draft: "Rascunho",
   planned: "Planejado",
   active: "Publicado",
+  enrollment_open: "Inscrições abertas",
   completed: "Concluído",
   cancelled: "Cancelado",
   archived: "Arquivado",
@@ -80,6 +81,7 @@ function dateLabel(value: string | null) {
 }
 
 export function ProgramsWorkspace({
+  view,
   organizationSlug,
   incubatorSlug,
   programTypes,
@@ -89,6 +91,7 @@ export function ProgramsWorkspace({
   success,
   error,
 }: {
+  view: "portfolio" | "novo" | "turmas";
   organizationSlug: string;
   incubatorSlug: string;
   programTypes: ProgramType[];
@@ -104,13 +107,33 @@ export function ProgramsWorkspace({
   const runningCohorts = cohorts.filter((cohort) =>
     ["enrollment_open", "active"].includes(cohort.status),
   ).length;
+  const pageCopy = {
+    portfolio: {
+      eyebrow: "Portfólio da incubadora",
+      title: "Programas",
+      description:
+        "Consulte o catálogo de programas e acompanhe suas execuções em um só panorama.",
+    },
+    novo: {
+      eyebrow: "Catálogo",
+      title: "Novo programa",
+      description:
+        "Estruture um novo modelo de desenvolvimento para reutilizar em diferentes turmas.",
+    },
+    turmas: {
+      eyebrow: "Execução",
+      title: "Turmas",
+      description:
+        "Crie ciclos, defina períodos de inscrição e organize a capacidade de atendimento.",
+    },
+  }[view];
 
   return (
     <div className="page-enter space-y-6">
       <PageHeader
-        eyebrow="Portfólio da incubadora"
-        title="Programas e turmas"
-        description="Defina modelos de desenvolvimento reutilizáveis e crie turmas para cada execução concreta, com datas, capacidade e startups próprias."
+        eyebrow={pageCopy.eyebrow}
+        title={pageCopy.title}
+        description={pageCopy.description}
         icon={Layers3}
       />
       <FeedbackBanner success={success} error={error} />
@@ -143,10 +166,12 @@ export function ProgramsWorkspace({
         })}
       </dl>
 
-      <section className="grid gap-5 xl:grid-cols-2">
+      <section
+        className={`${view === "novo" || view === "turmas" ? "grid" : "hidden"} gap-5 xl:grid-cols-2`}
+      >
         <details
-          className="surface-card group p-5"
-          open={programs.length === 0}
+          className={`${view === "novo" ? "block" : "hidden"} surface-card group p-5`}
+          open={view === "novo"}
         >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
             <div>
@@ -166,8 +191,8 @@ export function ProgramsWorkspace({
         </details>
 
         <details
-          className="surface-card group p-5"
-          open={cohorts.length === 0 && programs.length > 0}
+          className={`${view === "turmas" ? "block" : "hidden"} surface-card group p-5`}
+          open={view === "turmas"}
         >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
             <div>
@@ -290,7 +315,80 @@ export function ProgramsWorkspace({
         </details>
       </section>
 
-      <section aria-labelledby="program-portfolio" className="space-y-4">
+      <section className={view === "turmas" ? "space-y-4" : "hidden"}>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="eyebrow">Ciclos de execução</p>
+            <h2 className="operational-heading mt-1 text-2xl">
+              Turmas cadastradas
+            </h2>
+          </div>
+          <StatusBadge>{cohorts.length} turmas</StatusBadge>
+        </div>
+        {cohorts.length === 0 ? (
+          <EmptyState
+            icon={UsersRound}
+            title="Nenhuma turma cadastrada"
+            description="Crie a primeira turma para iniciar um novo ciclo de execução."
+          />
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {cohorts.map((cohort) => {
+              const program = programs.find(
+                (item) => item.id === cohort.program_id,
+              );
+              const startupCount = new Set(
+                enrollments
+                  .filter((item) => item.cohort_id === cohort.id)
+                  .map((item) => item.startup_id),
+              ).size;
+              return (
+                <article key={cohort.id} className="surface-card p-5 sm:p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="eyebrow">{program?.name ?? "Programa"}</p>
+                      <h3 className="operational-heading mt-1 text-xl">
+                        {cohort.name}
+                      </h3>
+                      <p className="mt-1 text-xs text-[var(--text-muted)]">
+                        {cohort.code}
+                      </p>
+                    </div>
+                    <StatusBadge>
+                      {statusLabels[cohort.status] ?? cohort.status}
+                    </StatusBadge>
+                  </div>
+                  <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-[var(--border)] pt-4 text-sm">
+                    <div>
+                      <dt className="text-xs text-[var(--text-muted)]">Início</dt>
+                      <dd className="mt-1 font-extrabold text-[var(--text-strong)]">
+                        {dateLabel(cohort.starts_on)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-[var(--text-muted)]">Startups</dt>
+                      <dd className="mt-1 font-extrabold text-[var(--text-strong)]">
+                        {startupCount}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-[var(--text-muted)]">Capacidade</dt>
+                      <dd className="mt-1 font-extrabold text-[var(--text-strong)]">
+                        {cohort.capacity ?? "—"}
+                      </dd>
+                    </div>
+                  </dl>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section
+        aria-labelledby="program-portfolio"
+        className={view === "portfolio" ? "space-y-4" : "hidden"}
+      >
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="eyebrow">Catálogo operacional</p>

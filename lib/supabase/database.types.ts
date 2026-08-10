@@ -2329,6 +2329,487 @@ export type Database = {
           },
         ];
       };
+      mentor_availability_slots: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          effective_from: string;
+          effective_until: string | null;
+          ends_at: string;
+          id: string;
+          incubator_id: string;
+          is_active: boolean;
+          mentor_profile_id: string;
+          organization_id: string;
+          starts_at: string;
+          timezone: string;
+          updated_at: string;
+          weekday: number;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          effective_from?: string;
+          effective_until?: string | null;
+          ends_at: string;
+          id?: string;
+          incubator_id: string;
+          is_active?: boolean;
+          mentor_profile_id: string;
+          organization_id: string;
+          starts_at: string;
+          timezone?: string;
+          updated_at?: string;
+          weekday: number;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          effective_from?: string;
+          effective_until?: string | null;
+          ends_at?: string;
+          id?: string;
+          incubator_id?: string;
+          is_active?: boolean;
+          mentor_profile_id?: string;
+          organization_id?: string;
+          starts_at?: string;
+          timezone?: string;
+          updated_at?: string;
+          weekday?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mentor_availability_incubator_same_org";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "mentor_availability_profile_same_org";
+            columns: ["organization_id", "mentor_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "mentor_profiles";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      mentoring_recommendations: {
+        Row: {
+          converted_action_id: string | null;
+          created_at: string;
+          created_by: string;
+          description: string;
+          due_on: string | null;
+          id: string;
+          organization_id: string;
+          owner_user_id: string | null;
+          priority: Database["public"]["Enums"]["mentoring_recommendation_priority"];
+          session_id: string;
+          status: Database["public"]["Enums"]["mentoring_recommendation_status"];
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          converted_action_id?: string | null;
+          created_at?: string;
+          created_by: string;
+          description: string;
+          due_on?: string | null;
+          id?: string;
+          organization_id: string;
+          owner_user_id?: string | null;
+          priority?: Database["public"]["Enums"]["mentoring_recommendation_priority"];
+          session_id: string;
+          status?: Database["public"]["Enums"]["mentoring_recommendation_status"];
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          converted_action_id?: string | null;
+          created_at?: string;
+          created_by?: string;
+          description?: string;
+          due_on?: string | null;
+          id?: string;
+          organization_id?: string;
+          owner_user_id?: string | null;
+          priority?: Database["public"]["Enums"]["mentoring_recommendation_priority"];
+          session_id?: string;
+          status?: Database["public"]["Enums"]["mentoring_recommendation_status"];
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mentoring_recommendations_session_same_org";
+            columns: ["organization_id", "session_id"];
+            isOneToOne: false;
+            referencedRelation: "mentoring_sessions";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      mentoring_feedback: {
+        Row: {
+          author_user_id: string;
+          created_at: string;
+          id: string;
+          improvements: string;
+          is_shared: boolean;
+          kind: Database["public"]["Enums"]["mentoring_feedback_kind"];
+          organization_id: string;
+          rating: number;
+          session_id: string;
+          strengths: string;
+          updated_at: string;
+        };
+        Insert: {
+          author_user_id: string;
+          created_at?: string;
+          id?: string;
+          improvements: string;
+          is_shared?: boolean;
+          kind: Database["public"]["Enums"]["mentoring_feedback_kind"];
+          organization_id: string;
+          rating: number;
+          session_id: string;
+          strengths: string;
+          updated_at?: string;
+        };
+        Update: {
+          author_user_id?: string;
+          created_at?: string;
+          id?: string;
+          improvements?: string;
+          is_shared?: boolean;
+          kind?: Database["public"]["Enums"]["mentoring_feedback_kind"];
+          organization_id?: string;
+          rating?: number;
+          session_id?: string;
+          strengths?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mentoring_feedback_session_same_org";
+            columns: ["organization_id", "session_id"];
+            isOneToOne: false;
+            referencedRelation: "mentoring_sessions";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      mentoring_session_notes: {
+        Row: {
+          author_user_id: string;
+          content: string;
+          created_at: string;
+          id: string;
+          organization_id: string;
+          session_id: string;
+          updated_at: string;
+          visibility: Database["public"]["Enums"]["mentoring_note_visibility"];
+        };
+        Insert: {
+          author_user_id: string;
+          content: string;
+          created_at?: string;
+          id?: string;
+          organization_id: string;
+          session_id: string;
+          updated_at?: string;
+          visibility?: Database["public"]["Enums"]["mentoring_note_visibility"];
+        };
+        Update: {
+          author_user_id?: string;
+          content?: string;
+          created_at?: string;
+          id?: string;
+          organization_id?: string;
+          session_id?: string;
+          updated_at?: string;
+          visibility?: Database["public"]["Enums"]["mentoring_note_visibility"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mentoring_notes_session_same_org";
+            columns: ["organization_id", "session_id"];
+            isOneToOne: false;
+            referencedRelation: "mentoring_sessions";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      mentoring_sessions: {
+        Row: {
+          assignment_id: string;
+          calendar_provider: string | null;
+          cancellation_reason: string | null;
+          cancelled_at: string | null;
+          completed_at: string | null;
+          created_at: string;
+          created_by: string;
+          diagnostic_assessment_id: string | null;
+          external_calendar_event_id: string | null;
+          id: string;
+          incubator_id: string;
+          location: string | null;
+          meeting_url: string | null;
+          mode: Database["public"]["Enums"]["mentoring_session_mode"];
+          objective: string;
+          organization_id: string;
+          requested_by: string;
+          scheduled_end_at: string | null;
+          scheduled_start_at: string | null;
+          status: Database["public"]["Enums"]["mentoring_session_status"];
+          timezone: string;
+          updated_at: string;
+        };
+        Insert: {
+          assignment_id: string;
+          calendar_provider?: string | null;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          created_by: string;
+          diagnostic_assessment_id?: string | null;
+          external_calendar_event_id?: string | null;
+          id?: string;
+          incubator_id: string;
+          location?: string | null;
+          meeting_url?: string | null;
+          mode?: Database["public"]["Enums"]["mentoring_session_mode"];
+          objective: string;
+          organization_id: string;
+          requested_by: string;
+          scheduled_end_at?: string | null;
+          scheduled_start_at?: string | null;
+          status?: Database["public"]["Enums"]["mentoring_session_status"];
+          timezone?: string;
+          updated_at?: string;
+        };
+        Update: {
+          assignment_id?: string;
+          calendar_provider?: string | null;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          created_by?: string;
+          diagnostic_assessment_id?: string | null;
+          external_calendar_event_id?: string | null;
+          id?: string;
+          incubator_id?: string;
+          location?: string | null;
+          meeting_url?: string | null;
+          mode?: Database["public"]["Enums"]["mentoring_session_mode"];
+          objective?: string;
+          organization_id?: string;
+          requested_by?: string;
+          scheduled_end_at?: string | null;
+          scheduled_start_at?: string | null;
+          status?: Database["public"]["Enums"]["mentoring_session_status"];
+          timezone?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mentoring_sessions_assignment_same_org";
+            columns: ["organization_id", "assignment_id"];
+            isOneToOne: false;
+            referencedRelation: "mentor_startup_assignments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "mentoring_sessions_diagnostic_same_org";
+            columns: ["organization_id", "diagnostic_assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "diagnostic_assessments";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "mentoring_sessions_incubator_same_org";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      mentor_profiles: {
+        Row: {
+          archived_at: string | null;
+          bio: string;
+          created_at: string;
+          created_by: string;
+          headline: string;
+          id: string;
+          incubator_id: string;
+          linkedin_url: string | null;
+          organization_id: string;
+          status: Database["public"]["Enums"]["mentor_profile_status"];
+          timezone: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          archived_at?: string | null;
+          bio: string;
+          created_at?: string;
+          created_by: string;
+          headline: string;
+          id?: string;
+          incubator_id: string;
+          linkedin_url?: string | null;
+          organization_id: string;
+          status?: Database["public"]["Enums"]["mentor_profile_status"];
+          timezone?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          archived_at?: string | null;
+          bio?: string;
+          created_at?: string;
+          created_by?: string;
+          headline?: string;
+          id?: string;
+          incubator_id?: string;
+          linkedin_url?: string | null;
+          organization_id?: string;
+          status?: Database["public"]["Enums"]["mentor_profile_status"];
+          timezone?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mentor_profiles_incubator_same_org";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "mentor_profiles_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      mentor_skills: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          id: string;
+          kind: Database["public"]["Enums"]["mentor_skill_kind"];
+          mentor_profile_id: string;
+          name: string;
+          organization_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          kind: Database["public"]["Enums"]["mentor_skill_kind"];
+          mentor_profile_id: string;
+          name: string;
+          organization_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          kind?: Database["public"]["Enums"]["mentor_skill_kind"];
+          mentor_profile_id?: string;
+          name?: string;
+          organization_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mentor_skills_profile_same_org";
+            columns: ["organization_id", "mentor_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "mentor_profiles";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      mentor_startup_assignments: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          ended_at: string | null;
+          ends_on: string | null;
+          focus: string | null;
+          id: string;
+          incubator_id: string;
+          mentor_profile_id: string;
+          organization_id: string;
+          starts_on: string;
+          startup_id: string;
+          status: Database["public"]["Enums"]["mentor_assignment_status"];
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          ended_at?: string | null;
+          ends_on?: string | null;
+          focus?: string | null;
+          id?: string;
+          incubator_id: string;
+          mentor_profile_id: string;
+          organization_id: string;
+          starts_on?: string;
+          startup_id: string;
+          status?: Database["public"]["Enums"]["mentor_assignment_status"];
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          ended_at?: string | null;
+          ends_on?: string | null;
+          focus?: string | null;
+          id?: string;
+          incubator_id?: string;
+          mentor_profile_id?: string;
+          organization_id?: string;
+          starts_on?: string;
+          startup_id?: string;
+          status?: Database["public"]["Enums"]["mentor_assignment_status"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mentor_assignments_incubator_same_org";
+            columns: ["organization_id", "incubator_id"];
+            isOneToOne: false;
+            referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "mentor_assignments_profile_same_org";
+            columns: ["organization_id", "mentor_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "mentor_profiles";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "mentor_assignments_startup_same_org";
+            columns: ["organization_id", "startup_id"];
+            isOneToOne: false;
+            referencedRelation: "startups";
+            referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
       organization_memberships: {
         Row: {
           created_at: string;
@@ -3388,6 +3869,169 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      add_selection_reviewer: {
+        Args: { reviewer_user_id: string; target_call_id: string };
+        Returns: string;
+      };
+      accept_selection_confidentiality: {
+        Args: { target_call_id: string };
+        Returns: undefined;
+      };
+      assign_selection_reviewer: {
+        Args: { target_application_id: string; target_reviewer_id: string };
+        Returns: string;
+      };
+      auto_assign_selection_reviewers: {
+        Args: { target_call_id: string };
+        Returns: number;
+      };
+      convert_selection_application: {
+        Args: { target_application_id: string };
+        Returns: string;
+      };
+      create_selection_call: {
+        Args: {
+          appeals_close_at: string | null;
+          appeals_open_at: string | null;
+          applications_close_at: string;
+          applications_open_at: string;
+          call_code: string;
+          call_slug: string;
+          call_summary: string;
+          call_title: string;
+          criteria: Json;
+          divergence_threshold: number | null;
+          evaluations_close_at: string | null;
+          evaluations_open_at: string | null;
+          questions: Json;
+          quota_rules: Json;
+          reviewers_per_application: number;
+          target_cohort_id: string;
+          target_incubator_id: string;
+          target_organization_id: string;
+          total_vacancies: number;
+          waitlist_size: number;
+        };
+        Returns: string;
+      };
+      create_selection_convocations: {
+        Args: { deadline_at: string; target_call_id: string };
+        Returns: number;
+      };
+      decide_selection_appeal: {
+        Args: {
+          decision_status:
+            | "submitted"
+            | "under_review"
+            | "granted"
+            | "partially_granted"
+            | "denied";
+          decision_text: string;
+          score_adjustment: number | null;
+          target_appeal_id: string;
+        };
+        Returns: undefined;
+      };
+      declare_selection_conflict: {
+        Args: {
+          justification: string;
+          reason_type: string;
+          target_assignment_id: string;
+        };
+        Returns: undefined;
+      };
+      generate_selection_ranking: {
+        Args: { target_call_id: string };
+        Returns: number;
+      };
+      get_public_selection_call: {
+        Args: { call_slug: string };
+        Returns: Json;
+      };
+      list_public_selection_calls: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      list_open_selection_call_slugs: {
+        Args: Record<PropertyKey, never>;
+        Returns: string[];
+      };
+      get_selection_workspace: {
+        Args: {
+          target_incubator_id: string;
+          target_organization_id: string;
+        };
+        Returns: Json;
+      };
+      publish_selection_call: {
+        Args: { target_call_id: string };
+        Returns: undefined;
+      };
+      publish_selection_result: {
+        Args: {
+          publication_content: string;
+          publication_phase: string;
+          publication_title: string;
+          target_call_id: string;
+        };
+        Returns: undefined;
+      };
+      register_selection_appeal: {
+        Args: { grounds: string; target_application_id: string };
+        Returns: string;
+      };
+      review_selection_eligibility: {
+        Args: {
+          eligible: boolean;
+          notes: string;
+          target_application_id: string;
+        };
+        Returns: undefined;
+      };
+      submit_selection_application: {
+        Args: {
+          answers: Json;
+          applicant_email: string;
+          applicant_name: string;
+          applicant_phone: string;
+          call_slug: string;
+          city: string;
+          legal_name: string;
+          sector: string;
+          stage: Database["public"]["Enums"]["startup_stage"];
+          startup_name: string;
+          state: string;
+          summary: string;
+          tax_id: string;
+        };
+        Returns: string;
+      };
+      submit_public_selection_appeal: {
+        Args: {
+          applicant_email: string;
+          application_protocol: string;
+          call_slug: string;
+          grounds: string;
+        };
+        Returns: string;
+      };
+      respond_selection_convocation: {
+        Args: {
+          accept: boolean;
+          applicant_email: string;
+          application_protocol: string;
+        };
+        Returns: string;
+      };
+      submit_selection_review: {
+        Args: {
+          general_justification: string;
+          private_notes: string;
+          scores: Json;
+          target_assignment_id: string;
+        };
+        Returns: string;
+      };
       accept_invitation: {
         Args: { raw_token: string };
         Returns: {
@@ -3399,6 +4043,14 @@ export type Database = {
       get_startup_registration_context: {
         Args: { incubator_slug: string; organization_slug: string };
         Returns: Json;
+      };
+      has_incubator_permission: {
+        Args: {
+          target_incubator_id: string;
+          target_organization_id: string;
+          target_permission_code: string;
+        };
+        Returns: boolean;
       };
       review_startup_application: {
         Args: {
@@ -3506,6 +4158,44 @@ export type Database = {
         };
         Returns: string;
       };
+      create_mentor_profile: {
+        Args: {
+          mentor_user_id: string;
+          profile_bio: string;
+          profile_headline: string;
+          profile_linkedin_url?: string | null;
+          profile_timezone?: string;
+          segment_names?: string[];
+          specialty_names?: string[];
+          target_incubator_id: string;
+          target_organization_id: string;
+        };
+        Returns: string;
+      };
+      create_mentoring_session: {
+        Args: {
+          scheduled_end_local?: string | null;
+          scheduled_start_local?: string | null;
+          session_location?: string | null;
+          session_meeting_url?: string | null;
+          session_mode: Database["public"]["Enums"]["mentoring_session_mode"];
+          session_objective: string;
+          session_timezone: string;
+          target_assignment_id: string;
+          target_diagnostic_assessment_id?: string | null;
+        };
+        Returns: string;
+      };
+      create_mentoring_feedback: {
+        Args: {
+          feedback_improvements: string;
+          feedback_rating: number;
+          feedback_strengths: string;
+          share_feedback?: boolean;
+          target_session_id: string;
+        };
+        Returns: string;
+      };
       create_organization: {
         Args: {
           organization_locale?: string;
@@ -3517,6 +4207,49 @@ export type Database = {
           id: string;
           slug: string;
         }[];
+      };
+      set_mentor_profile_status: {
+        Args: {
+          requested_status: Database["public"]["Enums"]["mentor_profile_status"];
+          target_profile_id: string;
+        };
+        Returns: undefined;
+      };
+      update_mentor_assignment_status: {
+        Args: {
+          requested_status: Database["public"]["Enums"]["mentor_assignment_status"];
+          target_assignment_id: string;
+        };
+        Returns: undefined;
+      };
+      update_mentor_profile: {
+        Args: {
+          profile_bio: string;
+          profile_headline: string;
+          profile_linkedin_url?: string | null;
+          profile_timezone: string;
+          segment_names?: string[];
+          specialty_names?: string[];
+          target_profile_id: string;
+        };
+        Returns: undefined;
+      };
+      update_mentoring_session_status: {
+        Args: {
+          reason?: string | null;
+          requested_status: Database["public"]["Enums"]["mentoring_session_status"];
+          target_session_id: string;
+        };
+        Returns: undefined;
+      };
+      reschedule_mentoring_session: {
+        Args: {
+          scheduled_end_local: string;
+          scheduled_start_local: string;
+          session_timezone: string;
+          target_session_id: string;
+        };
+        Returns: undefined;
       };
       delete_diagnostic_criterion: {
         Args: { target_criterion_id: string };
@@ -3755,6 +4488,17 @@ export type Database = {
         | "other";
       invitation_status: "pending" | "accepted" | "revoked" | "expired";
       membership_status: "invited" | "active" | "suspended" | "removed";
+      mentor_assignment_status: "active" | "paused" | "ended";
+      mentor_profile_status: "active" | "inactive";
+      mentor_skill_kind: "specialty" | "segment";
+      mentoring_note_visibility: "shared" | "restricted";
+      mentoring_feedback_kind: "mentor_to_startup" | "startup_to_mentor";
+      mentoring_recommendation_priority: "low" | "medium" | "high" | "critical";
+      mentoring_recommendation_status:
+        "proposed" | "accepted" | "dismissed" | "converted";
+      mentoring_session_mode: "remote" | "in_person" | "hybrid";
+      mentoring_session_status:
+        "requested" | "scheduled" | "completed" | "cancelled";
       organization_status: "active" | "inactive" | "suspended";
       program_member_role: "coordinator" | "staff" | "viewer";
       program_status:
@@ -4038,6 +4782,25 @@ export const Constants = {
       ],
       invitation_status: ["pending", "accepted", "revoked", "expired"],
       membership_status: ["invited", "active", "suspended", "removed"],
+      mentor_assignment_status: ["active", "paused", "ended"],
+      mentor_profile_status: ["active", "inactive"],
+      mentor_skill_kind: ["specialty", "segment"],
+      mentoring_note_visibility: ["shared", "restricted"],
+      mentoring_feedback_kind: ["mentor_to_startup", "startup_to_mentor"],
+      mentoring_recommendation_priority: ["low", "medium", "high", "critical"],
+      mentoring_recommendation_status: [
+        "proposed",
+        "accepted",
+        "dismissed",
+        "converted",
+      ],
+      mentoring_session_mode: ["remote", "in_person", "hybrid"],
+      mentoring_session_status: [
+        "requested",
+        "scheduled",
+        "completed",
+        "cancelled",
+      ],
       organization_status: ["active", "inactive", "suspended"],
       program_member_role: ["coordinator", "staff", "viewer"],
       program_status: [
