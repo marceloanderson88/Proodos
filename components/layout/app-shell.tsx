@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Menu,
   PanelLeftClose,
+  PanelLeftOpen,
   Rocket,
   Settings,
   ShieldCheck,
@@ -208,13 +209,29 @@ export function AppShell({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const pathSegments = pathname.split("/").filter(Boolean);
   const currentModule = pathSegments[4] ?? null;
   const activeView = searchParams.get("view");
+  const currentSection =
+    navigation.find(({ items }) =>
+      items.some(({ slug }) => slug === currentModule),
+    )?.group ?? null;
   const [navigationState, setNavigationState] = useState<{
     pathname: string;
+    expandedSection: string | null;
     expandedModule: string | null;
-  }>({ pathname, expandedModule: currentModule });
+  }>({
+    pathname,
+    expandedSection: currentSection === "Início" ? null : currentSection,
+    expandedModule: currentModule,
+  });
+  const expandedSection =
+    navigationState.pathname === pathname
+      ? navigationState.expandedSection
+      : currentSection === "Início"
+        ? null
+        : currentSection;
   const expandedModule =
     navigationState.pathname === pathname
       ? navigationState.expandedModule
@@ -228,7 +245,14 @@ export function AppShell({
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#fbf5ef] lg:grid lg:grid-cols-[17.5rem_1fr]">
+    <div
+      className={cn(
+        "min-h-screen bg-[#fbf5ef] transition-[grid-template-columns] duration-300 lg:grid",
+        sidebarCollapsed
+          ? "lg:grid-cols-[0_1fr]"
+          : "lg:grid-cols-[17.5rem_1fr]",
+      )}
+    >
       {menuOpen && (
         <button
           className="fixed inset-0 z-30 bg-[#260609]/55 backdrop-blur-sm lg:hidden"
@@ -239,8 +263,9 @@ export function AppShell({
       <aside
         id="navegacao-principal"
         className={cn(
-          "wine-panel fixed inset-y-0 left-0 z-40 flex w-[17.5rem] flex-col overflow-hidden text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
+          "wine-panel fixed inset-y-0 left-0 z-40 flex w-[17.5rem] flex-col overflow-hidden text-white shadow-2xl transition-[width,transform,box-shadow] duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
           menuOpen ? "translate-x-0" : "-translate-x-full",
+          sidebarCollapsed && "lg:w-0 lg:-translate-x-full lg:shadow-none",
         )}
       >
         <div className="flex items-center justify-between px-5 pt-6 pb-4">
@@ -270,158 +295,217 @@ export function AppShell({
           </button>
         </div>
         <nav
-          className="mt-2 flex-1 overflow-y-auto px-3 pb-4"
+          className="mt-1 min-h-0 flex-1 [scrollbar-width:none] overflow-y-auto px-3 pb-2 [&::-webkit-scrollbar]:hidden"
           aria-label="Módulos da plataforma"
         >
-          <div className="space-y-5">
-            {navigation.map(({ group, items }) => (
-              <section key={group}>
-                <p className="px-3.5 pb-2 text-[0.58rem] font-extrabold tracking-[0.14em] text-white/42 uppercase">
-                  {group}
-                </p>
-                <ul className="space-y-1">
-                  {items.map((item) => {
-                    const { label, slug, icon: Icon, children } = item;
-                    const href = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
-                    const active =
-                      pathname === href ||
-                      (slug !== "dashboard" && pathname.startsWith(`${href}/`));
-                    const expanded = expandedModule === slug;
+          <div className="space-y-1">
+            {navigation.map(({ group, items }) => {
+              const isHomeSection = group === "Início";
+              const sectionExpanded = expandedSection === group;
+              const sectionActive = items.some(({ slug }) => {
+                const itemHref = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
+                return (
+                  pathname === itemHref ||
+                  (slug !== "dashboard" && pathname.startsWith(`${itemHref}/`))
+                );
+              });
+              const sectionId = `nav-section-${group
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")}`;
 
-                    return (
-                      <li key={slug}>
-                        {children?.length ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setNavigationState({
-                                  pathname,
-                                  expandedModule:
-                                    expandedModule === slug ? null : slug,
-                                })
-                              }
-                              aria-expanded={expanded}
-                              aria-controls={`submenu-${slug}`}
-                              className={cn(
-                                "group flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-sm font-bold text-white/78 transition",
-                                active
-                                  ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
-                                  : "hover:bg-white/8 hover:text-white",
-                              )}
-                            >
-                              <Icon
-                                className={cn(
-                                  "size-[1.15rem] shrink-0",
-                                  active
-                                    ? "text-[#f4c47a]"
-                                    : "text-white/68 group-hover:text-white",
-                                )}
-                                strokeWidth={1.8}
-                                aria-hidden="true"
-                              />
-                              <span className="min-w-0 flex-1">{label}</span>
-                              <ChevronDown
-                                className={cn(
-                                  "size-4 shrink-0 text-white/50 transition-transform duration-200",
-                                  expanded && "rotate-180 text-[#f4c47a]",
-                                )}
-                                aria-hidden="true"
-                              />
-                            </button>
-                            <div
-                              id={`submenu-${slug}`}
-                              hidden={!expanded}
-                              className="ml-[1.35rem] border-l border-white/12 py-1 pl-3"
-                            >
-                              <ul className="space-y-0.5">
-                                {children.map((child) => {
-                                  const childParams =
-                                    slug === "indicadores" &&
-                                    currentModule === slug
-                                      ? new URLSearchParams(
-                                          searchParams.toString(),
-                                        )
-                                      : new URLSearchParams();
-                                  if (child.view)
-                                    childParams.set("view", child.view);
-                                  else childParams.delete("view");
-                                  const query = childParams.toString();
-                                  const childHref = query
-                                    ? `${href}?${query}`
-                                    : href;
-                                  const childActive =
-                                    pathname === href &&
-                                    (child.view
-                                      ? activeView === child.view
-                                      : !activeView);
-
-                                  return (
-                                    <li key={`${slug}-${child.label}`}>
-                                      <Link
-                                        href={childHref}
-                                        onClick={() => setMenuOpen(false)}
-                                        aria-current={
-                                          childActive ? "page" : undefined
-                                        }
-                                        className={cn(
-                                          "group/sub flex min-h-9 items-center gap-2 rounded-lg px-3 py-2 text-xs leading-4 font-semibold text-white/62 transition",
-                                          childActive
-                                            ? "bg-[#f4c47a]/14 text-[#ffe2ad]"
-                                            : "hover:bg-white/7 hover:text-white",
-                                        )}
-                                      >
-                                        <span
-                                          className={cn(
-                                            "size-1.5 shrink-0 rounded-full bg-white/24 transition",
-                                            childActive
-                                              ? "bg-[#f4c47a] shadow-[0_0_0_3px_rgba(244,196,122,0.12)]"
-                                              : "group-hover/sub:bg-white/55",
-                                          )}
-                                          aria-hidden="true"
-                                        />
-                                        <span>{child.label}</span>
-                                      </Link>
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            </div>
-                          </>
-                        ) : (
-                          <Link
-                            href={href}
-                            onClick={() => setMenuOpen(false)}
-                            aria-current={active ? "page" : undefined}
-                            className={cn(
-                              "group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-bold text-white/78 transition",
-                              active
-                                ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
-                                : "hover:bg-white/8 hover:text-white",
-                            )}
-                          >
-                            <Icon
-                              className={cn(
-                                "size-[1.15rem]",
-                                active
-                                  ? "text-[#f4c47a]"
-                                  : "text-white/68 group-hover:text-white",
-                              )}
-                              strokeWidth={1.8}
-                              aria-hidden="true"
-                            />
-                            <span>{label}</span>
-                          </Link>
+              return (
+                <section key={group}>
+                  {isHomeSection ? (
+                    <p className="px-3.5 pt-1 pb-1.5 text-[0.56rem] font-extrabold tracking-[0.14em] text-white/42 uppercase">
+                      {group}
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNavigationState({
+                          pathname,
+                          expandedSection: sectionExpanded ? null : group,
+                          expandedModule:
+                            !sectionExpanded && sectionActive
+                              ? currentModule
+                              : null,
+                        })
+                      }
+                      aria-expanded={sectionExpanded}
+                      aria-controls={sectionId}
+                      className={cn(
+                        "group/section flex w-full items-center gap-2 rounded-lg px-3.5 py-2 text-left text-[0.6rem] font-extrabold tracking-[0.13em] uppercase transition",
+                        sectionActive
+                          ? "text-[#f4c47a]"
+                          : "text-white/45 hover:bg-white/7 hover:text-white/75",
+                      )}
+                    >
+                      <span className="min-w-0 flex-1">{group}</span>
+                      <ChevronDown
+                        className={cn(
+                          "size-3.5 shrink-0 transition-transform duration-200",
+                          sectionExpanded && "rotate-180",
                         )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            ))}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  )}
+                  <div
+                    id={isHomeSection ? undefined : sectionId}
+                    hidden={!isHomeSection && !sectionExpanded}
+                  >
+                    <ul className="space-y-0.5">
+                      {items.map((item) => {
+                        const { label, slug, icon: Icon, children } = item;
+                        const href = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
+                        const active =
+                          pathname === href ||
+                          (slug !== "dashboard" &&
+                            pathname.startsWith(`${href}/`));
+                        const expanded = expandedModule === slug;
+
+                        return (
+                          <li key={slug}>
+                            {children?.length ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setNavigationState({
+                                      pathname,
+                                      expandedSection: group,
+                                      expandedModule:
+                                        expandedModule === slug ? null : slug,
+                                    })
+                                  }
+                                  aria-expanded={expanded}
+                                  aria-controls={`submenu-${slug}`}
+                                  className={cn(
+                                    "group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-bold text-white/78 transition",
+                                    active
+                                      ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
+                                      : "hover:bg-white/8 hover:text-white",
+                                  )}
+                                >
+                                  <Icon
+                                    className={cn(
+                                      "size-[1.15rem] shrink-0",
+                                      active
+                                        ? "text-[#f4c47a]"
+                                        : "text-white/68 group-hover:text-white",
+                                    )}
+                                    strokeWidth={1.8}
+                                    aria-hidden="true"
+                                  />
+                                  <span className="min-w-0 flex-1">
+                                    {label}
+                                  </span>
+                                  <ChevronDown
+                                    className={cn(
+                                      "size-4 shrink-0 text-white/50 transition-transform duration-200",
+                                      expanded && "rotate-180 text-[#f4c47a]",
+                                    )}
+                                    aria-hidden="true"
+                                  />
+                                </button>
+                                <div
+                                  id={`submenu-${slug}`}
+                                  hidden={!expanded}
+                                  className="ml-[1.35rem] border-l border-white/12 py-0.5 pl-3"
+                                >
+                                  <ul className="space-y-0.5">
+                                    {children.map((child) => {
+                                      const childParams =
+                                        slug === "indicadores" &&
+                                        currentModule === slug
+                                          ? new URLSearchParams(
+                                              searchParams.toString(),
+                                            )
+                                          : new URLSearchParams();
+                                      if (child.view)
+                                        childParams.set("view", child.view);
+                                      else childParams.delete("view");
+                                      const query = childParams.toString();
+                                      const childHref = query
+                                        ? `${href}?${query}`
+                                        : href;
+                                      const childActive =
+                                        pathname === href &&
+                                        (child.view
+                                          ? activeView === child.view
+                                          : !activeView);
+
+                                      return (
+                                        <li key={`${slug}-${child.label}`}>
+                                          <Link
+                                            href={childHref}
+                                            onClick={() => setMenuOpen(false)}
+                                            aria-current={
+                                              childActive ? "page" : undefined
+                                            }
+                                            className={cn(
+                                              "group/sub flex min-h-8 items-center gap-2 rounded-lg px-3 py-1.5 text-xs leading-4 font-semibold text-white/62 transition",
+                                              childActive
+                                                ? "bg-[#f4c47a]/14 text-[#ffe2ad]"
+                                                : "hover:bg-white/7 hover:text-white",
+                                            )}
+                                          >
+                                            <span
+                                              className={cn(
+                                                "size-1.5 shrink-0 rounded-full bg-white/24 transition",
+                                                childActive
+                                                  ? "bg-[#f4c47a] shadow-[0_0_0_3px_rgba(244,196,122,0.12)]"
+                                                  : "group-hover/sub:bg-white/55",
+                                              )}
+                                              aria-hidden="true"
+                                            />
+                                            <span>{child.label}</span>
+                                          </Link>
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              </>
+                            ) : (
+                              <Link
+                                href={href}
+                                onClick={() => setMenuOpen(false)}
+                                aria-current={active ? "page" : undefined}
+                                className={cn(
+                                  "group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold text-white/78 transition",
+                                  active
+                                    ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
+                                    : "hover:bg-white/8 hover:text-white",
+                                )}
+                              >
+                                <Icon
+                                  className={cn(
+                                    "size-[1.15rem]",
+                                    active
+                                      ? "text-[#f4c47a]"
+                                      : "text-white/68 group-hover:text-white",
+                                  )}
+                                  strokeWidth={1.8}
+                                  aria-hidden="true"
+                                />
+                                <span>{label}</span>
+                              </Link>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </section>
+              );
+            })}
           </div>
         </nav>
-        <div className="relative border-t border-white/10 p-4">
+        <div className="relative border-t border-white/10 p-3">
           <div
             className="absolute inset-x-0 bottom-0 h-28 opacity-20"
             aria-hidden="true"
@@ -459,10 +543,29 @@ export function AppShell({
             >
               <Menu className="size-5" />
             </button>
-            <PanelLeftClose
-              className="hidden size-5 text-[#9b8e88] lg:block"
-              aria-hidden="true"
-            />
+            <button
+              type="button"
+              className="hidden size-9 shrink-0 place-items-center rounded-lg border border-[#751118]/10 bg-white text-[#751118] shadow-sm transition hover:border-[#751118]/20 hover:bg-[#fff8f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a71922] lg:grid"
+              aria-controls="navegacao-principal"
+              aria-expanded={!sidebarCollapsed}
+              aria-label={
+                sidebarCollapsed
+                  ? "Mostrar menu lateral"
+                  : "Esconder menu lateral"
+              }
+              title={
+                sidebarCollapsed
+                  ? "Mostrar menu lateral"
+                  : "Esconder menu lateral"
+              }
+              onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+            >
+              {sidebarCollapsed ? (
+                <PanelLeftOpen className="size-4.5" aria-hidden="true" />
+              ) : (
+                <PanelLeftClose className="size-4.5" aria-hidden="true" />
+              )}
+            </button>
             <div className="ml-auto hidden min-w-0 sm:block">
               <p className="truncate text-xs font-extrabold text-[var(--wine-900)]">
                 {currentIncubator.name}

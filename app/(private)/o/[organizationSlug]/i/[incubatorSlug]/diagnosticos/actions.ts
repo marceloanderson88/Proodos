@@ -995,7 +995,7 @@ export async function inviteDiagnosticRespondentAction(
       invitedName: parsed.data.invitedName,
       email: parsed.data.email,
       roleId: parsed.data.roleId,
-      expiresInDays: 7,
+      validity: "one_month",
     });
     invitationId = invitation.invitationId;
   } catch (error) {
@@ -1120,7 +1120,7 @@ export async function manageDiagnosticRespondentInvitationAction(
           "Pessoa convidada",
         email: invitation.data.email,
         roleId: invitation.data.role_id,
-        expiresInDays: 7,
+        validity: "one_month",
       });
       const replacementMapping = await context.supabase
         .from("diagnostic_respondent_invitations")

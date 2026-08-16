@@ -48,11 +48,11 @@ describe("incubator schemas", () => {
       invitedName: "Pessoa Gestora",
       email: "GESTORA@EXAMPLE.COM",
       roleId: "20000000-0000-4000-8000-000000000001",
-      expiresInDays: "7",
+      validity: "no_expiry",
     });
 
     expect(parsed.email).toBe("gestora@example.com");
-    expect(parsed.expiresInDays).toBe(7);
+    expect(parsed.validity).toBe("no_expiry");
   });
 
   it("aceita somente ações de ciclo de vida previstas", () => {

@@ -3,6 +3,10 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 
 import type { getIncubatorServerContext } from "@/lib/incubators/server-context";
+import {
+  invitationExpirationAt,
+  type InvitationValidity,
+} from "@/lib/invitations/validity";
 import { createSupabaseAdminClient, getAppBaseUrl } from "@/lib/supabase/admin";
 
 type IncubatorContext = Awaited<ReturnType<typeof getIncubatorServerContext>>;
@@ -11,7 +15,7 @@ export type IncubatorInvitationInput = {
   invitedName: string;
   email: string;
   roleId: string;
-  expiresInDays: number;
+  validity: InvitationValidity;
 };
 
 export async function sendIncubatorInvitation(
@@ -22,9 +26,7 @@ export async function sendIncubatorInvitation(
   const baseUrl = getAppBaseUrl();
   const rawToken = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(rawToken).digest("hex");
-  const expiresAt = new Date(
-    Date.now() + input.expiresInDays * 24 * 60 * 60 * 1000,
-  ).toISOString();
+  const expiresAt = invitationExpirationAt(input.validity);
 
   const inserted = await context.supabase
     .from("invitations")

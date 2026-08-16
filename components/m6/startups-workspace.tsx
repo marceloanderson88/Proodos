@@ -71,7 +71,7 @@ type StartupInvitation = {
   email: string;
   invited_name: string | null;
   status: string;
-  expires_at: string;
+  expires_at: string | null;
   startupName: string;
 };
 
