@@ -11,6 +11,7 @@ import {
   type StartupSelfRegistrationInput,
 } from "@/lib/m6/schemas";
 import { createSupabaseAdminClient, getAppBaseUrl } from "@/lib/supabase/admin";
+import { invitationExpirationAt } from "@/lib/invitations/validity";
 import type { Database } from "@/lib/supabase/database.types";
 
 type IncubatorContext = Awaited<ReturnType<typeof getIncubatorServerContext>>;
@@ -173,7 +174,7 @@ export async function sendStartupOnboardingInvitation(
 
   const rawToken = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(rawToken).digest("hex");
-  const expiresAt = new Date(Date.now() + 7 * 86_400_000).toISOString();
+  const expiresAt = invitationExpirationAt("one_month");
   const inserted = await context.supabase
     .from("invitations")
     .insert({

@@ -224,7 +224,7 @@ export async function inviteIncubatorPersonAction(
     invitedName: value(formData, "invitedName"),
     email: value(formData, "email"),
     roleId: value(formData, "roleId"),
-    expiresInDays: value(formData, "expiresInDays") || "7",
+    validity: value(formData, "validity") || "one_month",
   });
   if (!parsed.success)
     redirect(
@@ -325,7 +325,7 @@ export async function manageInvitationAction(
           invitation.data.email,
         email: invitation.data.email,
         roleId: invitation.data.role_id,
-        expiresInDays: 7,
+        validity: "one_month",
       });
     } catch {
       redirect(

@@ -119,7 +119,7 @@ export function DiagnosticAssessmentWorkspace({
     email: string;
     invited_name: string | null;
     status: string;
-    expires_at: string;
+    expires_at: string | null;
     respondentRole: "primary" | "collaborator" | "viewer";
   }[];
   notes: {
@@ -964,10 +964,9 @@ export function DiagnosticAssessmentWorkspace({
                               : "colaborador"}
                         </p>
                         <p className="mt-1 text-[0.62rem] font-bold text-[#9a6b61]">
-                          Pendente até{" "}
-                          {new Date(invitation.expires_at).toLocaleDateString(
-                            "pt-BR",
-                          )}
+                          {invitation.expires_at
+                            ? `Pendente até ${new Date(invitation.expires_at).toLocaleDateString("pt-BR")}`
+                            : "Pendente sem prazo"}
                         </p>
                         <div className="mt-2 flex gap-2">
                           <form action={manageRespondentInvitation}>

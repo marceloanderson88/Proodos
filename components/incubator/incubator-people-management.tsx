@@ -25,6 +25,7 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { controlClassName, FormField } from "@/components/ui/form-field";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { INVITATION_VALIDITY_OPTIONS } from "@/lib/invitations/validity";
 
 type Person = {
   membershipId: string;
@@ -40,7 +41,7 @@ type Invitation = {
   email: string;
   role_id: string;
   status: string;
-  expires_at: string;
+  expires_at: string | null;
   created_at: string;
 };
 type SettingsObject = Record<string, unknown>;
@@ -468,13 +469,14 @@ export function IncubatorPeopleManagement({
               <select
                 id="invite-expiry"
                 className={controlClassName}
-                name="expiresInDays"
-                defaultValue="7"
+                name="validity"
+                defaultValue="one_month"
               >
-                <option value="3">3 dias</option>
-                <option value="7">7 dias</option>
-                <option value="14">14 dias</option>
-                <option value="30">30 dias</option>
+                {INVITATION_VALIDITY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </FormField>
             <Button type="submit">
@@ -648,10 +650,10 @@ export function IncubatorPeopleManagement({
                             {invitation.email}
                           </p>
                           <p className="mt-2 text-[0.68rem] font-bold text-[var(--wine-700)]">
-                            {role?.name ?? "Papel indisponível"} · expira em{" "}
-                            {new Intl.DateTimeFormat("pt-BR").format(
-                              new Date(invitation.expires_at),
-                            )}
+                            {role?.name ?? "Papel indisponível"} ·{" "}
+                            {invitation.expires_at
+                              ? `expira em ${new Intl.DateTimeFormat("pt-BR").format(new Date(invitation.expires_at))}`
+                              : "sem prazo"}
                           </p>
                         </div>
                         <div className="flex gap-2">

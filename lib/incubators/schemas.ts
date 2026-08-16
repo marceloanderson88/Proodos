@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { INVITATION_VALIDITIES } from "@/lib/invitations/validity";
+
 const normalizedName = z
   .string()
   .trim()
@@ -99,7 +101,7 @@ export const inviteIncubatorPersonSchema = z.object({
   invitedName: normalizedName,
   email: z.email().trim().toLowerCase(),
   roleId: z.uuid(),
-  expiresInDays: z.coerce.number().int().min(1).max(30).default(7),
+  validity: z.enum(INVITATION_VALIDITIES).default("one_month"),
 });
 
 export const invitationLifecycleSchema = z.object({

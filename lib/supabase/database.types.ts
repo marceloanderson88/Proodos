@@ -2243,7 +2243,7 @@ export type Database = {
           accepted_by: string | null;
           created_at: string;
           email: string;
-          expires_at: string;
+          expires_at: string | null;
           id: string;
           incubator_id: string | null;
           invited_by: string;
@@ -2263,7 +2263,7 @@ export type Database = {
           accepted_by?: string | null;
           created_at?: string;
           email: string;
-          expires_at: string;
+          expires_at: string | null;
           id?: string;
           incubator_id?: string | null;
           invited_by: string;
@@ -2283,7 +2283,7 @@ export type Database = {
           accepted_by?: string | null;
           created_at?: string;
           email?: string;
-          expires_at?: string;
+          expires_at?: string | null;
           id?: string;
           incubator_id?: string | null;
           invited_by?: string;

@@ -37,7 +37,7 @@ select
   'm3-invited@example.invalid',
   encode(extensions.digest('token-sintetico-seguro-com-mais-de-32-caracteres', 'sha256'), 'hex'),
   r.id,
-  now() + interval '2 days',
+  null,
   (select auth.uid())
 from public.organizations o
 join public.roles r on r.organization_id = o.id and r.code = 'organization_admin'
@@ -72,7 +72,7 @@ begin
   if audit_count < 1 then raise exception 'Aceite do convite não foi auditado'; end if;
 end $$;
 
-select pass('Bootstrap privilegiado e aceite de convite permanecem seguros e idempotentes');
+select pass('Bootstrap privilegiado e convite sem prazo permanecem seguros e idempotentes');
 select * from finish();
 
 rollback;
