@@ -43,15 +43,16 @@ type NavigationModule = {
 type NavigationSection = {
   group: string;
   items: readonly NavigationModule[];
+  exposeChildren?: boolean;
 };
 
 const navigation: readonly NavigationSection[] = [
   {
     group: "Início",
-    items: [{ label: "Dashboard", slug: "dashboard", icon: LayoutDashboard }],
+    items: [{ label: "Visão geral", slug: "dashboard", icon: LayoutDashboard }],
   },
   {
-    group: "Portfólio",
+    group: "Seleção e Portfólio",
     items: [
       {
         label: "Programas e turmas",
@@ -91,7 +92,7 @@ const navigation: readonly NavigationSection[] = [
     ],
   },
   {
-    group: "Desenvolvimento",
+    group: "Desenvolvimento das Startups",
     items: [
       {
         label: "Diagnósticos",
@@ -122,7 +123,7 @@ const navigation: readonly NavigationSection[] = [
     ],
   },
   {
-    group: "Resultados",
+    group: "Resultados e Impacto",
     items: [
       {
         label: "Relatórios e indicadores",
@@ -138,7 +139,8 @@ const navigation: readonly NavigationSection[] = [
     ],
   },
   {
-    group: "Qualidade e CERNE",
+    group: "Gestão CERNE",
+    exposeChildren: true,
     items: [
       {
         label: "CERNE",
@@ -157,7 +159,7 @@ const navigation: readonly NavigationSection[] = [
     ],
   },
   {
-    group: "Administração",
+    group: "Configurações",
     items: [
       {
         label: "Incubadora",
@@ -244,6 +246,52 @@ export function AppShell({
     .join("")
     .toUpperCase();
 
+  const renderNavigationChildren = (
+    children: readonly NavigationChild[],
+    slug: string,
+    href: string,
+  ) =>
+    children.map((child) => {
+      const childParams =
+        slug === "indicadores" && currentModule === slug
+          ? new URLSearchParams(searchParams.toString())
+          : new URLSearchParams();
+      if (child.view) childParams.set("view", child.view);
+      else childParams.delete("view");
+      const query = childParams.toString();
+      const childHref = query ? `${href}?${query}` : href;
+      const childActive =
+        pathname === href &&
+        (child.view ? activeView === child.view : !activeView);
+
+      return (
+        <li key={`${slug}-${child.label}`}>
+          <Link
+            href={childHref}
+            onClick={() => setMenuOpen(false)}
+            aria-current={childActive ? "page" : undefined}
+            className={cn(
+              "group/sub flex min-h-8 items-center gap-2 rounded-lg px-3 py-1.5 text-xs leading-4 font-semibold text-white/62 transition",
+              childActive
+                ? "bg-[#f4c47a]/14 text-[#ffe2ad]"
+                : "hover:bg-white/7 hover:text-white",
+            )}
+          >
+            <span
+              className={cn(
+                "size-1.5 shrink-0 rounded-full bg-white/24 transition",
+                childActive
+                  ? "bg-[#f4c47a] shadow-[0_0_0_3px_rgba(244,196,122,0.12)]"
+                  : "group-hover/sub:bg-white/55",
+              )}
+              aria-hidden="true"
+            />
+            <span>{child.label}</span>
+          </Link>
+        </li>
+      );
+    });
+
   return (
     <div
       className={cn(
@@ -299,7 +347,7 @@ export function AppShell({
           aria-label="Módulos da plataforma"
         >
           <div className="space-y-1">
-            {navigation.map(({ group, items }) => {
+            {navigation.map(({ group, items, exposeChildren }) => {
               const isHomeSection = group === "Início";
               const sectionExpanded = expandedSection === group;
               const sectionActive = items.some(({ slug }) => {
@@ -370,106 +418,73 @@ export function AppShell({
                         return (
                           <li key={slug}>
                             {children?.length ? (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setNavigationState({
-                                      pathname,
-                                      expandedSection: group,
-                                      expandedModule:
-                                        expandedModule === slug ? null : slug,
-                                    })
-                                  }
-                                  aria-expanded={expanded}
-                                  aria-controls={`submenu-${slug}`}
-                                  className={cn(
-                                    "group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-bold text-white/78 transition",
-                                    active
-                                      ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
-                                      : "hover:bg-white/8 hover:text-white",
-                                  )}
-                                >
-                                  <Icon
-                                    className={cn(
-                                      "size-[1.15rem] shrink-0",
-                                      active
-                                        ? "text-[#f4c47a]"
-                                        : "text-white/68 group-hover:text-white",
-                                    )}
-                                    strokeWidth={1.8}
-                                    aria-hidden="true"
-                                  />
-                                  <span className="min-w-0 flex-1">
-                                    {label}
-                                  </span>
-                                  <ChevronDown
-                                    className={cn(
-                                      "size-4 shrink-0 text-white/50 transition-transform duration-200",
-                                      expanded && "rotate-180 text-[#f4c47a]",
-                                    )}
-                                    aria-hidden="true"
-                                  />
-                                </button>
-                                <div
-                                  id={`submenu-${slug}`}
-                                  hidden={!expanded}
-                                  className="ml-[1.35rem] border-l border-white/12 py-0.5 pl-3"
-                                >
+                              exposeChildren ? (
+                                <div className="mx-2 border-l border-[#f4c47a]/25 py-1 pl-3">
                                   <ul className="space-y-0.5">
-                                    {children.map((child) => {
-                                      const childParams =
-                                        slug === "indicadores" &&
-                                        currentModule === slug
-                                          ? new URLSearchParams(
-                                              searchParams.toString(),
-                                            )
-                                          : new URLSearchParams();
-                                      if (child.view)
-                                        childParams.set("view", child.view);
-                                      else childParams.delete("view");
-                                      const query = childParams.toString();
-                                      const childHref = query
-                                        ? `${href}?${query}`
-                                        : href;
-                                      const childActive =
-                                        pathname === href &&
-                                        (child.view
-                                          ? activeView === child.view
-                                          : !activeView);
-
-                                      return (
-                                        <li key={`${slug}-${child.label}`}>
-                                          <Link
-                                            href={childHref}
-                                            onClick={() => setMenuOpen(false)}
-                                            aria-current={
-                                              childActive ? "page" : undefined
-                                            }
-                                            className={cn(
-                                              "group/sub flex min-h-8 items-center gap-2 rounded-lg px-3 py-1.5 text-xs leading-4 font-semibold text-white/62 transition",
-                                              childActive
-                                                ? "bg-[#f4c47a]/14 text-[#ffe2ad]"
-                                                : "hover:bg-white/7 hover:text-white",
-                                            )}
-                                          >
-                                            <span
-                                              className={cn(
-                                                "size-1.5 shrink-0 rounded-full bg-white/24 transition",
-                                                childActive
-                                                  ? "bg-[#f4c47a] shadow-[0_0_0_3px_rgba(244,196,122,0.12)]"
-                                                  : "group-hover/sub:bg-white/55",
-                                              )}
-                                              aria-hidden="true"
-                                            />
-                                            <span>{child.label}</span>
-                                          </Link>
-                                        </li>
-                                      );
-                                    })}
+                                    {renderNavigationChildren(
+                                      children,
+                                      slug,
+                                      href,
+                                    )}
                                   </ul>
                                 </div>
-                              </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setNavigationState({
+                                        pathname,
+                                        expandedSection: group,
+                                        expandedModule:
+                                          expandedModule === slug ? null : slug,
+                                      })
+                                    }
+                                    aria-expanded={expanded}
+                                    aria-controls={`submenu-${slug}`}
+                                    className={cn(
+                                      "group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-bold text-white/78 transition",
+                                      active
+                                        ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
+                                        : "hover:bg-white/8 hover:text-white",
+                                    )}
+                                  >
+                                    <Icon
+                                      className={cn(
+                                        "size-[1.15rem] shrink-0",
+                                        active
+                                          ? "text-[#f4c47a]"
+                                          : "text-white/68 group-hover:text-white",
+                                      )}
+                                      strokeWidth={1.8}
+                                      aria-hidden="true"
+                                    />
+                                    <span className="min-w-0 flex-1">
+                                      {label}
+                                    </span>
+                                    <ChevronDown
+                                      className={cn(
+                                        "size-4 shrink-0 text-white/50 transition-transform duration-200",
+                                        expanded && "rotate-180 text-[#f4c47a]",
+                                      )}
+                                      aria-hidden="true"
+                                    />
+                                  </button>
+                                  <div
+                                    id={`submenu-${slug}`}
+                                    hidden={!expanded}
+                                    className="ml-[1.35rem] border-l border-white/12 py-0.5 pl-3"
+                                  >
+                                    <ul className="space-y-0.5">
+                                      {renderNavigationChildren(
+                                        children,
+                                        slug,
+                                        href,
+                                      )}
+                                    </ul>
+                                  </div>
+                                </>
+                              )
                             ) : (
                               <Link
                                 href={href}

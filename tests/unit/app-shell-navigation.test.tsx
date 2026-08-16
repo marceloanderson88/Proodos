@@ -47,9 +47,11 @@ describe("AppShell navigation", () => {
     const user = userEvent.setup();
     render(<AppShell {...props}>Conteúdo</AppShell>);
 
-    const portfolio = screen.getByRole("button", { name: "Portfólio" });
+    const portfolio = screen.getByRole("button", {
+      name: "Seleção e Portfólio",
+    });
     const development = screen.getByRole("button", {
-      name: "Desenvolvimento",
+      name: "Desenvolvimento das Startups",
     });
 
     expect(portfolio).toHaveAttribute("aria-expanded", "false");
@@ -63,6 +65,24 @@ describe("AppShell navigation", () => {
     expect(portfolio).toHaveAttribute("aria-expanded", "false");
     expect(development).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("button", { name: "Diagnósticos" })).toBeVisible();
+  });
+
+  it("abre as opções do CERNE diretamente no grupo", async () => {
+    const user = userEvent.setup();
+    render(<AppShell {...props}>Conteúdo</AppShell>);
+
+    const cerne = screen.getByRole("button", { name: "Gestão CERNE" });
+    expect(cerne).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(cerne);
+
+    expect(cerne).toHaveAttribute("aria-expanded", "true");
+    expect(
+      screen.getByRole("link", { name: "Matriz de práticas" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "CERNE" }),
+    ).not.toBeInTheDocument();
   });
 
   it("recolhe e reabre o menu lateral no desktop", async () => {
