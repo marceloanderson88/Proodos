@@ -1,4 +1,4 @@
--- Permite que convites administrativos não tenham prazo final, preservando
+-- Permite que convites administrativos tenham validade opcional, preservando
 -- a validação temporal dos convites que possuem data de expiração.
 
 begin;
