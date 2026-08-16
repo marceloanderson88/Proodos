@@ -27,6 +27,7 @@ O build bloqueia Preview quando:
 - `SUPABASE_SECRET_KEY` (secret key moderna, somente no servidor, para envio de convites)
 - `NEXT_PUBLIC_APP_ENV=production`
 - `APP_BASE_URL=https://proodos.vercel.app`
+- `EMAIL_PROVIDER_API_KEY` e `EMAIL_FROM` (Resend; necessários para avisos de atribuição e convites de mentoria)
 - `GOOGLE_DRIVE_UPLOAD_ENABLED=false` até B-03/B-04.
 
 ### Preview

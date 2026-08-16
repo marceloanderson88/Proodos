@@ -2,6 +2,7 @@
 
 import {
   CalendarDays,
+  CalendarRange,
   ClipboardList,
   FileCheck2,
   FolderTree,
@@ -66,6 +67,8 @@ const moduleNavigation: Record<string, NavigationItem[]> = {
   mentorias: [
     { label: "Visão geral", icon: LayoutGrid },
     { label: "Mentores", view: "mentores", icon: UserRoundCheck },
+    { label: "Equipe por turma", view: "equipe", icon: UsersRound },
+    { label: "Rodadas", view: "rodadas", icon: CalendarRange },
     { label: "Vínculos", view: "vinculos", icon: Network },
     { label: "Agenda", view: "agenda", icon: CalendarDays },
   ],
@@ -83,6 +86,7 @@ const moduleNavigation: Record<string, NavigationItem[]> = {
   cerne: [
     { label: "Visão geral", icon: LayoutGrid },
     { label: "Matriz de práticas", view: "matrix", icon: ShieldCheck },
+    { label: "Plano de evidências", view: "plan", icon: ClipboardList },
     { label: "Evidências", view: "evidences", icon: FileCheck2 },
     { label: "Alertas", view: "alerts", icon: ShieldAlert },
     { label: "Pastas do Drive", view: "drive", icon: FolderTree },

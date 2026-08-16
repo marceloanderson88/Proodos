@@ -1,7 +1,7 @@
 import type { Json } from "@/lib/supabase/database.types";
 
 export type CerneView =
-  "overview" | "matrix" | "evidences" | "alerts" | "drive" | "review";
+  "overview" | "matrix" | "plan" | "evidences" | "alerts" | "drive" | "review";
 
 export type CernePractice = {
   code: string;
@@ -50,7 +50,35 @@ export type CerneSlot = {
   title: string;
   due_at: string | null;
   responsible_user_id: string | null;
+  required: boolean;
+  adjustment_notes: string | null;
+  adjusted_at: string | null;
   status: "pending" | "submitted" | "approved" | "rejected" | "waived";
+};
+
+export type CerneAction = {
+  id: string;
+  action_code: string;
+  practice_code: string;
+  action_name: string;
+  target_audience: string | null;
+  original_periodicity: string | null;
+  periodicity_group: string | null;
+  simplification_suggestion: string;
+  minimum_evidence: string;
+  manual_order: number;
+};
+
+export type CerneActionDecision = {
+  id: string;
+  cycle_id: string;
+  action_id: string;
+  status: "to_review" | "accepted" | "adjusted" | "not_applicable";
+  decision: string | null;
+  notes: string | null;
+  minimum_evidence_override: string | null;
+  periodicity_override: string | null;
+  reviewed_at: string | null;
 };
 
 export type CerneEvidence = {
@@ -118,6 +146,8 @@ export type CerneWorkspaceData = {
   canSubmit: boolean;
   canReview: boolean;
   practices: CernePractice[];
+  actions: CerneAction[];
+  actionDecisions: CerneActionDecision[];
   requirements: CerneRequirement[];
   cycles: CerneCycle[];
   owners: CerneOwner[];
@@ -136,4 +166,11 @@ export type CerneWorkspaceData = {
 
 export function cerneWorkspaceFromJson(value: Json): CerneWorkspaceData {
   return value as unknown as CerneWorkspaceData;
+}
+
+export function cernePlanFromJson(value: Json) {
+  return value as unknown as {
+    actions: CerneAction[];
+    decisions: CerneActionDecision[];
+  };
 }

@@ -4,6 +4,7 @@ import {
   BarChart3,
   BookOpen,
   Building2,
+  ChevronDown,
   ClipboardCheck,
   Gauge,
   Gavel,
@@ -17,35 +18,106 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { BrandMark } from "@/components/brand-mark";
 import { IncubatorSwitcher } from "@/components/layout/incubator-switcher";
-import { ModuleSubnav } from "@/components/layout/module-subnav";
 import { cn } from "@/lib/utils";
 
-const navigation = [
+type NavigationChild = {
+  label: string;
+  view?: string;
+};
+
+type NavigationModule = {
+  label: string;
+  slug: string;
+  icon: LucideIcon;
+  children?: readonly NavigationChild[];
+};
+
+type NavigationSection = {
+  group: string;
+  items: readonly NavigationModule[];
+};
+
+const navigation: readonly NavigationSection[] = [
   {
-    group: "Visão geral",
+    group: "Início",
     items: [{ label: "Dashboard", slug: "dashboard", icon: LayoutDashboard }],
   },
   {
     group: "Portfólio",
     items: [
-      { label: "Programas e turmas", slug: "programas", icon: Target },
-      { label: "Chamadas e seleção", slug: "chamadas", icon: Gavel },
-      { label: "Startups", slug: "startups", icon: Rocket },
+      {
+        label: "Programas e turmas",
+        slug: "programas",
+        icon: Target,
+        children: [
+          { label: "Catálogo de programas" },
+          { label: "Turmas e ciclos", view: "turmas" },
+        ],
+      },
+      {
+        label: "Chamadas e seleção",
+        slug: "chamadas",
+        icon: Gavel,
+        children: [
+          { label: "Visão geral" },
+          { label: "Chamadas", view: "calls" },
+          { label: "Inscrições", view: "applications" },
+          { label: "Avaliadores", view: "reviewers" },
+          { label: "Avaliações", view: "reviews" },
+          { label: "Classificação", view: "ranking" },
+          { label: "Recursos", view: "appeals" },
+          { label: "Resultados da seleção", view: "results" },
+        ],
+      },
+      {
+        label: "Startups",
+        slug: "startups",
+        icon: Rocket,
+        children: [
+          { label: "Portfólio de startups" },
+          { label: "Solicitações pendentes", view: "pendentes" },
+          { label: "Convites", view: "convites" },
+          { label: "Equipes e vínculos", view: "vinculos" },
+        ],
+      },
     ],
   },
   {
     group: "Desenvolvimento",
     items: [
-      { label: "Diagnósticos", slug: "diagnosticos", icon: ClipboardCheck },
+      {
+        label: "Diagnósticos",
+        slug: "diagnosticos",
+        icon: ClipboardCheck,
+        children: [
+          { label: "Visão geral" },
+          { label: "Modelos", view: "modelos" },
+          { label: "Campanhas", view: "campanhas" },
+          { label: "Avaliações", view: "avaliacoes" },
+        ],
+      },
       { label: "Planos de ação", slug: "planos-de-acao", icon: Gauge },
       { label: "Trilhas e conteúdos", slug: "conteudos", icon: BookOpen },
-      { label: "Mentorias", slug: "mentorias", icon: UsersRound },
+      {
+        label: "Mentorias",
+        slug: "mentorias",
+        icon: UsersRound,
+        children: [
+          { label: "Visão geral" },
+          { label: "Mentores", view: "mentores" },
+          { label: "Equipes por turma", view: "equipe" },
+          { label: "Rodadas", view: "rodadas" },
+          { label: "Vínculos", view: "vinculos" },
+          { label: "Agenda", view: "agenda" },
+        ],
+      },
     ],
   },
   {
@@ -55,22 +127,51 @@ const navigation = [
         label: "Relatórios e indicadores",
         slug: "indicadores",
         icon: BarChart3,
+        children: [
+          { label: "Visão geral" },
+          { label: "Portfólio", view: "portfolio" },
+          { label: "Diagnósticos", view: "diagnosticos" },
+          { label: "Território", view: "territorio" },
+        ],
       },
-      { label: "CERNE e evidências", slug: "cerne", icon: ShieldCheck },
+    ],
+  },
+  {
+    group: "Qualidade e CERNE",
+    items: [
+      {
+        label: "CERNE",
+        slug: "cerne",
+        icon: ShieldCheck,
+        children: [
+          { label: "Visão geral" },
+          { label: "Matriz de práticas", view: "matrix" },
+          { label: "Plano de evidências", view: "plan" },
+          { label: "Evidências", view: "evidences" },
+          { label: "Pendências e alertas", view: "alerts" },
+          { label: "Fontes no Drive", view: "drive" },
+          { label: "Avaliação e validação", view: "review" },
+        ],
+      },
     ],
   },
   {
     group: "Administração",
     items: [
       {
-        label: "Pessoas e configurações",
+        label: "Incubadora",
         slug: "gestao-incubadora",
         icon: Building2,
+        children: [
+          { label: "Perfil e operação" },
+          { label: "Equipe e permissões", view: "equipe" },
+          { label: "Convites de acesso", view: "convites" },
+        ],
       },
       { label: "Integrações", slug: "configuracoes", icon: Settings },
     ],
   },
-] as const;
+];
 
 type AppShellProps = {
   organization: {
@@ -105,7 +206,20 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const currentModule = pathSegments[4] ?? null;
+  const activeView = searchParams.get("view");
+  const [navigationState, setNavigationState] = useState<{
+    pathname: string;
+    expandedModule: string | null;
+  }>({ pathname, expandedModule: currentModule });
+  const expandedModule =
+    navigationState.pathname === pathname
+      ? navigationState.expandedModule
+      : currentModule;
+
   const initials = user.displayName
     .split(/\s+/)
     .slice(0, 2)
@@ -166,37 +280,139 @@ export function AppShell({
                   {group}
                 </p>
                 <ul className="space-y-1">
-                  {items.map(({ label, slug, icon: Icon }) => {
+                  {items.map((item) => {
+                    const { label, slug, icon: Icon, children } = item;
                     const href = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
                     const active =
                       pathname === href ||
                       (slug !== "dashboard" && pathname.startsWith(`${href}/`));
+                    const expanded = expandedModule === slug;
 
                     return (
                       <li key={slug}>
-                        <Link
-                          href={href}
-                          onClick={() => setMenuOpen(false)}
-                          aria-current={active ? "page" : undefined}
-                          className={cn(
-                            "group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-bold text-white/78 transition",
-                            active
-                              ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
-                              : "hover:bg-white/8 hover:text-white",
-                          )}
-                        >
-                          <Icon
+                        {children?.length ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setNavigationState({
+                                  pathname,
+                                  expandedModule:
+                                    expandedModule === slug ? null : slug,
+                                })
+                              }
+                              aria-expanded={expanded}
+                              aria-controls={`submenu-${slug}`}
+                              className={cn(
+                                "group flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-sm font-bold text-white/78 transition",
+                                active
+                                  ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
+                                  : "hover:bg-white/8 hover:text-white",
+                              )}
+                            >
+                              <Icon
+                                className={cn(
+                                  "size-[1.15rem] shrink-0",
+                                  active
+                                    ? "text-[#f4c47a]"
+                                    : "text-white/68 group-hover:text-white",
+                                )}
+                                strokeWidth={1.8}
+                                aria-hidden="true"
+                              />
+                              <span className="min-w-0 flex-1">{label}</span>
+                              <ChevronDown
+                                className={cn(
+                                  "size-4 shrink-0 text-white/50 transition-transform duration-200",
+                                  expanded && "rotate-180 text-[#f4c47a]",
+                                )}
+                                aria-hidden="true"
+                              />
+                            </button>
+                            <div
+                              id={`submenu-${slug}`}
+                              hidden={!expanded}
+                              className="ml-[1.35rem] border-l border-white/12 py-1 pl-3"
+                            >
+                              <ul className="space-y-0.5">
+                                {children.map((child) => {
+                                  const childParams =
+                                    slug === "indicadores" &&
+                                    currentModule === slug
+                                      ? new URLSearchParams(
+                                          searchParams.toString(),
+                                        )
+                                      : new URLSearchParams();
+                                  if (child.view)
+                                    childParams.set("view", child.view);
+                                  else childParams.delete("view");
+                                  const query = childParams.toString();
+                                  const childHref = query
+                                    ? `${href}?${query}`
+                                    : href;
+                                  const childActive =
+                                    pathname === href &&
+                                    (child.view
+                                      ? activeView === child.view
+                                      : !activeView);
+
+                                  return (
+                                    <li key={`${slug}-${child.label}`}>
+                                      <Link
+                                        href={childHref}
+                                        onClick={() => setMenuOpen(false)}
+                                        aria-current={
+                                          childActive ? "page" : undefined
+                                        }
+                                        className={cn(
+                                          "group/sub flex min-h-9 items-center gap-2 rounded-lg px-3 py-2 text-xs leading-4 font-semibold text-white/62 transition",
+                                          childActive
+                                            ? "bg-[#f4c47a]/14 text-[#ffe2ad]"
+                                            : "hover:bg-white/7 hover:text-white",
+                                        )}
+                                      >
+                                        <span
+                                          className={cn(
+                                            "size-1.5 shrink-0 rounded-full bg-white/24 transition",
+                                            childActive
+                                              ? "bg-[#f4c47a] shadow-[0_0_0_3px_rgba(244,196,122,0.12)]"
+                                              : "group-hover/sub:bg-white/55",
+                                          )}
+                                          aria-hidden="true"
+                                        />
+                                        <span>{child.label}</span>
+                                      </Link>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          </>
+                        ) : (
+                          <Link
+                            href={href}
+                            onClick={() => setMenuOpen(false)}
+                            aria-current={active ? "page" : undefined}
                             className={cn(
-                              "size-[1.15rem]",
+                              "group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-bold text-white/78 transition",
                               active
-                                ? "text-[#f4c47a]"
-                                : "text-white/68 group-hover:text-white",
+                                ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
+                                : "hover:bg-white/8 hover:text-white",
                             )}
-                            strokeWidth={1.8}
-                            aria-hidden="true"
-                          />
-                          <span>{label}</span>
-                        </Link>
+                          >
+                            <Icon
+                              className={cn(
+                                "size-[1.15rem]",
+                                active
+                                  ? "text-[#f4c47a]"
+                                  : "text-white/68 group-hover:text-white",
+                              )}
+                              strokeWidth={1.8}
+                              aria-hidden="true"
+                            />
+                            <span>{label}</span>
+                          </Link>
+                        )}
                       </li>
                     );
                   })}
@@ -285,7 +501,6 @@ export function AppShell({
         >
           Proodos · {currentIncubator.name} · acesso protegido por RLS
         </div>
-        <ModuleSubnav />
         <main
           id="conteudo-principal"
           className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8"

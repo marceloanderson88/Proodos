@@ -135,6 +135,23 @@ export function ProgramsWorkspace({
         title={pageCopy.title}
         description={pageCopy.description}
         icon={Layers3}
+        actions={
+          view === "novo" ? (
+            <Link
+              href={`/o/${organizationSlug}/i/${incubatorSlug}/programas`}
+              className="inline-flex min-h-11 items-center rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-4 py-3 text-sm font-extrabold text-[var(--wine-800)] transition hover:bg-[var(--surface-subtle)]"
+            >
+              Voltar ao catálogo
+            </Link>
+          ) : (
+            <Link
+              href={`/o/${organizationSlug}/i/${incubatorSlug}/programas?view=novo`}
+              className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] bg-[var(--wine-800)] px-4 py-3 text-sm font-extrabold text-white transition hover:bg-[var(--wine-700)]"
+            >
+              <Plus className="size-4" /> Novo programa
+            </Link>
+          )
+        }
       />
       <FeedbackBanner success={success} error={error} />
 

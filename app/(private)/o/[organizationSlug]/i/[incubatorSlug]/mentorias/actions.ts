@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getIncubatorServerContext } from "@/lib/incubators/server-context";
+import { dispatchPendingNotifications } from "@/lib/notifications/dispatcher";
 import {
+  bookMentoringRoundSessionSchema,
   createMentorAvailabilitySchema,
   createMentorAssignmentSchema,
   createMentorProfileSchema,
@@ -12,11 +14,16 @@ import {
   createMentoringFeedbackSchema,
   createMentoringRecommendationSchema,
   createMentoringSessionSchema,
+  createMentoringRoundSchema,
   deleteMentorAvailabilitySchema,
+  inviteCohortMentorSchema,
   parseCommaSeparatedList,
   updateMentorAssignmentStatusSchema,
   updateMentoringSessionStatusSchema,
   rescheduleMentoringSessionSchema,
+  respondCohortMentorInvitationSchema,
+  setMentoringRoundMentorSchema,
+  setMentoringRoundStatusSchema,
   updateMentoringRecommendationSchema,
   updateMentorProfileSchema,
   updateMentorProfileStatusSchema,
@@ -52,11 +59,366 @@ function mentoringSessionUrl(
     : base;
 }
 
+function mentoringViewUrl(
+  organizationSlug: string,
+  incubatorSlug: string,
+  view: "rodadas" | "equipe" | "agenda",
+  kind?: "success" | "error",
+  message?: string,
+) {
+  const query = new URLSearchParams({ view });
+  if (kind && message) query.set(kind, message);
+  return `${mentoringUrl(organizationSlug, incubatorSlug)}?${query}`;
+}
+
 function refreshMentoring(organizationSlug: string, incubatorSlug: string) {
   revalidatePath(mentoringUrl(organizationSlug, incubatorSlug));
   revalidatePath(
     `/o/${organizationSlug}/i/${incubatorSlug}/mentorias/sessoes/[sessionId]`,
     "page",
+  );
+}
+
+export async function createMentoringRoundAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = createMentoringRoundSchema.safeParse({
+    cohortId: value(formData, "cohortId"),
+    name: value(formData, "name"),
+    description: value(formData, "description"),
+    bookingOpensAt: value(formData, "bookingOpensAt"),
+    bookingClosesAt: value(formData, "bookingClosesAt"),
+    sessionsStartAt: value(formData, "sessionsStartAt"),
+    sessionsEndAt: value(formData, "sessionsEndAt"),
+    timezone: value(formData, "timezone") || context.incubator.timezone,
+    maxSessions: value(formData, "maxSessions") || "1",
+    openNow: value(formData, "openNow") || "false",
+  });
+  if (!parsed.success)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "rodadas",
+        "error",
+        parsed.error.issues[0]?.message ?? "Rodada inválida.",
+      ),
+    );
+  const { error } = await context.supabase.rpc("create_mentoring_round", {
+    target_organization_id: context.organization.id,
+    target_incubator_id: context.incubator.id,
+    target_cohort_id: parsed.data.cohortId,
+    round_name: parsed.data.name,
+    round_description: parsed.data.description,
+    booking_opens_local: parsed.data.bookingOpensAt,
+    booking_closes_local: parsed.data.bookingClosesAt,
+    sessions_start_local: parsed.data.sessionsStartAt,
+    sessions_end_local: parsed.data.sessionsEndAt,
+    round_timezone: parsed.data.timezone,
+    max_sessions: parsed.data.maxSessions,
+    open_now: parsed.data.openNow === "true",
+  });
+  if (error)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "rodadas",
+        "error",
+        error.message,
+      ),
+    );
+  refreshMentoring(organizationSlug, incubatorSlug);
+  redirect(
+    mentoringViewUrl(
+      organizationSlug,
+      incubatorSlug,
+      "rodadas",
+      "success",
+      "Rodada criada. Associe os mentores da turma antes de abrir as reservas.",
+    ),
+  );
+}
+
+export async function inviteCohortMentorAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const parsed = inviteCohortMentorSchema.safeParse({
+    cohortId: value(formData, "cohortId"),
+    mentorProfileId: value(formData, "mentorProfileId"),
+  });
+  if (!parsed.success)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "equipe",
+        "error",
+        "Selecione a turma e o mentor.",
+      ),
+    );
+  const { error } = await context.supabase.rpc("invite_mentor_to_cohort", {
+    target_cohort_id: parsed.data.cohortId,
+    target_mentor_profile_id: parsed.data.mentorProfileId,
+  });
+  if (error)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "equipe",
+        "error",
+        error.message,
+      ),
+    );
+  let notice = " Convite registrado na plataforma.";
+  try {
+    const dispatched = await dispatchPendingNotifications({
+      organizationId: context.organization.id,
+      kinds: ["mentoring.cohort_invitation"],
+    });
+    notice = dispatched.configured
+      ? ` ${dispatched.sent} e-mail(s) enviado(s).`
+      : " O e-mail ficou na fila até a configuração do provedor.";
+  } catch {
+    notice = " O e-mail foi preservado na fila para nova tentativa.";
+  }
+  refreshMentoring(organizationSlug, incubatorSlug);
+  redirect(
+    mentoringViewUrl(
+      organizationSlug,
+      incubatorSlug,
+      "equipe",
+      "success",
+      `Mentor convidado para a equipe da turma.${notice}`,
+    ),
+  );
+}
+
+export async function respondCohortMentorInvitationAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const parsed = respondCohortMentorInvitationSchema.safeParse({
+    teamId: value(formData, "teamId"),
+    accept: value(formData, "accept"),
+  });
+  if (!parsed.success)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "equipe",
+        "error",
+        "Convite inválido.",
+      ),
+    );
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const { error } = await context.supabase.rpc(
+    "respond_mentor_cohort_invitation",
+    {
+      target_team_id: parsed.data.teamId,
+      accept_invitation: parsed.data.accept === "true",
+    },
+  );
+  if (error)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "equipe",
+        "error",
+        error.message,
+      ),
+    );
+  refreshMentoring(organizationSlug, incubatorSlug);
+  redirect(
+    mentoringViewUrl(
+      organizationSlug,
+      incubatorSlug,
+      "equipe",
+      "success",
+      parsed.data.accept === "true" ? "Convite aceito." : "Convite recusado.",
+    ),
+  );
+}
+
+export async function setMentoringRoundMentorAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const parsed = setMentoringRoundMentorSchema.safeParse({
+    roundId: value(formData, "roundId"),
+    cohortMentorId: value(formData, "cohortMentorId"),
+    enabled: value(formData, "enabled"),
+  });
+  if (!parsed.success)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "rodadas",
+        "error",
+        "Associação inválida.",
+      ),
+    );
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const { error } = await context.supabase.rpc("set_mentoring_round_mentor", {
+    target_round_id: parsed.data.roundId,
+    target_cohort_mentor_id: parsed.data.cohortMentorId,
+    enabled: parsed.data.enabled === "true",
+  });
+  if (error)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "rodadas",
+        "error",
+        error.message,
+      ),
+    );
+  refreshMentoring(organizationSlug, incubatorSlug);
+  redirect(
+    mentoringViewUrl(
+      organizationSlug,
+      incubatorSlug,
+      "rodadas",
+      "success",
+      "Equipe da rodada atualizada.",
+    ),
+  );
+}
+
+export async function setMentoringRoundStatusAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const parsed = setMentoringRoundStatusSchema.safeParse({
+    roundId: value(formData, "roundId"),
+    status: value(formData, "status"),
+  });
+  if (!parsed.success)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "rodadas",
+        "error",
+        "Status inválido.",
+      ),
+    );
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const { error } = await context.supabase.rpc("set_mentoring_round_status", {
+    target_round_id: parsed.data.roundId,
+    requested_status: parsed.data.status,
+  });
+  if (error)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "rodadas",
+        "error",
+        error.message,
+      ),
+    );
+  refreshMentoring(organizationSlug, incubatorSlug);
+  redirect(
+    mentoringViewUrl(
+      organizationSlug,
+      incubatorSlug,
+      "rodadas",
+      "success",
+      "Status da rodada atualizado.",
+    ),
+  );
+}
+
+export async function bookMentoringRoundSessionAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const parsed = bookMentoringRoundSessionSchema.safeParse({
+    roundId: value(formData, "roundId"),
+    assignmentId: value(formData, "assignmentId"),
+    objective: value(formData, "objective"),
+    mode: value(formData, "mode"),
+    timezone: value(formData, "timezone"),
+    scheduledStartAt: value(formData, "scheduledStartAt"),
+    scheduledEndAt: value(formData, "scheduledEndAt"),
+    meetingUrl: value(formData, "meetingUrl"),
+    location: value(formData, "location"),
+  });
+  if (!parsed.success)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "rodadas",
+        "error",
+        parsed.error.issues[0]?.message ?? "Agendamento inválido.",
+      ),
+    );
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const { error } = await context.supabase.rpc("book_mentoring_round_session", {
+    target_round_id: parsed.data.roundId,
+    target_assignment_id: parsed.data.assignmentId,
+    session_objective: parsed.data.objective,
+    session_mode: parsed.data.mode,
+    session_timezone: parsed.data.timezone,
+    scheduled_start_local: parsed.data.scheduledStartAt,
+    scheduled_end_local: parsed.data.scheduledEndAt,
+    session_meeting_url: parsed.data.meetingUrl,
+    session_location: parsed.data.location,
+  });
+  if (error)
+    redirect(
+      mentoringViewUrl(
+        organizationSlug,
+        incubatorSlug,
+        "rodadas",
+        "error",
+        error.message,
+      ),
+    );
+  refreshMentoring(organizationSlug, incubatorSlug);
+  redirect(
+    mentoringViewUrl(
+      organizationSlug,
+      incubatorSlug,
+      "rodadas",
+      "success",
+      "Mentoria agendada dentro da rodada.",
+    ),
   );
 }
 

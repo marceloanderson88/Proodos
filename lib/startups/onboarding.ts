@@ -140,6 +140,29 @@ export async function sendStartupOnboardingInvitation(
     email: rawInput.email,
     cohortId: rawInput.cohortId ?? "",
   });
+  if (input.startupId) {
+    const existingInvitations = await context.supabase
+      .from("invitations")
+      .select("id")
+      .eq("organization_id", context.organization.id)
+      .eq("incubator_id", context.incubator.id)
+      .eq("email", input.email)
+      .in("status", ["pending", "accepted"]);
+    const invitationIds = (existingInvitations.data ?? []).map(
+      (invitation) => invitation.id,
+    );
+    if (invitationIds.length > 0) {
+      const existingMapping = await context.supabase
+        .from("startup_onboarding_invitations")
+        .select("invitation_id")
+        .eq("organization_id", context.organization.id)
+        .eq("startup_id", input.startupId)
+        .in("invitation_id", invitationIds)
+        .limit(1)
+        .maybeSingle();
+      if (existingMapping.data) return existingMapping.data.invitation_id;
+    }
+  }
   const { data: role } = await context.supabase
     .from("roles")
     .select("id")

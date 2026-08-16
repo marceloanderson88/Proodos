@@ -7,10 +7,12 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
+import { selectionReceiptCookieName } from "@/lib/selection/public-receipt";
 import { publicSelectionCallFromJson } from "@/lib/selection/types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -32,7 +34,14 @@ export default async function PublicSelectionCallPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ success?: string; error?: string }>;
 }) {
-  const [{ slug }, query] = await Promise.all([params, searchParams]);
+  const [{ slug }, query, cookieStore] = await Promise.all([
+    params,
+    searchParams,
+    cookies(),
+  ]);
+  const receipt = query.success?.startsWith("Inscrição enviada")
+    ? cookieStore.get(selectionReceiptCookieName(slug))?.value
+    : undefined;
   const supabase = await createServerSupabaseClient();
   const [callResult, openResult] = await Promise.all([
     supabase.rpc("get_public_selection_call", { call_slug: slug }),
@@ -92,7 +101,14 @@ export default async function PublicSelectionCallPage({
             className="mt-6 flex gap-3 rounded-2xl border border-[#3d8b51]/20 bg-[#edf7ee] p-4 text-sm font-bold text-[#27643a]"
           >
             <CheckCircle2 className="size-5 shrink-0" />
-            {query.success}
+            <span>
+              {query.success}
+              {receipt ? (
+                <strong className="mt-1 block font-black tracking-wide text-[#1f4f2e]">
+                  Protocolo: {receipt}
+                </strong>
+              ) : null}
+            </span>
           </div>
         )}
         {query.error && (
@@ -142,6 +158,12 @@ export default async function PublicSelectionCallPage({
                 action={appealAction}
                 className="surface-card space-y-3 p-6"
               >
+                <input
+                  className="hidden"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  name="website"
+                />
                 <p className="eyebrow">Contraditório</p>
                 <h2 className="text-xl font-black text-[#3f090d]">
                   Protocolar recurso
@@ -172,6 +194,12 @@ export default async function PublicSelectionCallPage({
                 action={convocationAction}
                 className="surface-card space-y-3 p-6"
               >
+                <input
+                  className="hidden"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  name="website"
+                />
                 <p className="eyebrow">Ingresso</p>
                 <h2 className="text-xl font-black text-[#3f090d]">
                   Responder convocação
@@ -261,6 +289,18 @@ export default async function PublicSelectionCallPage({
                         name={String(name)}
                         type={String(type)}
                         required={Boolean(required)}
+                        maxLength={
+                          name === "applicantPhone"
+                            ? 40
+                            : name === "legalName"
+                              ? 200
+                              : name === "taxId"
+                                ? 32
+                                : name === "applicantName" ||
+                                    name === "startupName"
+                                  ? 160
+                                  : 120
+                        }
                       />
                     </label>
                   ))}
@@ -283,12 +323,13 @@ export default async function PublicSelectionCallPage({
                     <textarea
                       className={`${inputClass} min-h-28`}
                       name="summary"
+                      maxLength={3000}
                     />
                   </label>
                 </div>
                 <div className="h-px bg-[#751118]/10" />
                 {call.questions.map((question, index) => (
-                  <label key={question.id} className="block space-y-2">
+                  <div key={question.id} className="block space-y-2">
                     <span className="text-sm font-black text-[#3f090d]">
                       <span className="mr-2 text-[#d97918]">
                         {String(index + 1).padStart(2, "0")}
@@ -306,6 +347,7 @@ export default async function PublicSelectionCallPage({
                         className={`${inputClass} min-h-32`}
                         name={`answer_${question.code}`}
                         required={question.required}
+                        maxLength={10000}
                       />
                     ) : question.kind === "boolean" ? (
                       <select
@@ -317,11 +359,50 @@ export default async function PublicSelectionCallPage({
                         <option value="true">Sim</option>
                         <option value="false">Não</option>
                       </select>
+                    ) : question.kind === "single_choice" ? (
+                      <select
+                        className={inputClass}
+                        name={`answer_${question.code}`}
+                        required={question.required}
+                      >
+                        <option value="">Selecione</option>
+                        {question.options.map((option) => {
+                          const optionValue = String(option);
+                          return (
+                            <option key={optionValue} value={optionValue}>
+                              {optionValue}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    ) : question.kind === "multiple_choice" ? (
+                      <fieldset className="grid gap-2 rounded-xl border border-[#751118]/12 bg-white p-4">
+                        <legend className="sr-only">{question.label}</legend>
+                        {question.options.map((option) => {
+                          const optionValue = String(option);
+                          return (
+                            <label
+                              key={optionValue}
+                              className="flex items-center gap-3 text-sm font-bold text-[#594844]"
+                            >
+                              <input
+                                type="checkbox"
+                                name={`answer_${question.code}`}
+                                value={optionValue}
+                              />
+                              {optionValue}
+                            </label>
+                          );
+                        })}
+                      </fieldset>
                     ) : (
                       <input
                         className={inputClass}
                         name={`answer_${question.code}`}
                         required={question.required}
+                        maxLength={
+                          question.kind === "short_text" ? 500 : undefined
+                        }
                         type={
                           question.kind === "number"
                             ? "number"
@@ -333,7 +414,7 @@ export default async function PublicSelectionCallPage({
                         }
                       />
                     )}
-                  </label>
+                  </div>
                 ))}
                 <Button type="submit" className="w-full sm:w-auto">
                   <Send className="size-4" /> Enviar inscrição

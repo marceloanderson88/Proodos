@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getIncubatorServerContext } from "@/lib/incubators/server-context";
+import { dispatchPendingNotifications } from "@/lib/notifications/dispatcher";
 import { createSelectionCallSchema } from "@/lib/selection/schemas";
+import { sendStartupOnboardingInvitation } from "@/lib/startups/onboarding";
 import type { Json } from "@/lib/supabase/database.types";
 
 function value(formData: FormData, key: string) {
@@ -29,6 +31,22 @@ function feedback(
 
 function isoOrNull(raw: string) {
   return raw ? new Date(raw).toISOString() : null;
+}
+
+async function dispatchSelectionNotifications(organizationId: string) {
+  try {
+    const result = await dispatchPendingNotifications({
+      organizationId,
+      kinds: ["selection.assignment"],
+    });
+    if (!result.configured)
+      return " Os avisos ficaram na fila até a configuração do provedor de e-mail.";
+    if (result.failed)
+      return ` ${result.sent} e-mail(s) enviado(s); ${result.failed} seguirá(ão) na fila para nova tentativa.`;
+    return result.sent ? ` ${result.sent} e-mail(s) enviado(s).` : "";
+  } catch {
+    return " Os avisos foram preservados na fila para nova tentativa.";
+  }
 }
 
 function rpcMessage(
@@ -311,6 +329,9 @@ export async function assignSelectionReviewerAction(
         rpcMessage(error, "Não foi possível distribuir a proposta."),
       ),
     );
+  const notificationFeedback = await dispatchSelectionNotifications(
+    context.organization.id,
+  );
   revalidatePath(basePath(organizationSlug, incubatorSlug));
   redirect(
     feedback(
@@ -318,7 +339,7 @@ export async function assignSelectionReviewerAction(
       incubatorSlug,
       "reviewers",
       "success",
-      "Proposta atribuída sem apagar o histórico anterior.",
+      `Proposta atribuída sem apagar o histórico anterior.${notificationFeedback}`,
     ),
   );
 }
@@ -346,6 +367,9 @@ export async function autoAssignSelectionReviewersAction(
         rpcMessage(error, "Não foi possível distribuir automaticamente."),
       ),
     );
+  const notificationFeedback = await dispatchSelectionNotifications(
+    context.organization.id,
+  );
   revalidatePath(basePath(organizationSlug, incubatorSlug));
   redirect(
     feedback(
@@ -353,7 +377,7 @@ export async function autoAssignSelectionReviewersAction(
       incubatorSlug,
       "reviewers",
       "success",
-      `${data} atribuição(ões) criada(s), equilibrando a carga da banca.`,
+      `${data} atribuição(ões) criada(s) por sorteio com balanceamento de carga.${notificationFeedback}`,
     ),
   );
 }
@@ -635,9 +659,10 @@ export async function convertSelectionApplicationAction(
     organizationSlug,
     incubatorSlug,
   );
-  const { error } = await context.supabase.rpc(
-    "convert_selection_application",
-    { target_application_id: value(formData, "applicationId") },
+  const applicationId = value(formData, "applicationId");
+  const { data, error } = await context.supabase.rpc(
+    "convert_selection_application_with_onboarding",
+    { target_application_id: applicationId },
   );
   if (error)
     redirect(
@@ -649,6 +674,36 @@ export async function convertSelectionApplicationAction(
         rpcMessage(error, "Não foi possível criar a startup e a matrícula."),
       ),
     );
+  const conversion = data as unknown as {
+    startupId: string;
+    applicantUserId: string | null;
+    applicantName: string;
+    applicantEmail: string;
+    startupName: string;
+    cohortId: string;
+    onboardingPending: boolean;
+  };
+  if (conversion.onboardingPending && conversion.startupId) {
+    try {
+      await sendStartupOnboardingInvitation(context, {
+        startupId: conversion.startupId,
+        startupName: conversion.startupName,
+        representativeName: conversion.applicantName,
+        email: conversion.applicantEmail,
+        cohortId: conversion.cohortId,
+      });
+    } catch {
+      redirect(
+        feedback(
+          organizationSlug,
+          incubatorSlug,
+          "results",
+          "error",
+          "A startup foi criada, mas o convite de acesso não pôde ser enviado. Tente a conversão novamente para reenviar o convite.",
+        ),
+      );
+    }
+  }
   revalidatePath(basePath(organizationSlug, incubatorSlug));
   revalidatePath(`/o/${organizationSlug}/i/${incubatorSlug}/startups`);
   redirect(
@@ -657,7 +712,9 @@ export async function convertSelectionApplicationAction(
       incubatorSlug,
       "results",
       "success",
-      "Startup, representante e matrícula criados de forma transacional.",
+      conversion.onboardingPending
+        ? "Startup criada e matrícula reservada. O representante recebeu o convite para ativar o acesso."
+        : "Startup, representante e matrícula criados de forma transacional.",
     ),
   );
 }

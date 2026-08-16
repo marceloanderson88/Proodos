@@ -3,10 +3,12 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   CalendarClock,
+  CalendarRange,
   CirclePause,
   CirclePlay,
   ExternalLink,
   Handshake,
+  MailCheck,
   Network,
   Sparkles,
   Trash2,
@@ -15,11 +17,17 @@ import {
 } from "lucide-react";
 
 import {
+  bookMentoringRoundSessionAction,
+  createMentoringRoundAction,
   createMentorAssignmentAction,
   createMentorAvailabilityAction,
   createMentorProfileAction,
   createMentoringSessionAction,
   deleteMentorAvailabilityAction,
+  inviteCohortMentorAction,
+  respondCohortMentorInvitationAction,
+  setMentoringRoundMentorAction,
+  setMentoringRoundStatusAction,
   updateMentorAssignmentStatusAction,
   updateMentorProfileAction,
   updateMentorProfileStatusAction,
@@ -31,6 +39,7 @@ import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { controlClassName, FormField } from "@/components/ui/form-field";
 import { StatusBadge } from "@/components/ui/status-badge";
+import type { MentoringOperations } from "@/lib/mentoring/types";
 
 type Mentor = {
   id: string;
@@ -83,6 +92,7 @@ type Session = {
   assignment_id: string;
   diagnostic_assessment_id: string | null;
   objective: string;
+  round_id: string | null;
   mode: "remote" | "in_person" | "hybrid";
   timezone: string;
   scheduled_start_at: string | null;
@@ -149,10 +159,11 @@ export function MentoringWorkspace({
   availability,
   sessions,
   assessments,
+  operations,
   success,
   error,
 }: {
-  view: "overview" | "mentores" | "vinculos" | "agenda";
+  view: "overview" | "mentores" | "equipe" | "rodadas" | "vinculos" | "agenda";
   organizationSlug: string;
   incubatorSlug: string;
   incubatorName: string;
@@ -166,6 +177,7 @@ export function MentoringWorkspace({
   availability: Availability[];
   sessions: Session[];
   assessments: Assessment[];
+  operations: MentoringOperations;
   success?: string;
   error?: string;
 }) {
@@ -198,6 +210,13 @@ export function MentoringWorkspace({
     (session) =>
       session.status === "requested" || session.status === "scheduled",
   );
+  const activeRounds = operations.rounds.filter((round) =>
+    ["open", "draft"].includes(round.status),
+  );
+  const ownTeamInvites = operations.cohortMentors.filter(
+    (team) =>
+      team.status === "invited" && team.mentor_profile_id === ownMentor?.id,
+  );
   const pageCopy = {
     overview: {
       title: "Mentorias",
@@ -207,6 +226,16 @@ export function MentoringWorkspace({
       title: "Diretório de mentores",
       description:
         "Gerencie perfis, especialidades, setores de experiência e disponibilidade da rede.",
+    },
+    equipe: {
+      title: "Equipe de mentores por turma",
+      description:
+        "Convide mentores, acompanhe o aceite e forme uma equipe coerente com cada turma do programa.",
+    },
+    rodadas: {
+      title: "Rodadas de mentoria",
+      description:
+        "Abra períodos de reserva, selecione os mentores participantes e permita que startups agendem dentro da janela definida.",
     },
     vinculos: {
       title: "Vínculos de mentoria",
@@ -246,7 +275,7 @@ export function MentoringWorkspace({
 
       <section
         aria-label="Resumo das mentorias"
-        className={`${view === "overview" ? "grid" : "hidden"} gap-4 sm:grid-cols-2 xl:grid-cols-4`}
+        className={`${view === "overview" ? "grid" : "hidden"} gap-4 sm:grid-cols-2 xl:grid-cols-5`}
       >
         {[
           [
@@ -272,6 +301,12 @@ export function MentoringWorkspace({
             "Startups sem mentor",
             Math.max(0, startups.length - assignedStartupIds.size),
             "Oportunidades de conexão",
+          ],
+          [
+            CalendarRange,
+            "Rodadas em preparação",
+            activeRounds.length,
+            "Abertas ou aguardando composição",
           ],
         ].map(([Icon, label, value, description]) => {
           const SummaryIcon = Icon as typeof UsersRound;
@@ -668,6 +703,616 @@ export function MentoringWorkspace({
             </section>
           )}
         </aside>
+      </section>
+
+      <section
+        className={`${view === "equipe" ? "grid" : "hidden"} gap-6 xl:grid-cols-[0.82fr_1.18fr]`}
+      >
+        <div className="space-y-6">
+          {canManage ? (
+            <form
+              action={inviteCohortMentorAction.bind(
+                null,
+                organizationSlug,
+                incubatorSlug,
+              )}
+              className="surface-card space-y-4 p-5 sm:p-6"
+            >
+              <div>
+                <p className="eyebrow">Composição da equipe</p>
+                <h2 className="operational-heading mt-1 text-2xl">
+                  Convidar para uma turma
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
+                  O mentor recebe um aviso por e-mail e precisa aceitar antes de
+                  participar das rodadas.
+                </p>
+              </div>
+              <FormField label="Turma" htmlFor="team-cohort" required>
+                <select
+                  id="team-cohort"
+                  name="cohortId"
+                  className={controlClassName}
+                  required
+                >
+                  <option value="">Selecione</option>
+                  {operations.cohorts.map((cohort) => (
+                    <option key={cohort.id} value={cohort.id}>
+                      {cohort.programName} · {cohort.name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField label="Mentor" htmlFor="team-mentor" required>
+                <select
+                  id="team-mentor"
+                  name="mentorProfileId"
+                  className={controlClassName}
+                  required
+                >
+                  <option value="">Selecione</option>
+                  {activeMentors.map((mentor) => (
+                    <option key={mentor.id} value={mentor.id}>
+                      {mentor.displayName} · {mentor.headline}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <Button type="submit">
+                <UserRoundPlus className="size-4" /> Enviar convite
+              </Button>
+            </form>
+          ) : null}
+
+          {ownTeamInvites.map((invite) => {
+            const cohort = operations.cohorts.find(
+              (item) => item.id === invite.cohort_id,
+            );
+            return (
+              <article
+                key={invite.id}
+                className="rounded-3xl border border-[#d6a240]/45 bg-[#fff8e8] p-5"
+              >
+                <MailCheck className="size-7 text-[#9b6300]" />
+                <p className="mt-4 text-xs font-black tracking-[0.14em] text-[#8a5900] uppercase">
+                  Convite pendente
+                </p>
+                <h3 className="mt-1 text-xl font-black text-[var(--wine-950)]">
+                  {cohort?.name ?? "Equipe da turma"}
+                </h3>
+                <p className="mt-2 text-sm text-[var(--text-muted)]">
+                  {cohort?.programName}
+                </p>
+                <div className="mt-5 flex gap-2">
+                  <form
+                    action={respondCohortMentorInvitationAction.bind(
+                      null,
+                      organizationSlug,
+                      incubatorSlug,
+                    )}
+                  >
+                    <input type="hidden" name="teamId" value={invite.id} />
+                    <input type="hidden" name="accept" value="true" />
+                    <Button type="submit">Aceitar</Button>
+                  </form>
+                  <form
+                    action={respondCohortMentorInvitationAction.bind(
+                      null,
+                      organizationSlug,
+                      incubatorSlug,
+                    )}
+                  >
+                    <input type="hidden" name="teamId" value={invite.id} />
+                    <input type="hidden" name="accept" value="false" />
+                    <Button type="submit" variant="secondary">
+                      Recusar
+                    </Button>
+                  </form>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="surface-card p-5 sm:p-6">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="eyebrow">Cobertura por turma</p>
+              <h2 className="operational-heading mt-1 text-2xl">
+                Equipes formadas
+              </h2>
+            </div>
+            <StatusBadge tone="info">
+              {
+                operations.cohortMentors.filter(
+                  (team) => team.status === "active",
+                ).length
+              }{" "}
+              ativos
+            </StatusBadge>
+          </div>
+          <div className="mt-5 space-y-3">
+            {operations.cohortMentors.map((team) => {
+              const cohort = operations.cohorts.find(
+                (item) => item.id === team.cohort_id,
+              );
+              const mentor = mentors.find(
+                (item) => item.id === team.mentor_profile_id,
+              );
+              return (
+                <article
+                  key={team.id}
+                  className="rounded-2xl border border-[var(--border)] bg-white p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-black text-[var(--wine-950)]">
+                        {mentor?.displayName ?? "Mentor"}
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--text-muted)]">
+                        {cohort?.programName} · {cohort?.name}
+                      </p>
+                    </div>
+                    <StatusBadge
+                      tone={
+                        team.status === "active"
+                          ? "success"
+                          : team.status === "invited"
+                            ? "warning"
+                            : "neutral"
+                      }
+                    >
+                      {team.status === "active"
+                        ? "Aceito"
+                        : team.status === "invited"
+                          ? "Aguardando"
+                          : team.status === "declined"
+                            ? "Recusado"
+                            : "Revogado"}
+                    </StatusBadge>
+                  </div>
+                </article>
+              );
+            })}
+            {!operations.cohortMentors.length ? (
+              <EmptyState
+                icon={UsersRound}
+                title="Nenhuma equipe por turma"
+                description="Convide os mentores que participarão das próximas rodadas."
+              />
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      <section
+        className={`${view === "rodadas" ? "block" : "hidden"} space-y-6`}
+      >
+        {canManage ? (
+          <form
+            action={createMentoringRoundAction.bind(
+              null,
+              organizationSlug,
+              incubatorSlug,
+            )}
+            className="surface-card p-5 sm:p-6"
+          >
+            <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
+              <div>
+                <p className="eyebrow">Nova rodada</p>
+                <h2 className="operational-heading mt-1 text-2xl">
+                  Defina reservas e atendimentos
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
+                  A janela de reserva controla quando a startup pode agendar; o
+                  período de atendimento limita os horários das sessões.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField label="Turma" htmlFor="round-cohort" required>
+                  <select
+                    id="round-cohort"
+                    name="cohortId"
+                    className={controlClassName}
+                    required
+                  >
+                    <option value="">Selecione</option>
+                    {operations.cohorts.map((cohort) => (
+                      <option key={cohort.id} value={cohort.id}>
+                        {cohort.programName} · {cohort.name}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label="Nome" htmlFor="round-name" required>
+                  <input
+                    id="round-name"
+                    name="name"
+                    className={controlClassName}
+                    placeholder="Rodada comercial — setembro"
+                    required
+                  />
+                </FormField>
+                <FormField
+                  label="Reservas abrem"
+                  htmlFor="booking-opens"
+                  required
+                >
+                  <input
+                    id="booking-opens"
+                    name="bookingOpensAt"
+                    type="datetime-local"
+                    className={controlClassName}
+                    required
+                  />
+                </FormField>
+                <FormField
+                  label="Reservas encerram"
+                  htmlFor="booking-closes"
+                  required
+                >
+                  <input
+                    id="booking-closes"
+                    name="bookingClosesAt"
+                    type="datetime-local"
+                    className={controlClassName}
+                    required
+                  />
+                </FormField>
+                <FormField
+                  label="Atendimentos iniciam"
+                  htmlFor="sessions-start"
+                  required
+                >
+                  <input
+                    id="sessions-start"
+                    name="sessionsStartAt"
+                    type="datetime-local"
+                    className={controlClassName}
+                    required
+                  />
+                </FormField>
+                <FormField
+                  label="Atendimentos encerram"
+                  htmlFor="sessions-end"
+                  required
+                >
+                  <input
+                    id="sessions-end"
+                    name="sessionsEndAt"
+                    type="datetime-local"
+                    className={controlClassName}
+                    required
+                  />
+                </FormField>
+                <FormField
+                  label="Limite por startup"
+                  htmlFor="round-limit"
+                  required
+                >
+                  <input
+                    id="round-limit"
+                    name="maxSessions"
+                    type="number"
+                    min="1"
+                    max="20"
+                    defaultValue="1"
+                    className={controlClassName}
+                    required
+                  />
+                </FormField>
+                <FormField
+                  label="Fuso horário"
+                  htmlFor="round-timezone"
+                  required
+                >
+                  <input
+                    id="round-timezone"
+                    name="timezone"
+                    defaultValue={timezone}
+                    className={controlClassName}
+                    required
+                  />
+                </FormField>
+                <div className="sm:col-span-2">
+                  <FormField label="Descrição" htmlFor="round-description">
+                    <textarea
+                      id="round-description"
+                      name="description"
+                      rows={3}
+                      className={controlClassName}
+                    />
+                  </FormField>
+                </div>
+                <input type="hidden" name="openNow" value="false" />
+                <div className="sm:col-span-2">
+                  <Button type="submit">
+                    <CalendarRange className="size-4" /> Criar como rascunho
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </form>
+        ) : null}
+
+        <div className="grid gap-5 xl:grid-cols-2">
+          {operations.rounds.map((round) => {
+            const cohort = operations.cohorts.find(
+              (item) => item.id === round.cohort_id,
+            );
+            const eligibleTeam = operations.cohortMentors.filter(
+              (team) =>
+                team.cohort_id === round.cohort_id && team.status === "active",
+            );
+            const selectedTeamIds = new Set(
+              operations.roundMentors
+                .filter((item) => item.round_id === round.id)
+                .map((item) => item.cohort_mentor_id),
+            );
+            const roundAssignments = openAssignments.filter(
+              (assignment) =>
+                assignment.status === "active" &&
+                eligibleTeam.some(
+                  (team) =>
+                    team.mentor_profile_id === assignment.mentor_profile_id &&
+                    selectedTeamIds.has(team.id),
+                ),
+            );
+            return (
+              <article key={round.id} className="surface-card overflow-hidden">
+                <div className="border-b border-[var(--border)] bg-[#fffaf6] p-5 sm:p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="eyebrow">{cohort?.programName}</p>
+                      <h3 className="mt-1 text-xl font-black text-[var(--wine-950)]">
+                        {round.name}
+                      </h3>
+                      <p className="mt-1 text-sm text-[var(--text-muted)]">
+                        {cohort?.name}
+                      </p>
+                    </div>
+                    <StatusBadge
+                      tone={
+                        round.status === "open"
+                          ? "success"
+                          : round.status === "draft"
+                            ? "warning"
+                            : "neutral"
+                      }
+                    >
+                      {round.status === "open"
+                        ? "Reservas abertas"
+                        : round.status === "draft"
+                          ? "Rascunho"
+                          : round.status === "closed"
+                            ? "Encerrada"
+                            : round.status === "completed"
+                              ? "Concluída"
+                              : "Cancelada"}
+                    </StatusBadge>
+                  </div>
+                  <div className="mt-5 grid gap-3 text-xs sm:grid-cols-2">
+                    <div className="rounded-xl bg-white p-3">
+                      <p className="font-black text-[var(--text-strong)]">
+                        Reservas
+                      </p>
+                      <p className="mt-1 text-[var(--text-muted)]">
+                        {formatDateTime(round.booking_opens_at, round.timezone)}{" "}
+                        →{" "}
+                        {formatDateTime(
+                          round.booking_closes_at,
+                          round.timezone,
+                        )}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-white p-3">
+                      <p className="font-black text-[var(--text-strong)]">
+                        Atendimentos
+                      </p>
+                      <p className="mt-1 text-[var(--text-muted)]">
+                        {formatDateTime(
+                          round.sessions_start_at,
+                          round.timezone,
+                        )}{" "}
+                        →{" "}
+                        {formatDateTime(round.sessions_end_at, round.timezone)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-5 p-5 sm:p-6">
+                  {canManage ? (
+                    <div>
+                      <p className="text-xs font-black tracking-[0.12em] text-[var(--text-muted)] uppercase">
+                        Mentores participantes
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {eligibleTeam.map((team) => {
+                          const mentor = mentors.find(
+                            (item) => item.id === team.mentor_profile_id,
+                          );
+                          const selected = selectedTeamIds.has(team.id);
+                          return (
+                            <form
+                              key={team.id}
+                              action={setMentoringRoundMentorAction.bind(
+                                null,
+                                organizationSlug,
+                                incubatorSlug,
+                              )}
+                            >
+                              <input
+                                type="hidden"
+                                name="roundId"
+                                value={round.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="cohortMentorId"
+                                value={team.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="enabled"
+                                value={selected ? "false" : "true"}
+                              />
+                              <button
+                                type="submit"
+                                className={`rounded-full border px-3 py-2 text-xs font-extrabold ${selected ? "border-[#1f7a57]/25 bg-[#e9f6ef] text-[#176044]" : "border-[var(--border)] bg-white text-[var(--text-muted)]"}`}
+                              >
+                                {selected ? "✓ " : "+ "}
+                                {mentor?.displayName ?? "Mentor"}
+                              </button>
+                            </form>
+                          );
+                        })}
+                        {!eligibleTeam.length ? (
+                          <p className="text-xs text-[var(--text-muted)]">
+                            Nenhum mentor aceitou o convite desta turma.
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {round.status === "draft" ? (
+                          <form
+                            action={setMentoringRoundStatusAction.bind(
+                              null,
+                              organizationSlug,
+                              incubatorSlug,
+                            )}
+                          >
+                            <input
+                              type="hidden"
+                              name="roundId"
+                              value={round.id}
+                            />
+                            <input type="hidden" name="status" value="open" />
+                            <Button type="submit">Abrir reservas</Button>
+                          </form>
+                        ) : null}
+                        {round.status === "open" ? (
+                          <form
+                            action={setMentoringRoundStatusAction.bind(
+                              null,
+                              organizationSlug,
+                              incubatorSlug,
+                            )}
+                          >
+                            <input
+                              type="hidden"
+                              name="roundId"
+                              value={round.id}
+                            />
+                            <input type="hidden" name="status" value="closed" />
+                            <Button type="submit" variant="secondary">
+                              Encerrar reservas
+                            </Button>
+                          </form>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {round.status === "open" && roundAssignments.length ? (
+                    <form
+                      action={bookMentoringRoundSessionAction.bind(
+                        null,
+                        organizationSlug,
+                        incubatorSlug,
+                      )}
+                      className="space-y-3 rounded-2xl border border-[#8d1018]/15 bg-[#fff8f4] p-4"
+                    >
+                      <p className="font-black text-[var(--wine-950)]">
+                        Agendar nesta rodada
+                      </p>
+                      <input type="hidden" name="roundId" value={round.id} />
+                      <input
+                        type="hidden"
+                        name="timezone"
+                        value={round.timezone}
+                      />
+                      <select
+                        name="assignmentId"
+                        className={controlClassName}
+                        required
+                      >
+                        <option value="">Mentor e startup</option>
+                        {roundAssignments.map((assignment) => {
+                          const mentor = mentors.find(
+                            (item) => item.id === assignment.mentor_profile_id,
+                          );
+                          const startup = startups.find(
+                            (item) => item.id === assignment.startup_id,
+                          );
+                          return (
+                            <option key={assignment.id} value={assignment.id}>
+                              {mentor?.displayName} · {startup?.name}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <input
+                          name="scheduledStartAt"
+                          type="datetime-local"
+                          className={controlClassName}
+                          required
+                        />
+                        <input
+                          name="scheduledEndAt"
+                          type="datetime-local"
+                          className={controlClassName}
+                          required
+                        />
+                      </div>
+                      <textarea
+                        name="objective"
+                        rows={3}
+                        className={controlClassName}
+                        placeholder="Objetivo da mentoria"
+                        required
+                      />
+                      <select
+                        name="mode"
+                        className={controlClassName}
+                        defaultValue="remote"
+                      >
+                        <option value="remote">Remota</option>
+                        <option value="in_person">Presencial</option>
+                        <option value="hybrid">Híbrida</option>
+                      </select>
+                      <input
+                        name="meetingUrl"
+                        type="url"
+                        className={controlClassName}
+                        placeholder="Link da reunião (opcional)"
+                      />
+                      <input
+                        name="location"
+                        className={controlClassName}
+                        placeholder="Local (opcional)"
+                      />
+                      <Button type="submit">
+                        <CalendarClock className="size-4" /> Confirmar horário
+                      </Button>
+                    </form>
+                  ) : round.status === "open" ? (
+                    <p className="rounded-2xl bg-[#f7f2ee] p-4 text-sm text-[var(--text-muted)]">
+                      Nenhum vínculo elegível com os mentores desta rodada.
+                    </p>
+                  ) : null}
+                </div>
+              </article>
+            );
+          })}
+          {!operations.rounds.length ? (
+            <EmptyState
+              icon={CalendarRange}
+              title="Nenhuma rodada criada"
+              description="Crie uma rodada vinculada a uma turma e convide os mentores participantes."
+            />
+          ) : null}
+        </div>
       </section>
 
       <section

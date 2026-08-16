@@ -2561,6 +2561,7 @@ export type Database = {
           objective: string;
           organization_id: string;
           requested_by: string;
+          round_id: string | null;
           scheduled_end_at: string | null;
           scheduled_start_at: string | null;
           status: Database["public"]["Enums"]["mentoring_session_status"];
@@ -2585,6 +2586,7 @@ export type Database = {
           objective: string;
           organization_id: string;
           requested_by: string;
+          round_id?: string | null;
           scheduled_end_at?: string | null;
           scheduled_start_at?: string | null;
           status?: Database["public"]["Enums"]["mentoring_session_status"];
@@ -2609,6 +2611,7 @@ export type Database = {
           objective?: string;
           organization_id?: string;
           requested_by?: string;
+          round_id?: string | null;
           scheduled_end_at?: string | null;
           scheduled_start_at?: string | null;
           status?: Database["public"]["Enums"]["mentoring_session_status"];
@@ -2635,6 +2638,13 @@ export type Database = {
             columns: ["organization_id", "incubator_id"];
             isOneToOne: false;
             referencedRelation: "incubators";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "mentoring_sessions_round_same_org";
+            columns: ["organization_id", "round_id"];
+            isOneToOne: false;
+            referencedRelation: "mentoring_rounds";
             referencedColumns: ["organization_id", "id"];
           },
         ];
@@ -2807,6 +2817,71 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "startups";
             referencedColumns: ["organization_id", "id"];
+          },
+        ];
+      };
+      notification_outbox: {
+        Row: {
+          action_path: string | null;
+          attempts: number;
+          available_at: string;
+          created_at: string;
+          dedupe_key: string;
+          id: string;
+          kind: string;
+          last_error: string | null;
+          organization_id: string;
+          recipient_email: string;
+          recipient_user_id: string | null;
+          sent_at: string | null;
+          status: string;
+          subject: string;
+          text_body: string;
+          updated_at: string;
+        };
+        Insert: {
+          action_path?: string | null;
+          attempts?: number;
+          available_at?: string;
+          created_at?: string;
+          dedupe_key: string;
+          id?: string;
+          kind: string;
+          last_error?: string | null;
+          organization_id: string;
+          recipient_email: string;
+          recipient_user_id?: string | null;
+          sent_at?: string | null;
+          status?: string;
+          subject: string;
+          text_body: string;
+          updated_at?: string;
+        };
+        Update: {
+          action_path?: string | null;
+          attempts?: number;
+          available_at?: string;
+          created_at?: string;
+          dedupe_key?: string;
+          id?: string;
+          kind?: string;
+          last_error?: string | null;
+          organization_id?: string;
+          recipient_email?: string;
+          recipient_user_id?: string | null;
+          sent_at?: string | null;
+          status?: string;
+          subject?: string;
+          text_body?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notification_outbox_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
           },
         ];
       };
@@ -3885,9 +3960,27 @@ export type Database = {
         Args: { target_call_id: string };
         Returns: number;
       };
+      book_mentoring_round_session: {
+        Args: {
+          scheduled_end_local: string;
+          scheduled_start_local: string;
+          session_location?: string | null;
+          session_meeting_url?: string | null;
+          session_mode: Database["public"]["Enums"]["mentoring_session_mode"];
+          session_objective: string;
+          session_timezone: string;
+          target_assignment_id: string;
+          target_round_id: string;
+        };
+        Returns: string;
+      };
       convert_selection_application: {
         Args: { target_application_id: string };
         Returns: string;
+      };
+      convert_selection_application_with_onboarding: {
+        Args: { target_application_id: string };
+        Returns: Json;
       };
       create_selection_call: {
         Args: {
@@ -3993,12 +4086,89 @@ export type Database = {
         };
         Returns: string;
       };
+      create_mentoring_round: {
+        Args: {
+          booking_closes_local: string;
+          booking_opens_local: string;
+          max_sessions: number;
+          open_now?: boolean;
+          round_description: string;
+          round_name: string;
+          round_timezone: string;
+          sessions_end_local: string;
+          sessions_start_local: string;
+          target_cohort_id: string;
+          target_incubator_id: string;
+          target_organization_id: string;
+        };
+        Returns: string;
+      };
+      adjust_cerne_evidence_slot: {
+        Args: {
+          requested_due_local: string | null;
+          requested_notes?: string | null;
+          requested_required: boolean;
+          requested_title: string;
+          requested_timezone: string;
+          target_slot_id: string;
+        };
+        Returns: undefined;
+      };
+      save_cerne_action_decision: {
+        Args: {
+          requested_decision?: string | null;
+          requested_minimum_evidence?: string | null;
+          requested_notes?: string | null;
+          requested_periodicity?: string | null;
+          requested_status: string;
+          target_action_id: string;
+          target_cycle_id: string;
+        };
+        Returns: string;
+      };
+      get_cerne_plan: {
+        Args: {
+          target_incubator_id: string;
+          target_organization_id: string;
+        };
+        Returns: Json;
+      };
       get_cerne_workspace: {
         Args: {
           target_incubator_id: string;
           target_organization_id: string;
         };
         Returns: Json;
+      };
+      get_mentoring_operations: {
+        Args: {
+          target_incubator_id: string;
+          target_organization_id: string;
+        };
+        Returns: Json;
+      };
+      invite_mentor_to_cohort: {
+        Args: {
+          target_cohort_id: string;
+          target_mentor_profile_id: string;
+        };
+        Returns: string;
+      };
+      respond_mentor_cohort_invitation: {
+        Args: { accept_invitation: boolean; target_team_id: string };
+        Returns: undefined;
+      };
+      set_mentoring_round_mentor: {
+        Args: {
+          enabled: boolean;
+          target_cohort_mentor_id: string;
+          target_round_id: string;
+        };
+        Returns: undefined;
+      };
+      set_mentoring_round_status: {
+        Args: { requested_status: string; target_round_id: string };
+        Returns: undefined;
       };
       refresh_cerne_alerts: {
         Args: {
@@ -4067,12 +4237,14 @@ export type Database = {
       submit_selection_application: {
         Args: {
           answers: Json;
+          authenticated_applicant_user_id?: string | null;
           applicant_email: string;
           applicant_name: string;
           applicant_phone: string;
           call_slug: string;
           city: string;
           legal_name: string;
+          request_fingerprint: string;
           sector: string;
           stage: Database["public"]["Enums"]["startup_stage"];
           startup_name: string;
@@ -4088,6 +4260,7 @@ export type Database = {
           application_protocol: string;
           call_slug: string;
           grounds: string;
+          request_fingerprint: string;
         };
         Returns: string;
       };
@@ -4096,6 +4269,8 @@ export type Database = {
           accept: boolean;
           applicant_email: string;
           application_protocol: string;
+          call_slug: string;
+          request_fingerprint: string;
         };
         Returns: string;
       };

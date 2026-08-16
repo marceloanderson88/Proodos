@@ -1,10 +1,18 @@
 import { MentoringWorkspace } from "@/components/mentoring/mentoring-workspace";
 import { getIncubatorServerContext } from "@/lib/incubators/server-context";
 import { firstSearchValue } from "@/lib/m6/server-context";
+import { mentoringOperationsFromJson } from "@/lib/mentoring/types";
 
 export const dynamic = "force-dynamic";
 
-const mentoringViews = new Set(["overview", "mentores", "vinculos", "agenda"]);
+const mentoringViews = new Set([
+  "overview",
+  "mentores",
+  "equipe",
+  "rodadas",
+  "vinculos",
+  "agenda",
+]);
 
 export default async function MentoringPage({
   params,
@@ -32,6 +40,7 @@ export default async function MentoringPage({
     availabilityResult,
     sessionsResult,
     assessmentsResult,
+    operationsResult,
   ] = await Promise.all([
     supabase.rpc("has_incubator_permission", {
       target_organization_id: organization.id,
@@ -87,7 +96,7 @@ export default async function MentoringPage({
     supabase
       .from("mentoring_sessions")
       .select(
-        "id, assignment_id, diagnostic_assessment_id, objective, mode, timezone, scheduled_start_at, scheduled_end_at, meeting_url, location, status, cancellation_reason, created_at",
+        "id, assignment_id, round_id, diagnostic_assessment_id, objective, mode, timezone, scheduled_start_at, scheduled_end_at, meeting_url, location, status, cancellation_reason, created_at",
       )
       .eq("organization_id", organization.id)
       .eq("incubator_id", incubator.id)
@@ -101,6 +110,10 @@ export default async function MentoringPage({
       .eq("incubator_id", incubator.id)
       .eq("execution_mode", "facilitated")
       .order("updated_at", { ascending: false }),
+    supabase.rpc("get_mentoring_operations", {
+      target_organization_id: organization.id,
+      target_incubator_id: incubator.id,
+    }),
   ]);
 
   if (
@@ -112,7 +125,9 @@ export default async function MentoringPage({
     mentorRoleResult.error ||
     availabilityResult.error ||
     sessionsResult.error ||
-    assessmentsResult.error
+    assessmentsResult.error ||
+    operationsResult.error ||
+    !operationsResult.data
   ) {
     throw new Error("Falha ao carregar o módulo de mentorias.");
   }
@@ -173,7 +188,10 @@ export default async function MentoringPage({
 
   return (
     <MentoringWorkspace
-      view={view as "overview" | "mentores" | "vinculos" | "agenda"}
+      view={
+        view as
+          "overview" | "mentores" | "equipe" | "rodadas" | "vinculos" | "agenda"
+      }
       organizationSlug={organizationSlug}
       incubatorSlug={incubatorSlug}
       incubatorName={incubator.name}
@@ -198,6 +216,7 @@ export default async function MentoringPage({
       availability={availabilityResult.data ?? []}
       sessions={sessionsResult.data ?? []}
       assessments={assessmentsResult.data ?? []}
+      operations={mentoringOperationsFromJson(operationsResult.data)}
       success={firstSearchValue(feedback.success)}
       error={firstSearchValue(feedback.error)}
     />

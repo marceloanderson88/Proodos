@@ -75,6 +75,85 @@ const optionalUuid = z.preprocess(
   z.string().uuid().nullable(),
 );
 
+const localDateTimeSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Informe data e hora válidas.");
+
+export const createMentoringRoundSchema = z
+  .object({
+    cohortId: z.string().uuid(),
+    name: z.string().trim().min(3).max(160),
+    description: z.string().trim().max(2000),
+    bookingOpensAt: localDateTimeSchema,
+    bookingClosesAt: localDateTimeSchema,
+    sessionsStartAt: localDateTimeSchema,
+    sessionsEndAt: localDateTimeSchema,
+    timezone: z.string().trim().min(1).max(100),
+    maxSessions: z.coerce.number().int().min(1).max(20),
+    openNow: z.enum(["true", "false"]).default("false"),
+  })
+  .refine(
+    ({ bookingOpensAt, bookingClosesAt }) => bookingOpensAt < bookingClosesAt,
+    {
+      message: "O encerramento das reservas deve ser posterior à abertura.",
+      path: ["bookingClosesAt"],
+    },
+  )
+  .refine(
+    ({ sessionsStartAt, sessionsEndAt }) => sessionsStartAt < sessionsEndAt,
+    {
+      message: "O período de atendimento é inválido.",
+      path: ["sessionsEndAt"],
+    },
+  );
+
+export const inviteCohortMentorSchema = z.object({
+  cohortId: z.string().uuid(),
+  mentorProfileId: z.string().uuid(),
+});
+
+export const respondCohortMentorInvitationSchema = z.object({
+  teamId: z.string().uuid(),
+  accept: z.enum(["true", "false"]),
+});
+
+export const setMentoringRoundMentorSchema = z.object({
+  roundId: z.string().uuid(),
+  cohortMentorId: z.string().uuid(),
+  enabled: z.enum(["true", "false"]),
+});
+
+export const setMentoringRoundStatusSchema = z.object({
+  roundId: z.string().uuid(),
+  status: z.enum(["draft", "open", "closed", "completed", "cancelled"]),
+});
+
+export const bookMentoringRoundSessionSchema = z
+  .object({
+    roundId: z.string().uuid(),
+    assignmentId: z.string().uuid(),
+    objective: z.string().trim().min(5).max(1000),
+    mode: z.enum(["remote", "in_person", "hybrid"]),
+    timezone: z.string().trim().min(1).max(100),
+    scheduledStartAt: localDateTimeSchema,
+    scheduledEndAt: localDateTimeSchema,
+    meetingUrl: z.preprocess(
+      (value) => (value === "" ? null : value),
+      z.string().url().max(2048).nullable(),
+    ),
+    location: z.preprocess(
+      (value) => (value === "" ? null : value),
+      z.string().trim().min(3).max(500).nullable(),
+    ),
+  })
+  .refine(
+    ({ scheduledStartAt, scheduledEndAt }) => scheduledStartAt < scheduledEndAt,
+    {
+      message: "O término deve ser posterior ao início.",
+      path: ["scheduledEndAt"],
+    },
+  );
+
 export const createMentorAvailabilitySchema = z
   .object({
     mentorProfileId: z.string().uuid(),
