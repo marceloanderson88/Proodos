@@ -3,6 +3,7 @@
 import {
   BarChart3,
   BriefcaseBusiness,
+  ChevronDown,
   Gavel,
   House,
   LayoutDashboard,
@@ -18,7 +19,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { IncubatorSwitcher } from "@/components/layout/incubator-switcher";
@@ -28,6 +29,12 @@ type NavigationItem = {
   label: string;
   slug: string;
   icon: LucideIcon;
+  children?: readonly NavigationChild[];
+};
+
+type NavigationChild = {
+  label: string;
+  view?: string;
 };
 
 type NavigationGroup = {
@@ -43,17 +50,81 @@ const navigation: readonly NavigationGroup[] = [
   {
     group: "Operação",
     items: [
-      { label: "Seleção", slug: "chamadas", icon: Gavel },
-      { label: "Startups", slug: "startups", icon: Rocket },
-      { label: "Portfólio", slug: "programas", icon: BriefcaseBusiness },
-      { label: "Mentorias", slug: "mentorias", icon: MessageSquare },
+      {
+        label: "Seleção",
+        slug: "chamadas",
+        icon: Gavel,
+        children: [
+          { label: "Visão geral" },
+          { label: "Chamadas", view: "calls" },
+          { label: "Inscrições", view: "applications" },
+          { label: "Avaliadores", view: "reviewers" },
+          { label: "Avaliações", view: "reviews" },
+          { label: "Ranking", view: "ranking" },
+          { label: "Recursos", view: "appeals" },
+          { label: "Resultados", view: "results" },
+        ],
+      },
+      {
+        label: "Startups",
+        slug: "startups",
+        icon: Rocket,
+        children: [
+          { label: "Portfólio de startups" },
+          { label: "Solicitações pendentes", view: "pendentes" },
+          { label: "Convites", view: "convites" },
+          { label: "Equipes e vínculos", view: "vinculos" },
+        ],
+      },
+      {
+        label: "Portfólio",
+        slug: "programas",
+        icon: BriefcaseBusiness,
+        children: [{ label: "Programas" }, { label: "Turmas", view: "turmas" }],
+      },
+      {
+        label: "Mentorias",
+        slug: "mentorias",
+        icon: MessageSquare,
+        children: [
+          { label: "Visão geral" },
+          { label: "Mentores", view: "mentores" },
+          { label: "Equipe por turma", view: "equipe" },
+          { label: "Rodadas", view: "rodadas" },
+          { label: "Vínculos", view: "vinculos" },
+          { label: "Agenda", view: "agenda" },
+        ],
+      },
     ],
   },
   {
     group: "Gestão",
     items: [
-      { label: "Indicadores", slug: "indicadores", icon: BarChart3 },
-      { label: "CERNE", slug: "cerne", icon: ShieldCheck },
+      {
+        label: "Indicadores",
+        slug: "indicadores",
+        icon: BarChart3,
+        children: [
+          { label: "Visão geral" },
+          { label: "Portfólio", view: "portfolio" },
+          { label: "Diagnósticos", view: "diagnosticos" },
+          { label: "Território", view: "territorio" },
+        ],
+      },
+      {
+        label: "CERNE",
+        slug: "cerne",
+        icon: ShieldCheck,
+        children: [
+          { label: "Visão geral" },
+          { label: "Matriz de práticas", view: "matrix" },
+          { label: "Plano de evidências", view: "plan" },
+          { label: "Evidências", view: "evidences" },
+          { label: "Pendências e alertas", view: "alerts" },
+          { label: "Fontes no Drive", view: "drive" },
+          { label: "Avaliação e validação", view: "review" },
+        ],
+      },
     ],
   },
   {
@@ -63,6 +134,11 @@ const navigation: readonly NavigationGroup[] = [
         label: "Configurações",
         slug: "gestao-incubadora",
         icon: Settings,
+        children: [
+          { label: "Perfil e operação" },
+          { label: "Equipe e permissões", view: "equipe" },
+          { label: "Convites de acesso", view: "convites" },
+        ],
       },
     ],
   },
@@ -101,10 +177,18 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const pathSegments = pathname.split("/").filter(Boolean);
   const currentModule = pathSegments[4] ?? null;
+  const activeView = searchParams.get("view");
+  const [submenuState, setSubmenuState] = useState<{
+    pathname: string;
+    slug: string | null;
+  }>({ pathname, slug: currentModule });
+  const expandedSubmenu =
+    submenuState.pathname === pathname ? submenuState.slug : currentModule;
 
   const initials = user.displayName
     .split(/\s+/)
@@ -181,21 +265,19 @@ export function AppShell({
                   {group}
                 </h2>
                 <ul className="space-y-0.5">
-                  {items.map(({ label, slug, icon: Icon }) => {
+                  {items.map(({ label, slug, icon: Icon, children }) => {
                     const href = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
                     const active =
                       currentModule === slug ||
                       (slug !== "dashboard" && pathname.startsWith(`${href}/`));
                     const primary = slug === "dashboard";
+                    const expanded = expandedSubmenu === slug;
 
                     return (
                       <li key={slug}>
-                        <Link
-                          href={href}
-                          onClick={() => setMenuOpen(false)}
-                          aria-current={active ? "page" : undefined}
+                        <div
                           className={cn(
-                            "group relative flex min-h-[3.35rem] items-center gap-4 rounded-xl px-3 text-[0.96rem] font-semibold tracking-[-0.01em] text-white/82 transition duration-200 hover:bg-white/[0.065] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4c47a] [@media(max-height:760px)]:min-h-[2.9rem]",
+                            "group relative flex min-h-[3.35rem] items-stretch rounded-xl text-white/82 transition duration-200 hover:bg-white/[0.065] hover:text-white [@media(max-height:760px)]:min-h-[2.9rem]",
                             active && primary
                               ? "bg-gradient-to-r from-[#8f171f]/88 to-[#751118]/62 text-white shadow-[0_12px_28px_rgba(38,6,9,0.24),inset_3px_0_0_#f4c47a]"
                               : active
@@ -203,16 +285,103 @@ export function AppShell({
                                 : "",
                           )}
                         >
-                          <Icon
-                            className={cn(
-                              "size-5.5 shrink-0 text-white/68 transition group-hover:text-[#f4c47a]",
-                              active && "text-[#f4c47a]",
-                            )}
-                            strokeWidth={1.7}
-                            aria-hidden="true"
-                          />
-                          <span>{label}</span>
-                        </Link>
+                          <Link
+                            href={href}
+                            onClick={() => setMenuOpen(false)}
+                            aria-current={active ? "page" : undefined}
+                            className="flex min-w-0 flex-1 items-center gap-4 rounded-xl px-3 text-[0.96rem] font-semibold tracking-[-0.01em] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4c47a]"
+                          >
+                            <Icon
+                              className={cn(
+                                "size-5.5 shrink-0 text-white/68 transition group-hover:text-[#f4c47a]",
+                                active && "text-[#f4c47a]",
+                              )}
+                              strokeWidth={1.7}
+                              aria-hidden="true"
+                            />
+                            <span className="truncate">{label}</span>
+                          </Link>
+                          {children?.length ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSubmenuState({
+                                  pathname,
+                                  slug: expanded ? null : slug,
+                                })
+                              }
+                              aria-expanded={expanded}
+                              aria-controls={`submenu-${slug}`}
+                              aria-label={`${expanded ? "Fechar" : "Abrir"} submenu de ${label}`}
+                              className="grid w-10 shrink-0 place-items-center rounded-xl text-white/50 transition hover:bg-white/[0.07] hover:text-[#f4c47a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4c47a]"
+                            >
+                              <ChevronDown
+                                className={cn(
+                                  "size-4 transition-transform duration-200",
+                                  expanded && "rotate-180 text-[#f4c47a]",
+                                )}
+                                aria-hidden="true"
+                              />
+                            </button>
+                          ) : null}
+                        </div>
+                        {children?.length ? (
+                          <div
+                            id={`submenu-${slug}`}
+                            hidden={!expanded}
+                            className="ml-[1.35rem] border-l border-[#f4c47a]/24 py-1 pl-3"
+                          >
+                            <ul className="space-y-0.5">
+                              {children.map((child) => {
+                                const childParams =
+                                  slug === "indicadores" &&
+                                  currentModule === slug
+                                    ? new URLSearchParams(
+                                        searchParams.toString(),
+                                      )
+                                    : new URLSearchParams();
+                                if (child.view)
+                                  childParams.set("view", child.view);
+                                else childParams.delete("view");
+                                const query = childParams.toString();
+                                const childHref = query
+                                  ? `${href}?${query}`
+                                  : href;
+                                const childActive =
+                                  currentModule === slug &&
+                                  (child.view
+                                    ? activeView === child.view
+                                    : !activeView);
+
+                                return (
+                                  <li key={`${slug}-${child.label}`}>
+                                    <Link
+                                      href={childHref}
+                                      onClick={() => setMenuOpen(false)}
+                                      aria-current={
+                                        childActive ? "page" : undefined
+                                      }
+                                      className={cn(
+                                        "group/sub flex min-h-8 items-center gap-2 rounded-lg px-3 py-1.5 text-xs leading-4 font-semibold text-white/62 transition hover:bg-white/[0.07] hover:text-white",
+                                        childActive &&
+                                          "bg-[#f4c47a]/12 text-[#ffe2ad]",
+                                      )}
+                                    >
+                                      <span
+                                        className={cn(
+                                          "size-1.5 shrink-0 rounded-full bg-white/24 transition group-hover/sub:bg-white/55",
+                                          childActive && "bg-[#f4c47a]",
+                                        )}
+                                        aria-hidden="true"
+                                      />
+                                      <span>{child.label}</span>
+                                    </Link>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        ) : null}
                       </li>
                     );
                   })}
