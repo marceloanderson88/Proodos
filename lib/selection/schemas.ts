@@ -124,6 +124,28 @@ export const publicSelectionApplicationSchema = z.object({
   ),
 });
 
+export const publicSelectionAppealSchema = z.object({
+  protocol: z
+    .string()
+    .trim()
+    .min(10)
+    .max(100)
+    .transform((value) => value.toUpperCase()),
+  email: z.email().transform((value) => value.toLowerCase()),
+  grounds: z.string().trim().min(30).max(5000),
+});
+
+export const publicSelectionConvocationSchema = z.object({
+  protocol: z
+    .string()
+    .trim()
+    .min(10)
+    .max(100)
+    .transform((value) => value.toUpperCase()),
+  email: z.email().transform((value) => value.toLowerCase()),
+  response: z.enum(["accept", "decline"]),
+});
+
 export function defaultSelectionQuestions() {
   return [
     {

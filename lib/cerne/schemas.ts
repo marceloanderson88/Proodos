@@ -45,3 +45,25 @@ export const registerCerneEvidenceSchema = z
       path: ["externalUrl"],
     },
   );
+
+export const saveCerneActionDecisionSchema = z.object({
+  cycleId: uuid,
+  actionId: uuid,
+  status: z.enum(["accepted", "adjusted", "not_applicable"]),
+  decision: z.string().trim().max(1000),
+  notes: z.string().trim().max(2000),
+  minimumEvidence: z.string().trim().max(1500),
+  periodicity: z.string().trim().max(160),
+});
+
+export const adjustCerneEvidenceSlotSchema = z.object({
+  slotId: uuid,
+  title: z.string().trim().min(3).max(300),
+  dueAt: z.union([
+    z.literal(""),
+    z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+  ]),
+  timezone: z.string().trim().min(1).max(100),
+  required: z.enum(["true", "false"]),
+  notes: z.string().trim().max(2000),
+});

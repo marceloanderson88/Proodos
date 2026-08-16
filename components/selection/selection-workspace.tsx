@@ -449,7 +449,7 @@ export function SelectionWorkspace({
           <SectionTitle
             eyebrow="Banca"
             title="Avaliadores e distribuição"
-            description="Atribuições adicionais preservam integralmente avaliações, impedimentos e histórico."
+            description="Distribua manualmente ou faça um sorteio entre os avaliadores de menor carga. Atribuições, impedimentos, avisos por e-mail e histórico permanecem auditáveis."
           />
           {data.canManage && (
             <section className="grid gap-5 lg:grid-cols-2">
@@ -528,29 +528,63 @@ export function SelectionWorkspace({
                     ))}
                   </select>
                   <Button type="submit" variant="secondary">
-                    Equilibrar banca
+                    Sortear e equilibrar
                   </Button>
                 </form>
               </div>
             </section>
           )}
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {data.reviewers.map((reviewer) => (
-              <article key={reviewer.id} className="surface-card p-5">
-                <div className="grid size-10 place-items-center rounded-full bg-[#f5e2d5] font-black text-[var(--wine-800)]">
-                  {reviewer.display_name.slice(0, 2).toUpperCase()}
-                </div>
-                <h3 className="mt-4 font-black text-[var(--wine-950)]">
-                  {reviewer.display_name}
-                </h3>
-                <p className="mt-1 text-xs text-[var(--text-muted)]">
-                  {reviewer.email}
-                </p>
-                <p className="mt-3 text-xs font-bold text-[#8a4c08]">
-                  {callName(data.calls, reviewer.call_id)}
-                </p>
-              </article>
-            ))}
+            {data.reviewers.map((reviewer) => {
+              const reviewerAssignments = data.assignments.filter(
+                (assignment) => assignment.reviewer_id === reviewer.id,
+              );
+              const pending = reviewerAssignments.filter((assignment) =>
+                ["assigned", "in_progress"].includes(assignment.status),
+              ).length;
+              const submitted = reviewerAssignments.filter(
+                (assignment) => assignment.status === "submitted",
+              ).length;
+              return (
+                <article key={reviewer.id} className="surface-card p-5">
+                  <div className="grid size-10 place-items-center rounded-full bg-[#f5e2d5] font-black text-[var(--wine-800)]">
+                    {reviewer.display_name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <h3 className="mt-4 font-black text-[var(--wine-950)]">
+                    {reviewer.display_name}
+                  </h3>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    {reviewer.email}
+                  </p>
+                  <p className="mt-3 text-xs font-bold text-[#8a4c08]">
+                    {callName(data.calls, reviewer.call_id)}
+                  </p>
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="rounded-xl bg-[#fff7ed] p-3">
+                      <p className="text-lg font-black text-[#8a4c08]">
+                        {pending}
+                      </p>
+                      <p className="text-[10px] font-bold tracking-wide text-[#9a6a33] uppercase">
+                        Pendentes
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-[#eef8f2] p-3">
+                      <p className="text-lg font-black text-[#176044]">
+                        {submitted}
+                      </p>
+                      <p className="text-[10px] font-bold tracking-wide text-[#4b7b66] uppercase">
+                        Entregues
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-[11px] text-[var(--text-muted)]">
+                    {reviewer.confidentiality_accepted_at
+                      ? "Confidencialidade aceita"
+                      : "Aguardando aceite de confidencialidade"}
+                  </p>
+                </article>
+              );
+            })}
           </section>
         </div>
       )}

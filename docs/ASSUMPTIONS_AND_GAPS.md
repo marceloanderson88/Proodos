@@ -66,12 +66,12 @@ Confirmar tamanho máximo por tipo, tipos proibidos, retenção, quarentena/anti
 ### G-07 — Escopo de mentorias
 
 **Lacuna:** o SDD coloca mentorias na Fase 2, mas o menu da fundação deve estar preparado.  
-**Suposição:** item e placeholder no shell; nenhuma persistência ou agenda nesta etapa.
+**Implementação atual:** perfis, vínculos mentor–startup, disponibilidade, sessões, equipe por turma, convites e rodadas com janela de reserva estão persistidos. A integração com calendário externo permanece opcional.
 
 ### G-08 — Provedor de e-mail
 
 **Lacuna:** fornecedor transacional, remetente, domínio e templates.  
-**Implementação atual:** convites de acesso usam o e-mail nativo do Supabase Auth com `SUPABASE_SECRET_KEY` exclusivamente no servidor. Um provedor transacional e templates institucionais continuam pendentes para comunicações de negócio.
+**Implementação atual:** convites de acesso usam o e-mail nativo do Supabase Auth. Comunicações de negócio usam uma fila transacional idempotente e o adapter HTTP do Resend, ativado por `EMAIL_PROVIDER_API_KEY` e `EMAIL_FROM`; sem configuração, os avisos permanecem na fila para envio posterior.
 
 ### G-09 — Calendário
 

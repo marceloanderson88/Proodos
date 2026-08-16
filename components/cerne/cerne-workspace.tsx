@@ -3,10 +3,13 @@
 import {
   AlertTriangle,
   ArrowUpRight,
+  ClipboardList,
   FileCheck2,
   FolderTree,
   Gauge,
   Link2,
+  RefreshCw,
+  Settings2,
   ShieldCheck,
   UserRoundCheck,
 } from "lucide-react";
@@ -26,6 +29,7 @@ type Props = {
   view: CerneView;
   data: CerneWorkspaceData;
   currentUserId: string;
+  timezone: string;
   success?: string;
   error?: string;
   prefill: {
@@ -42,6 +46,9 @@ type Props = {
     assignReviewer: FormAction;
     acceptConfidentiality: FormAction;
     reviewEvidence: FormAction;
+    saveActionDecision: FormAction;
+    adjustEvidenceSlot: FormAction;
+    refreshAlerts: () => void | Promise<void>;
   };
 };
 
@@ -77,10 +84,27 @@ function Empty({ children }: { children: React.ReactNode }) {
   );
 }
 
+function localDateTimeValue(value: string | null, timeZone: string) {
+  if (!value) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(value));
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+
 export function CerneWorkspace({
   view,
   data,
   currentUserId,
+  timezone,
   success,
   error,
   prefill,
@@ -167,6 +191,14 @@ export function CerneWorkspace({
           action={actions.assignOwner}
         />
       )}
+      {view === "plan" && (
+        <EvidencePlan
+          data={data}
+          activeCycleId={activeCycle?.id}
+          timezone={timezone}
+          actions={actions}
+        />
+      )}
       {view === "evidences" && (
         <Evidences
           data={data}
@@ -176,7 +208,11 @@ export function CerneWorkspace({
         />
       )}
       {view === "alerts" && (
-        <Alerts alerts={openAlerts} action={actions.acknowledgeAlert} />
+        <Alerts
+          alerts={openAlerts}
+          action={actions.acknowledgeAlert}
+          refreshAction={actions.refreshAlerts}
+        />
       )}
       {view === "drive" && (
         <Drive data={data} activeCycleId={activeCycle?.id} />
@@ -229,9 +265,40 @@ function Overview({
       ),
     ),
   }));
+  const reviewedActions = data.actionDecisions.filter(
+    (decision) =>
+      decision.cycle_id === activeCycleId && decision.status !== "to_review",
+  ).length;
+  const actionReviewPercent = data.actions.length
+    ? Math.round((reviewedActions / data.actions.length) * 100)
+    : 0;
+  const processStats = [
+    ...new Map(
+      data.practices.map((practice) => [
+        practice.process_code,
+        {
+          code: practice.process_code,
+          name: practice.process_name,
+        },
+      ]),
+    ).values(),
+  ].map((process) => ({
+    ...process,
+    ...calculateCerneCoverage(
+      data.slots.filter(
+        (slot) =>
+          slot.cycle_id === activeCycleId &&
+          data.practices.some(
+            (practice) =>
+              practice.code === slot.practice_code &&
+              practice.process_code === process.code,
+          ),
+      ),
+    ),
+  }));
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Kpi
           icon={Gauge}
           label="Cobertura validada"
@@ -257,6 +324,12 @@ function Overview({
           value={String(failedSync)}
           detail="sincronização preparada"
           danger={failedSync > 0}
+        />
+        <Kpi
+          icon={ClipboardList}
+          label="Plano revisado"
+          value={`${actionReviewPercent}%`}
+          detail={`${reviewedActions} de ${data.actions.length} ações`}
         />
       </div>
       {!activeCycleId ? (
@@ -316,6 +389,34 @@ function Overview({
                 Abrir matriz →
               </Link>
             </div>
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {processStats.map((process) => (
+                <div
+                  key={process.code}
+                  className="rounded-2xl border border-[#751118]/8 bg-white p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-black tracking-[.14em] text-[#9a4a36] uppercase">
+                        Processo {process.code}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-[#401014]">
+                        {process.name}
+                      </p>
+                    </div>
+                    <strong className="text-lg text-[#8f111a]">
+                      {process.approvedPercent}%
+                    </strong>
+                  </div>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#eadbd3]">
+                    <div
+                      className="h-full rounded-full bg-[#a5222b]"
+                      style={{ width: `${process.approvedPercent}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               {practiceStats.map(({ practice, approvedPercent }) => (
                 <div
@@ -345,6 +446,12 @@ function Overview({
               Próximas ações
             </p>
             <div className="mt-4 space-y-3">
+              <Quick
+                href="?view=plan"
+                icon={ClipboardList}
+                title="Revisar plano"
+                text={`${reviewedActions} de ${data.actions.length} ações consolidadas.`}
+              />
               <Quick
                 href="?view=evidences"
                 icon={Link2}
@@ -578,6 +685,299 @@ function Matrix({
           </Card>
         );
       })}
+    </div>
+  );
+}
+
+function EvidencePlan({
+  data,
+  activeCycleId,
+  timezone,
+  actions,
+}: {
+  data: CerneWorkspaceData;
+  activeCycleId?: string;
+  timezone: string;
+  actions: Props["actions"];
+}) {
+  if (!activeCycleId)
+    return (
+      <Empty>Crie um ciclo CERNE para revisar o plano de evidências.</Empty>
+    );
+  const decisions = data.actionDecisions.filter(
+    (decision) => decision.cycle_id === activeCycleId,
+  );
+  const reviewed = decisions.filter(
+    (decision) => decision.status !== "to_review",
+  ).length;
+  const adjusted = decisions.filter(
+    (decision) => decision.status === "adjusted",
+  ).length;
+  const optionalSlots = data.slots.filter(
+    (slot) => slot.cycle_id === activeCycleId && slot.required === false,
+  ).length;
+  const reviewPercent = data.actions.length
+    ? Math.round((reviewed / data.actions.length) * 100)
+    : 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Kpi
+          icon={ClipboardList}
+          label="Ações revisadas"
+          value={`${reviewPercent}%`}
+          detail={`${reviewed} de ${data.actions.length} ações da planilha`}
+        />
+        <Kpi
+          icon={Settings2}
+          label="Ajustes aprovados"
+          value={String(adjusted)}
+          detail="periodicidade ou evidência mínima adaptada"
+        />
+        <Kpi
+          icon={FileCheck2}
+          label="Itens opcionais"
+          value={String(optionalSlots)}
+          detail="fora do denominador de prontidão"
+        />
+        <Kpi
+          icon={ShieldCheck}
+          label="Práticas cobertas"
+          value={String(
+            new Set(data.actions.map((action) => action.practice_code)).size,
+          )}
+          detail="catálogo consolidado CERNE I e II"
+        />
+      </div>
+
+      <Card>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold tracking-[.16em] text-[#9a4a36] uppercase">
+              Revisão da equipe
+            </p>
+            <h2 className="mt-1 font-serif text-2xl font-bold text-[#401014]">
+              42 ações consolidadas
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#765f60]">
+              Preserve a referência do manual, aceite a simplificação sugerida
+              ou registre uma adaptação justificada para este ciclo.
+            </p>
+          </div>
+          <Link href="?view=evidences" className={button}>
+            Registrar evidência
+          </Link>
+        </div>
+        <div className="mt-5 space-y-3">
+          {data.actions.map((catalogAction) => {
+            const decision = decisions.find(
+              (item) => item.action_id === catalogAction.id,
+            );
+            return (
+              <details
+                key={catalogAction.id}
+                className="group rounded-2xl border border-[#751118]/10 bg-[#fffdfb] open:bg-white"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4">
+                  <div>
+                    <p className="text-[10px] font-black tracking-[.16em] text-[#9a4a36] uppercase">
+                      {catalogAction.action_code} ·{" "}
+                      {catalogAction.periodicity_group}
+                    </p>
+                    <h3 className="mt-1 font-semibold text-[#401014]">
+                      {catalogAction.action_name}
+                    </h3>
+                  </div>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-3 py-1 text-[11px] font-bold",
+                      decision?.status === "accepted"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : decision?.status === "adjusted"
+                          ? "bg-blue-100 text-blue-800"
+                          : decision?.status === "not_applicable"
+                            ? "bg-slate-100 text-slate-700"
+                            : "bg-amber-100 text-amber-800",
+                    )}
+                  >
+                    {decision?.status === "accepted"
+                      ? "Aceita"
+                      : decision?.status === "adjusted"
+                        ? "Ajustada"
+                        : decision?.status === "not_applicable"
+                          ? "Não aplicável"
+                          : "A revisar"}
+                  </span>
+                </summary>
+                <div className="grid gap-5 border-t border-[#751118]/8 p-4 lg:grid-cols-[1fr_1.1fr]">
+                  <div className="space-y-4 text-sm">
+                    <div>
+                      <p className="text-xs font-bold text-[#8d7474] uppercase">
+                        Simplificação sugerida
+                      </p>
+                      <p className="mt-1 leading-6 text-[#684f51]">
+                        {catalogAction.simplification_suggestion}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-[#f7f2ee] p-4">
+                      <p className="text-xs font-bold text-[#8d7474] uppercase">
+                        Evidência mínima recomendada
+                      </p>
+                      <p className="mt-1 leading-6 text-[#401014]">
+                        {catalogAction.minimum_evidence}
+                      </p>
+                    </div>
+                    <p className="text-xs text-[#806c6d]">
+                      Periodicidade original:{" "}
+                      {catalogAction.original_periodicity ?? "Não informada"}
+                    </p>
+                  </div>
+                  {data.canManage ? (
+                    <form
+                      action={actions.saveActionDecision}
+                      className="grid gap-3"
+                    >
+                      <input
+                        type="hidden"
+                        name="cycleId"
+                        value={activeCycleId}
+                      />
+                      <input
+                        type="hidden"
+                        name="actionId"
+                        value={catalogAction.id}
+                      />
+                      <select
+                        name="status"
+                        defaultValue={
+                          decision?.status === "to_review" || !decision
+                            ? "accepted"
+                            : decision.status
+                        }
+                        className={field}
+                      >
+                        <option value="accepted">Aceitar recomendação</option>
+                        <option value="adjusted">Ajustar para o ciclo</option>
+                        <option value="not_applicable">
+                          Não se aplica neste ciclo
+                        </option>
+                      </select>
+                      <input
+                        name="periodicity"
+                        defaultValue={
+                          decision?.periodicity_override ??
+                          catalogAction.periodicity_group ??
+                          ""
+                        }
+                        className={field}
+                        placeholder="Periodicidade adotada"
+                      />
+                      <textarea
+                        name="minimumEvidence"
+                        defaultValue={
+                          decision?.minimum_evidence_override ??
+                          catalogAction.minimum_evidence
+                        }
+                        rows={3}
+                        className={cn(field, "h-auto py-3")}
+                        placeholder="Evidência mínima adotada"
+                      />
+                      <input
+                        name="decision"
+                        defaultValue={decision?.decision ?? ""}
+                        className={field}
+                        placeholder="Decisão resumida da equipe"
+                      />
+                      <textarea
+                        name="notes"
+                        defaultValue={decision?.notes ?? ""}
+                        rows={2}
+                        className={cn(field, "h-auto py-3")}
+                        placeholder="Justificativa ou observações"
+                      />
+                      <button className={cn(button, "justify-self-start")}>
+                        Salvar revisão
+                      </button>
+                    </form>
+                  ) : null}
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card>
+        <div>
+          <p className="text-xs font-bold tracking-[.16em] text-[#9a4a36] uppercase">
+            Plano operacional
+          </p>
+          <h2 className="mt-1 font-serif text-2xl font-bold text-[#401014]">
+            Ajustar evidências planejadas
+          </h2>
+          <p className="mt-2 text-sm text-[#765f60]">
+            Altere título, prazo e obrigatoriedade sem apagar o histórico do
+            requisito original.
+          </p>
+        </div>
+        <div className="mt-5 grid gap-4 xl:grid-cols-2">
+          {data.slots
+            .filter((slot) => slot.cycle_id === activeCycleId)
+            .map((slot) => (
+              <form
+                key={slot.id}
+                action={actions.adjustEvidenceSlot}
+                className="rounded-2xl border border-[#751118]/10 bg-[#fffdfb] p-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-black text-[#8f111a]">
+                    {slot.practice_code}
+                  </span>
+                  <Status status={slot.status} />
+                </div>
+                <input type="hidden" name="slotId" value={slot.id} />
+                <input type="hidden" name="timezone" value={timezone} />
+                <div className="mt-3 grid gap-3">
+                  <input
+                    name="title"
+                    defaultValue={slot.title}
+                    className={field}
+                    required
+                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      name="dueAt"
+                      type="datetime-local"
+                      defaultValue={localDateTimeValue(slot.due_at, timezone)}
+                      className={field}
+                    />
+                    <select
+                      name="required"
+                      defaultValue={slot.required === false ? "false" : "true"}
+                      className={field}
+                    >
+                      <option value="true">Obrigatória</option>
+                      <option value="false">Opcional neste ciclo</option>
+                    </select>
+                  </div>
+                  <textarea
+                    name="notes"
+                    defaultValue={slot.adjustment_notes ?? ""}
+                    rows={2}
+                    className={cn(field, "h-auto py-3")}
+                    placeholder="Justificativa do ajuste"
+                  />
+                  {data.canManage ? (
+                    <button className={cn(button, "justify-self-start")}>
+                      Salvar ajuste
+                    </button>
+                  ) : null}
+                </div>
+              </form>
+            ))}
+        </div>
+      </Card>
     </div>
   );
 }
@@ -825,19 +1225,33 @@ function Status({ status }: { status: string }) {
 function Alerts({
   alerts,
   action,
+  refreshAction,
 }: {
   alerts: CerneWorkspaceData["alerts"];
   action: FormAction;
+  refreshAction: () => void | Promise<void>;
 }) {
   return (
     <Card>
-      <div>
-        <p className="text-xs font-bold tracking-[.16em] text-[#9a4a36] uppercase">
-          Central de atenção
-        </p>
-        <h2 className="mt-1 font-serif text-2xl font-bold text-[#401014]">
-          Alertas e prazos
-        </h2>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold tracking-[.16em] text-[#9a4a36] uppercase">
+            Central de atenção
+          </p>
+          <h2 className="mt-1 font-serif text-2xl font-bold text-[#401014]">
+            Alertas e prazos
+          </h2>
+        </div>
+        <form action={refreshAction}>
+          <button
+            className={cn(
+              button,
+              "bg-white text-[#8f111a] ring-1 ring-[#751118]/15 hover:bg-[#fbf6f1]",
+            )}
+          >
+            <RefreshCw className="h-4 w-4" /> Atualizar alertas
+          </button>
+        </form>
       </div>
       <div className="mt-5 space-y-3">
         {alerts.map((alert) => (

@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  adjustCerneEvidenceSlotSchema,
   createCerneCycleSchema,
   registerCerneEvidenceSchema,
+  saveCerneActionDecisionSchema,
 } from "@/lib/cerne/schemas";
 import { getIncubatorServerContext } from "@/lib/incubators/server-context";
 import type { Json } from "@/lib/supabase/database.types";
@@ -308,5 +310,136 @@ export async function reviewCerneEvidenceAction(
     "review",
     "success",
     "Parecer registrado.",
+  );
+}
+
+export async function saveCerneActionDecisionAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const parsed = saveCerneActionDecisionSchema.safeParse({
+    cycleId: value(formData, "cycleId"),
+    actionId: value(formData, "actionId"),
+    status: value(formData, "status"),
+    decision: value(formData, "decision"),
+    notes: value(formData, "notes"),
+    minimumEvidence: value(formData, "minimumEvidence"),
+    periodicity: value(formData, "periodicity"),
+  });
+  if (!parsed.success)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "plan",
+      "error",
+      parsed.error.issues[0]?.message ?? "Revisão inválida.",
+    );
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const { error } = await context.supabase.rpc("save_cerne_action_decision", {
+    target_cycle_id: parsed.data.cycleId,
+    target_action_id: parsed.data.actionId,
+    requested_status: parsed.data.status,
+    requested_decision: parsed.data.decision || null,
+    requested_notes: parsed.data.notes || null,
+    requested_minimum_evidence: parsed.data.minimumEvidence || null,
+    requested_periodicity: parsed.data.periodicity || null,
+  });
+  if (error)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "plan",
+      "error",
+      message(error, "Não foi possível salvar a decisão."),
+    );
+  finish(
+    organizationSlug,
+    incubatorSlug,
+    "plan",
+    "success",
+    "Decisão do plano de evidências salva.",
+  );
+}
+
+export async function adjustCerneEvidenceSlotAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+  formData: FormData,
+) {
+  const parsed = adjustCerneEvidenceSlotSchema.safeParse({
+    slotId: value(formData, "slotId"),
+    title: value(formData, "title"),
+    dueAt: value(formData, "dueAt"),
+    timezone: value(formData, "timezone"),
+    required: value(formData, "required"),
+    notes: value(formData, "notes"),
+  });
+  if (!parsed.success)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "plan",
+      "error",
+      parsed.error.issues[0]?.message ?? "Ajuste inválido.",
+    );
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const { error } = await context.supabase.rpc("adjust_cerne_evidence_slot", {
+    target_slot_id: parsed.data.slotId,
+    requested_title: parsed.data.title,
+    requested_due_local: parsed.data.dueAt || null,
+    requested_timezone: parsed.data.timezone,
+    requested_required: parsed.data.required === "true",
+    requested_notes: parsed.data.notes || null,
+  });
+  if (error)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "plan",
+      "error",
+      message(error, "Não foi possível ajustar a evidência planejada."),
+    );
+  finish(
+    organizationSlug,
+    incubatorSlug,
+    "plan",
+    "success",
+    "Evidência planejada ajustada.",
+  );
+}
+
+export async function refreshCerneAlertsAction(
+  organizationSlug: string,
+  incubatorSlug: string,
+) {
+  const context = await getIncubatorServerContext(
+    organizationSlug,
+    incubatorSlug,
+  );
+  const { data, error } = await context.supabase.rpc("refresh_cerne_alerts", {
+    target_organization_id: context.organization.id,
+    target_incubator_id: context.incubator.id,
+  });
+  if (error)
+    finish(
+      organizationSlug,
+      incubatorSlug,
+      "alerts",
+      "error",
+      message(error, "Não foi possível atualizar os alertas."),
+    );
+  finish(
+    organizationSlug,
+    incubatorSlug,
+    "alerts",
+    "success",
+    `${data ?? 0} alerta(s) aberto(s) ou atualizado(s).`,
   );
 }

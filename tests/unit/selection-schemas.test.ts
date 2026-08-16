@@ -4,7 +4,9 @@ import {
   createSelectionCallSchema,
   defaultSelectionCriteria,
   defaultSelectionQuestions,
+  publicSelectionAppealSchema,
   publicSelectionApplicationSchema,
+  publicSelectionConvocationSchema,
 } from "@/lib/selection/schemas";
 
 const validCall = {
@@ -82,6 +84,27 @@ describe("selection call schemas", () => {
         stage: "desconhecido",
         summary: "",
         answers: { problem: "Escassez hídrica" },
+      }),
+    ).toThrow();
+  });
+
+  it("normaliza a identidade usada no recurso público", () => {
+    const parsed = publicSelectionAppealSchema.parse({
+      protocol: " abc-20260810-123456 ",
+      email: "MARIA@EXAMPLE.COM",
+      grounds:
+        "Solicito revisão porque o documento foi enviado no prazo correto.",
+    });
+    expect(parsed.protocol).toBe("ABC-20260810-123456");
+    expect(parsed.email).toBe("maria@example.com");
+  });
+
+  it("rejeita respostas arbitrárias na convocação pública", () => {
+    expect(() =>
+      publicSelectionConvocationSchema.parse({
+        protocol: "ABC-20260810-123456",
+        email: "maria@example.com",
+        response: "maybe",
       }),
     ).toThrow();
   });

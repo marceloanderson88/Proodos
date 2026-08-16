@@ -1,5 +1,9 @@
 import { CerneWorkspace } from "@/components/cerne/cerne-workspace";
-import { cerneWorkspaceFromJson, type CerneView } from "@/lib/cerne/types";
+import {
+  cernePlanFromJson,
+  cerneWorkspaceFromJson,
+  type CerneView,
+} from "@/lib/cerne/types";
 import { getIncubatorServerContext } from "@/lib/incubators/server-context";
 import { firstSearchValue } from "@/lib/m6/server-context";
 
@@ -8,9 +12,12 @@ import {
   acknowledgeCerneAlertAction,
   assignCerneOwnerAction,
   assignCerneReviewerAction,
+  adjustCerneEvidenceSlotAction,
   createCerneCycleAction,
   registerCerneEvidenceAction,
+  refreshCerneAlertsAction,
   reviewCerneEvidenceAction,
+  saveCerneActionDecisionAction,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +25,7 @@ export const dynamic = "force-dynamic";
 const views = new Set<CerneView>([
   "overview",
   "matrix",
+  "plan",
   "evidences",
   "alerts",
   "drive",
@@ -41,21 +49,36 @@ export default async function CernePage({
     organizationSlug,
     incubatorSlug,
   );
-  await context.supabase.rpc("refresh_cerne_alerts", {
-    target_organization_id: context.organization.id,
-    target_incubator_id: context.incubator.id,
-  });
-  const { data, error } = await context.supabase.rpc("get_cerne_workspace", {
-    target_organization_id: context.organization.id,
-    target_incubator_id: context.incubator.id,
-  });
-  if (error || !data) throw new Error("Falha ao carregar a governança CERNE.");
+  const [workspaceResult, planResult] = await Promise.all([
+    context.supabase.rpc("get_cerne_workspace", {
+      target_organization_id: context.organization.id,
+      target_incubator_id: context.incubator.id,
+    }),
+    context.supabase.rpc("get_cerne_plan", {
+      target_organization_id: context.organization.id,
+      target_incubator_id: context.incubator.id,
+    }),
+  ]);
+  if (
+    workspaceResult.error ||
+    !workspaceResult.data ||
+    planResult.error ||
+    !planResult.data
+  )
+    throw new Error("Falha ao carregar a governança CERNE.");
+  const plan = cernePlanFromJson(planResult.data);
+  const workspace = {
+    ...cerneWorkspaceFromJson(workspaceResult.data),
+    actions: plan.actions,
+    actionDecisions: plan.decisions,
+  };
 
   return (
     <CerneWorkspace
       view={view}
-      data={cerneWorkspaceFromJson(data)}
+      data={workspace}
       currentUserId={context.user.id}
+      timezone={context.incubator.timezone}
       success={firstSearchValue(query.success)}
       error={firstSearchValue(query.error)}
       prefill={{
@@ -96,6 +119,21 @@ export default async function CernePage({
           incubatorSlug,
         ),
         reviewEvidence: reviewCerneEvidenceAction.bind(
+          null,
+          organizationSlug,
+          incubatorSlug,
+        ),
+        saveActionDecision: saveCerneActionDecisionAction.bind(
+          null,
+          organizationSlug,
+          incubatorSlug,
+        ),
+        adjustEvidenceSlot: adjustCerneEvidenceSlotAction.bind(
+          null,
+          organizationSlug,
+          incubatorSlug,
+        ),
+        refreshAlerts: refreshCerneAlertsAction.bind(
           null,
           organizationSlug,
           incubatorSlug,
