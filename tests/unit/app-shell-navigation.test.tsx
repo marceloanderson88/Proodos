@@ -73,6 +73,28 @@ describe("AppShell navigation", () => {
     );
   });
 
+  it("abre os submenus sem impedir o acesso à visão geral do módulo", async () => {
+    const user = userEvent.setup();
+    render(<AppShell {...props}>Conteúdo</AppShell>);
+
+    const selection = screen.getByRole("link", { name: "Seleção" });
+    expect(selection).toHaveAttribute(
+      "href",
+      "/o/proodos/i/sertao-maker/chamadas",
+    );
+
+    const toggle = screen.getByRole("button", {
+      name: "Abrir submenu de Seleção",
+    });
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("link", { name: "Inscrições" })).toHaveAttribute(
+      "href",
+      "/o/proodos/i/sertao-maker/chamadas?view=applications",
+    );
+  });
+
   it("recolhe e reabre o menu lateral no desktop", async () => {
     const user = userEvent.setup();
     render(<AppShell {...props}>Conteúdo</AppShell>);
