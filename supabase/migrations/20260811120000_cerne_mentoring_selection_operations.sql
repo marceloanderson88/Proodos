@@ -35,6 +35,13 @@ revoke all on public.notification_outbox from public, anon, authenticated;
 grant select, insert, update, delete on public.notification_outbox to service_role;
 
 do $$ begin
+  create policy notification_outbox_no_direct_access
+  on public.notification_outbox for all to authenticated
+  using (false) with check (false);
+exception when duplicate_object then null;
+end $$;
+
+do $$ begin
   create trigger notification_outbox_set_updated_at
   before update on public.notification_outbox
   for each row execute function private.set_updated_at();
@@ -85,6 +92,175 @@ $$;
 
 revoke all on function private.queue_notification(uuid,text,uuid,text,text,text,text,text)
   from public, anon, authenticated;
+
+-- Corrige ambiguidades entre parâmetros PL/pgSQL e colunas de escopo.
+-- A assinatura pública é preservada para manter compatibilidade com o app.
+create or replace function public.register_cerne_evidence(
+  target_cycle_id uuid,
+  target_practice_code text,
+  target_requirement_id uuid,
+  evidence_title text,
+  evidence_description text,
+  external_url text,
+  source_module text,
+  source_entity_type text,
+  source_entity_id uuid,
+  source_snapshot jsonb,
+  scope_type text,
+  scope_entity_id uuid
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := (select auth.uid());
+  cycle_record public.cerne_cycles%rowtype;
+  target_slot_id uuid;
+  created_evidence_id uuid;
+  target_folder_path text;
+  target_scope_label text := 'Incubadora';
+  resolved_scope_type text := scope_type;
+  target_program_id uuid;
+  target_cohort_id uuid;
+  target_startup_id uuid;
+  target_call_id uuid;
+begin
+  select * into cycle_record
+  from public.cerne_cycles cycle
+  where cycle.id = target_cycle_id;
+
+  if not found or not private.cerne_may_submit(cycle_record.organization_id, cycle_record.incubator_id) then
+    raise exception 'Ciclo indisponível' using errcode = '42501';
+  end if;
+  if not exists (
+    select 1 from public.cerne_evidence_requirements requirement
+    where requirement.id = target_requirement_id
+      and requirement.practice_code = target_practice_code
+  ) then
+    raise exception 'Requisito incompatível' using errcode = '23514';
+  end if;
+  if nullif(btrim(external_url), '') is null and source_entity_id is null then
+    raise exception 'Informe um link ou uma origem do sistema' using errcode = '22023';
+  end if;
+
+  case resolved_scope_type
+    when 'program' then
+      target_program_id := scope_entity_id;
+      select program.name into target_scope_label
+      from public.programs program
+      where program.organization_id = cycle_record.organization_id
+        and program.id = target_program_id
+        and program.incubator_id = cycle_record.incubator_id;
+    when 'cohort' then
+      target_cohort_id := scope_entity_id;
+      select cohort.name into target_scope_label
+      from public.cohorts cohort
+      join public.programs program
+        on program.organization_id = cohort.organization_id
+       and program.id = cohort.program_id
+      where cohort.organization_id = cycle_record.organization_id
+        and cohort.id = target_cohort_id
+        and program.incubator_id = cycle_record.incubator_id;
+    when 'startup' then
+      target_startup_id := scope_entity_id;
+      select startup.name into target_scope_label
+      from public.startups startup
+      where startup.organization_id = cycle_record.organization_id
+        and startup.id = target_startup_id
+        and startup.incubator_id = cycle_record.incubator_id;
+    when 'selection_call' then
+      target_call_id := scope_entity_id;
+      select selection_call.title into target_scope_label
+      from public.selection_calls selection_call
+      where selection_call.organization_id = cycle_record.organization_id
+        and selection_call.id = target_call_id
+        and selection_call.incubator_id = cycle_record.incubator_id;
+    else
+      resolved_scope_type := 'incubator';
+  end case;
+
+  if resolved_scope_type <> 'incubator' and target_scope_label is null then
+    raise exception 'Contexto fora da incubadora' using errcode = '23514';
+  end if;
+
+  select slot.id into target_slot_id
+  from public.cerne_evidence_slots slot
+  where slot.cycle_id = cycle_record.id
+    and slot.requirement_id = target_requirement_id
+    and slot.scope_type = resolved_scope_type
+    and slot.program_id is not distinct from target_program_id
+    and slot.cohort_id is not distinct from target_cohort_id
+    and slot.startup_id is not distinct from target_startup_id
+    and slot.selection_call_id is not distinct from target_call_id
+  limit 1;
+
+  if target_slot_id is null then
+    insert into public.cerne_evidence_slots(
+      organization_id, cycle_id, practice_code, requirement_id, scope_type,
+      program_id, cohort_id, startup_id, selection_call_id, title, due_at, created_by
+    )
+    select
+      cycle_record.organization_id, cycle_record.id, target_practice_code,
+      target_requirement_id, resolved_scope_type, target_program_id,
+      target_cohort_id, target_startup_id, target_call_id, requirement.name,
+      cycle_record.ends_on::timestamptz, actor
+    from public.cerne_evidence_requirements requirement
+    where requirement.id = target_requirement_id
+    returning id into target_slot_id;
+  end if;
+
+  select folder.logical_path into target_folder_path
+  from public.cerne_drive_folders folder
+  where folder.cycle_id = cycle_record.id
+    and folder.practice_code = target_practice_code
+    and folder.folder_kind = 'practice';
+
+  target_folder_path := format(
+    '%s/%s/%s',
+    target_folder_path,
+    case resolved_scope_type
+      when 'incubator' then '00 - Incubadora'
+      when 'program' then '01 - Programas'
+      when 'cohort' then '02 - Turmas'
+      when 'startup' then '03 - Startups'
+      else '04 - Chamadas e Selecao'
+    end,
+    private.cerne_segment(target_scope_label)
+  );
+
+  insert into public.cerne_drive_folders(
+    organization_id, cycle_id, practice_code, folder_kind, logical_path, created_by
+  ) values (
+    cycle_record.organization_id, cycle_record.id, target_practice_code,
+    'context', target_folder_path, actor
+  ) on conflict(cycle_id, logical_path) do nothing;
+
+  insert into public.cerne_evidences(
+    organization_id, cycle_id, slot_id, practice_code, title, description,
+    external_url, source_module, source_entity_type, source_entity_id,
+    source_snapshot, drive_path, sync_status, submitted_by
+  ) values (
+    cycle_record.organization_id, cycle_record.id, target_slot_id,
+    target_practice_code, btrim(evidence_title),
+    nullif(btrim(evidence_description), ''), nullif(btrim(external_url), ''),
+    nullif(btrim(source_module), ''), source_entity_type, source_entity_id,
+    coalesce(source_snapshot, '{}'), target_folder_path,
+    case when nullif(btrim(external_url), '') is null
+      then 'pending'::public.cerne_sync_status
+      else 'not_required'::public.cerne_sync_status
+    end,
+    actor
+  ) returning id into created_evidence_id;
+
+  update public.cerne_evidence_slots
+  set status = 'submitted', updated_at = now()
+  where id = target_slot_id;
+
+  return created_evidence_id;
+end;
+$$;
 
 -- CERNE: catálogo consolidado da planilha e decisões por ciclo.
 create table if not exists public.cerne_action_catalog (
@@ -468,6 +644,14 @@ begin
   foreach table_name in array array['mentoring_cohort_mentors', 'mentoring_rounds', 'mentoring_round_mentors'] loop
     execute format('alter table public.%I enable row level security', table_name);
     execute format('revoke all on public.%I from public, anon, authenticated', table_name);
+    begin
+      execute format(
+        'create policy %I_no_direct_access on public.%I for all to authenticated using (false) with check (false)',
+        table_name,
+        table_name
+      );
+    exception when duplicate_object then null;
+    end;
     begin
       execute format('create trigger %I_audit after insert or update or delete on public.%I for each row execute function private.write_audit_log()', table_name, table_name);
     exception when duplicate_object then null;
