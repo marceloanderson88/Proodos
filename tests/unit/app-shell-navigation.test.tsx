@@ -43,46 +43,34 @@ describe("AppShell navigation", () => {
     },
   };
 
-  it("mantém apenas um grupo principal expandido por vez", async () => {
-    const user = userEvent.setup();
+  it("organiza os módulos em grupos com links diretos", () => {
     render(<AppShell {...props}>Conteúdo</AppShell>);
 
-    const portfolio = screen.getByRole("button", {
-      name: "Seleção e Portfólio",
-    });
-    const development = screen.getByRole("button", {
-      name: "Desenvolvimento das Startups",
-    });
-
-    expect(portfolio).toHaveAttribute("aria-expanded", "false");
-    expect(development).toHaveAttribute("aria-expanded", "false");
-
-    await user.click(portfolio);
-    expect(portfolio).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText("Programas e turmas")).toBeVisible();
-
-    await user.click(development);
-    expect(portfolio).toHaveAttribute("aria-expanded", "false");
-    expect(development).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("button", { name: "Diagnósticos" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Principal" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Operação" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Gestão" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Sistema" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Seleção" })).toHaveAttribute(
+      "href",
+      "/o/proodos/i/sertao-maker/chamadas",
+    );
+    expect(screen.getByRole("link", { name: "Portfólio" })).toHaveAttribute(
+      "href",
+      "/o/proodos/i/sertao-maker/programas",
+    );
   });
 
-  it("abre as opções do CERNE diretamente no grupo", async () => {
-    const user = userEvent.setup();
+  it("oferece acesso direto ao CERNE e às configurações", () => {
     render(<AppShell {...props}>Conteúdo</AppShell>);
 
-    const cerne = screen.getByRole("button", { name: "Gestão CERNE" });
-    expect(cerne).toHaveAttribute("aria-expanded", "false");
-
-    await user.click(cerne);
-
-    expect(cerne).toHaveAttribute("aria-expanded", "true");
-    expect(
-      screen.getByRole("link", { name: "Matriz de práticas" }),
-    ).toBeVisible();
-    expect(
-      screen.queryByRole("button", { name: "CERNE" }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "CERNE" })).toHaveAttribute(
+      "href",
+      "/o/proodos/i/sertao-maker/cerne",
+    );
+    expect(screen.getByRole("link", { name: "Configurações" })).toHaveAttribute(
+      "href",
+      "/o/proodos/i/sertao-maker/gestao-incubadora",
+    );
   });
 
   it("recolhe e reabre o menu lateral no desktop", async () => {
