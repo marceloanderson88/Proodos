@@ -3,6 +3,7 @@
 import {
   BarChart3,
   BookOpen,
+  BriefcaseBusiness,
   Building2,
   ChevronDown,
   ClipboardCheck,
@@ -15,6 +16,7 @@ import {
   Rocket,
   Settings,
   ShieldCheck,
+  Sparkles,
   Target,
   UsersRound,
   X,
@@ -43,6 +45,7 @@ type NavigationModule = {
 type NavigationSection = {
   group: string;
   items: readonly NavigationModule[];
+  icon?: LucideIcon;
   exposeChildren?: boolean;
 };
 
@@ -53,6 +56,7 @@ const navigation: readonly NavigationSection[] = [
   },
   {
     group: "Seleção e Portfólio",
+    icon: BriefcaseBusiness,
     items: [
       {
         label: "Programas e turmas",
@@ -93,6 +97,7 @@ const navigation: readonly NavigationSection[] = [
   },
   {
     group: "Desenvolvimento das Startups",
+    icon: Rocket,
     items: [
       {
         label: "Diagnósticos",
@@ -124,6 +129,7 @@ const navigation: readonly NavigationSection[] = [
   },
   {
     group: "Resultados e Impacto",
+    icon: BarChart3,
     items: [
       {
         label: "Relatórios e indicadores",
@@ -140,6 +146,7 @@ const navigation: readonly NavigationSection[] = [
   },
   {
     group: "Gestão CERNE",
+    icon: ShieldCheck,
     exposeChildren: true,
     items: [
       {
@@ -160,6 +167,7 @@ const navigation: readonly NavigationSection[] = [
   },
   {
     group: "Configurações",
+    icon: Settings,
     items: [
       {
         label: "Incubadora",
@@ -296,9 +304,7 @@ export function AppShell({
     <div
       className={cn(
         "min-h-screen bg-[#fbf5ef] transition-[grid-template-columns] duration-300 lg:grid",
-        sidebarCollapsed
-          ? "lg:grid-cols-[0_1fr]"
-          : "lg:grid-cols-[17.5rem_1fr]",
+        sidebarCollapsed ? "lg:grid-cols-[0_1fr]" : "lg:grid-cols-[19rem_1fr]",
       )}
     >
       {menuOpen && (
@@ -311,14 +317,14 @@ export function AppShell({
       <aside
         id="navegacao-principal"
         className={cn(
-          "wine-panel fixed inset-y-0 left-0 z-40 flex w-[17.5rem] flex-col overflow-hidden text-white shadow-2xl transition-[width,transform,box-shadow] duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
+          "wine-panel fixed inset-y-0 left-0 z-40 flex w-[19rem] flex-col overflow-hidden border-r border-white/10 text-white shadow-[18px_0_60px_rgba(63,9,13,0.18)] transition-[width,transform,box-shadow] duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
           menuOpen ? "translate-x-0" : "-translate-x-full",
           sidebarCollapsed && "lg:w-0 lg:-translate-x-full lg:shadow-none",
         )}
       >
-        <div className="flex items-center justify-between px-5 pt-6 pb-4">
+        <div className="flex items-center justify-between px-6 pt-7 pb-5 [@media(max-height:760px)]:pt-4 [@media(max-height:760px)]:pb-3">
           {currentIncubator.slug.includes("sertao-maker") ? (
-            <BrandMark inverse />
+            <BrandMark className="sidebar-brand max-w-[14rem]" />
           ) : (
             <div className="flex min-w-0 items-center gap-3">
               <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/10 text-sm font-black text-[#f4c47a]">
@@ -343,138 +349,109 @@ export function AppShell({
           </button>
         </div>
         <nav
-          className="mt-1 min-h-0 flex-1 [scrollbar-width:none] overflow-y-auto px-3 pb-2 [&::-webkit-scrollbar]:hidden"
+          className="min-h-0 flex-1 [scrollbar-width:none] overflow-y-auto px-4 pb-3 [&::-webkit-scrollbar]:hidden"
           aria-label="Módulos da plataforma"
         >
-          <div className="space-y-1">
-            {navigation.map(({ group, items, exposeChildren }) => {
-              const isHomeSection = group === "Início";
-              const sectionExpanded = expandedSection === group;
-              const sectionActive = items.some(({ slug }) => {
-                const itemHref = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
+          <div>
+            {navigation.map(
+              ({ group, items, icon: SectionIcon, exposeChildren }) => {
+                const isHomeSection = group === "Início";
+                const sectionExpanded = expandedSection === group;
+                const sectionActive = items.some(({ slug }) => {
+                  const itemHref = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
+                  return (
+                    pathname === itemHref ||
+                    (slug !== "dashboard" &&
+                      pathname.startsWith(`${itemHref}/`))
+                  );
+                });
+                const sectionId = `nav-section-${group
+                  .normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "")
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, "-")}`;
+
                 return (
-                  pathname === itemHref ||
-                  (slug !== "dashboard" && pathname.startsWith(`${itemHref}/`))
-                );
-              });
-              const sectionId = `nav-section-${group
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")}`;
-
-              return (
-                <section key={group}>
-                  {isHomeSection ? (
-                    <p className="px-3.5 pt-1 pb-1.5 text-[0.56rem] font-extrabold tracking-[0.14em] text-white/42 uppercase">
-                      {group}
-                    </p>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setNavigationState({
-                          pathname,
-                          expandedSection: sectionExpanded ? null : group,
-                          expandedModule:
-                            !sectionExpanded && sectionActive
-                              ? currentModule
-                              : null,
-                        })
-                      }
-                      aria-expanded={sectionExpanded}
-                      aria-controls={sectionId}
-                      className={cn(
-                        "group/section flex w-full items-center gap-2 rounded-lg px-3.5 py-2 text-left text-[0.6rem] font-extrabold tracking-[0.13em] uppercase transition",
-                        sectionActive
-                          ? "text-[#f4c47a]"
-                          : "text-white/45 hover:bg-white/7 hover:text-white/75",
-                      )}
-                    >
-                      <span className="min-w-0 flex-1">{group}</span>
-                      <ChevronDown
-                        className={cn(
-                          "size-3.5 shrink-0 transition-transform duration-200",
-                          sectionExpanded && "rotate-180",
-                        )}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  )}
-                  <div
-                    id={isHomeSection ? undefined : sectionId}
-                    hidden={!isHomeSection && !sectionExpanded}
+                  <section
+                    key={group}
+                    className={cn(
+                      !isHomeSection && "border-b border-white/10",
+                      sectionExpanded && !isHomeSection && "pb-2",
+                    )}
                   >
-                    <ul className="space-y-0.5">
-                      {items.map((item) => {
-                        const { label, slug, icon: Icon, children } = item;
-                        const href = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
-                        const active =
-                          pathname === href ||
-                          (slug !== "dashboard" &&
-                            pathname.startsWith(`${href}/`));
-                        const expanded = expandedModule === slug;
+                    {isHomeSection ? (
+                      <p className="px-2 pt-1 pb-2.5 text-[0.64rem] font-black tracking-[0.2em] text-[#e7aeb0]/75 uppercase">
+                        {group}
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNavigationState({
+                            pathname,
+                            expandedSection: sectionExpanded ? null : group,
+                            expandedModule:
+                              !sectionExpanded && sectionActive
+                                ? currentModule
+                                : null,
+                          })
+                        }
+                        aria-expanded={sectionExpanded}
+                        aria-controls={sectionId}
+                        className={cn(
+                          "group/section flex min-h-[4.15rem] w-full items-center gap-3 px-2 py-3 text-left transition duration-200 focus-visible:rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4c47a] [@media(max-height:760px)]:min-h-[3.5rem] [@media(max-height:760px)]:py-2",
+                          sectionActive
+                            ? "text-white"
+                            : "text-white/82 hover:text-white",
+                        )}
+                      >
+                        {SectionIcon && (
+                          <span
+                            className={cn(
+                              "grid size-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.045] text-[#eab8b8] transition duration-200 group-hover/section:border-[#f4c47a]/35 group-hover/section:bg-white/[0.08] group-hover/section:text-[#f4c47a]",
+                              (sectionActive || sectionExpanded) &&
+                                "border-[#f4c47a]/30 bg-[#f4c47a]/10 text-[#f4c47a]",
+                            )}
+                          >
+                            <SectionIcon
+                              className="size-5"
+                              strokeWidth={1.7}
+                              aria-hidden="true"
+                            />
+                          </span>
+                        )}
+                        <span className="min-w-0 flex-1 text-[0.91rem] leading-[1.25rem] font-bold tracking-[-0.01em]">
+                          {group}
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            "size-4 shrink-0 text-white/50 transition-transform duration-200 group-hover/section:text-white/80",
+                            sectionExpanded && "rotate-180 text-[#f4c47a]",
+                          )}
+                          aria-hidden="true"
+                        />
+                      </button>
+                    )}
+                    <div
+                      id={isHomeSection ? undefined : sectionId}
+                      hidden={!isHomeSection && !sectionExpanded}
+                      className={cn(isHomeSection && "pb-3")}
+                    >
+                      <ul className="space-y-0.5">
+                        {items.map((item) => {
+                          const { label, slug, icon: Icon, children } = item;
+                          const href = `/o/${organization.slug}/i/${currentIncubator.slug}/${slug}`;
+                          const active =
+                            pathname === href ||
+                            (slug !== "dashboard" &&
+                              pathname.startsWith(`${href}/`));
+                          const expanded = expandedModule === slug;
 
-                        return (
-                          <li key={slug}>
-                            {children?.length ? (
-                              exposeChildren ? (
-                                <div className="mx-2 border-l border-[#f4c47a]/25 py-1 pl-3">
-                                  <ul className="space-y-0.5">
-                                    {renderNavigationChildren(
-                                      children,
-                                      slug,
-                                      href,
-                                    )}
-                                  </ul>
-                                </div>
-                              ) : (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setNavigationState({
-                                        pathname,
-                                        expandedSection: group,
-                                        expandedModule:
-                                          expandedModule === slug ? null : slug,
-                                      })
-                                    }
-                                    aria-expanded={expanded}
-                                    aria-controls={`submenu-${slug}`}
-                                    className={cn(
-                                      "group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-bold text-white/78 transition",
-                                      active
-                                        ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
-                                        : "hover:bg-white/8 hover:text-white",
-                                    )}
-                                  >
-                                    <Icon
-                                      className={cn(
-                                        "size-[1.15rem] shrink-0",
-                                        active
-                                          ? "text-[#f4c47a]"
-                                          : "text-white/68 group-hover:text-white",
-                                      )}
-                                      strokeWidth={1.8}
-                                      aria-hidden="true"
-                                    />
-                                    <span className="min-w-0 flex-1">
-                                      {label}
-                                    </span>
-                                    <ChevronDown
-                                      className={cn(
-                                        "size-4 shrink-0 text-white/50 transition-transform duration-200",
-                                        expanded && "rotate-180 text-[#f4c47a]",
-                                      )}
-                                      aria-hidden="true"
-                                    />
-                                  </button>
-                                  <div
-                                    id={`submenu-${slug}`}
-                                    hidden={!expanded}
-                                    className="ml-[1.35rem] border-l border-white/12 py-0.5 pl-3"
-                                  >
+                          return (
+                            <li key={slug}>
+                              {children?.length ? (
+                                exposeChildren ? (
+                                  <div className="mx-2 border-l border-[#f4c47a]/25 py-1 pl-3">
                                     <ul className="space-y-0.5">
                                       {renderNavigationChildren(
                                         children,
@@ -483,41 +460,119 @@ export function AppShell({
                                       )}
                                     </ul>
                                   </div>
-                                </>
-                              )
-                            ) : (
-                              <Link
-                                href={href}
-                                onClick={() => setMenuOpen(false)}
-                                aria-current={active ? "page" : undefined}
-                                className={cn(
-                                  "group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold text-white/78 transition",
-                                  active
-                                    ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
-                                    : "hover:bg-white/8 hover:text-white",
-                                )}
-                              >
-                                <Icon
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setNavigationState({
+                                          pathname,
+                                          expandedSection: group,
+                                          expandedModule:
+                                            expandedModule === slug
+                                              ? null
+                                              : slug,
+                                        })
+                                      }
+                                      aria-expanded={expanded}
+                                      aria-controls={`submenu-${slug}`}
+                                      className={cn(
+                                        "group mx-1 flex w-[calc(100%_-_0.5rem)] items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-white/72 transition",
+                                        active
+                                          ? "bg-white/12 text-white shadow-[inset_2px_0_0_#f4c47a]"
+                                          : "hover:bg-white/[0.07] hover:text-white",
+                                      )}
+                                    >
+                                      <Icon
+                                        className={cn(
+                                          "size-[1.15rem] shrink-0",
+                                          active
+                                            ? "text-[#f4c47a]"
+                                            : "text-white/68 group-hover:text-white",
+                                        )}
+                                        strokeWidth={1.8}
+                                        aria-hidden="true"
+                                      />
+                                      <span className="min-w-0 flex-1">
+                                        {label}
+                                      </span>
+                                      <ChevronDown
+                                        className={cn(
+                                          "size-4 shrink-0 text-white/50 transition-transform duration-200",
+                                          expanded &&
+                                            "rotate-180 text-[#f4c47a]",
+                                        )}
+                                        aria-hidden="true"
+                                      />
+                                    </button>
+                                    <div
+                                      id={`submenu-${slug}`}
+                                      hidden={!expanded}
+                                      className="ml-[1.35rem] border-l border-white/12 py-0.5 pl-3"
+                                    >
+                                      <ul className="space-y-0.5">
+                                        {renderNavigationChildren(
+                                          children,
+                                          slug,
+                                          href,
+                                        )}
+                                      </ul>
+                                    </div>
+                                  </>
+                                )
+                              ) : (
+                                <Link
+                                  href={href}
+                                  onClick={() => setMenuOpen(false)}
+                                  aria-current={active ? "page" : undefined}
                                   className={cn(
-                                    "size-[1.15rem]",
-                                    active
-                                      ? "text-[#f4c47a]"
-                                      : "text-white/68 group-hover:text-white",
+                                    "group flex items-center gap-3 text-sm font-bold transition",
+                                    isHomeSection
+                                      ? "min-h-[4.25rem] rounded-[1.35rem] border px-3 py-2.5 text-base [@media(max-height:760px)]:min-h-[3.65rem]"
+                                      : "rounded-xl px-3.5 py-2.5 text-white/78",
+                                    active && isHomeSection
+                                      ? "border-[#f4c47a]/70 bg-gradient-to-r from-[#a71922]/90 to-[#8c1720]/70 text-white shadow-[0_14px_30px_rgba(38,6,9,0.28),inset_2px_0_0_#f4c47a]"
+                                      : active
+                                        ? "bg-white/13 text-white shadow-[inset_3px_0_0_#f4c47a]"
+                                        : "border-transparent hover:bg-white/8 hover:text-white",
                                   )}
-                                  strokeWidth={1.8}
-                                  aria-hidden="true"
-                                />
-                                <span>{label}</span>
-                              </Link>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                </section>
-              );
-            })}
+                                >
+                                  <span
+                                    className={cn(
+                                      "grid shrink-0 place-items-center transition",
+                                      isHomeSection
+                                        ? "size-11 rounded-xl bg-[#681015]/55"
+                                        : "size-5",
+                                      active && "text-[#f4c47a]",
+                                    )}
+                                  >
+                                    <Icon
+                                      className={cn(
+                                        isHomeSection
+                                          ? "size-[1.35rem]"
+                                          : "size-[1.15rem]",
+                                        active
+                                          ? "text-[#f4c47a]"
+                                          : "text-white/68 group-hover:text-white",
+                                      )}
+                                      strokeWidth={1.8}
+                                      aria-hidden="true"
+                                    />
+                                  </span>
+                                  <span className="tracking-[-0.01em]">
+                                    {label}
+                                  </span>
+                                </Link>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </section>
+                );
+              },
+            )}
           </div>
         </nav>
         <div className="relative border-t border-white/10 p-3">
@@ -537,6 +592,19 @@ export function AppShell({
                 fill="none"
               />
             </svg>
+          </div>
+          <div className="relative mx-1 mb-2 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.045] px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] [@media(max-height:700px)]:hidden">
+            <Sparkles
+              className="size-5 shrink-0 text-[#f4c47a]"
+              strokeWidth={1.7}
+              aria-hidden="true"
+            />
+            <p className="text-[0.72rem] leading-4 font-semibold text-white/72">
+              Impulsionando ideias.
+              <span className="block text-[#f4c47a]">
+                Transformando o sertão.
+              </span>
+            </p>
           </div>
           <IncubatorSwitcher
             organizationSlug={organization.slug}

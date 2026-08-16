@@ -127,6 +127,11 @@ select {
     linear-gradient(145deg, var(--wine-800), var(--wine-950) 78%);
 }
 
+.sidebar-brand img {
+  filter: brightness(0) saturate(100%) invert(84%) sepia(35%) saturate(757%)
+    hue-rotate(345deg) brightness(101%) contrast(91%);
+}
+
 .dashboard-card {
   border: 1px solid rgb(117 17 24 / 9%);
   background: rgb(255 253 249 / 92%);
